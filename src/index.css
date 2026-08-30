@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import 'leaflet/dist/leaflet.css';
+@import 'tailwindcss';
+
+@theme {
+  --color-ground: #0D0805;
+  --color-clay: #C1440E;
+  --color-ochre: #D4A017;
+  --color-sage: #1A3A2A;
+  --color-cream: #F5EDD9;
+  --color-mist: #E8DFCC;
+  --color-rust: #8B3008;
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #0D0805;
+  color: #F5EDD9;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0805;
+}
+::-webkit-scrollbar-thumb {
+  background: #C1440E;
+  border-radius: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  /* Glow at ~45% intensity (dialed back from the earlier 65% pass) */
+  text-shadow: 0 0 10px rgba(255, 214, 122, 0.22), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/*
+  Global shine/brightness pass (~65% intensity, tuned rather than maxed).
+  Most colors in this codebase are inline hex (style={{ backgroundColor: "#C1440E" }})
+  rather than CSS variables, so a palette-variable tweak wouldn't reach them.
+  A CSS filter is the one lever that touches every pixel uniformly, including
+  images and inline-styled elements.
+
+  Important: this is applied to .shine-wrap (which wraps <Outlet/> only) and to
+  <nav> directly — NOT to <body> or #root. Nav uses position:fixed, and a filter
+  on any ANCESTOR of a fixed element makes that ancestor become its containing
+  block instead of the viewport (a real CSS spec quirk), which would make the
+  nav scroll away instead of staying pinned. Scoping the filter to a sibling of
+  Nav avoids that entirely.
+*/
+.shine-wrap {
+  filter: brightness(1.18) saturate(1.4) contrast(1.04);
+}
+nav {
+  filter: brightness(1.18) saturate(1.4) contrast(1.04);
+}
+
+/* Tribal SVG pattern overlay */
+.tribal-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A017' fill-opacity='0.07'%3E%3Cpath d='M30 0L60 30L30 60L0 30z'/%3E%3Cpath d='M30 10L50 30L30 50L10 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.tribal-border {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #75AADB 0px,  #75AADB 14px,
+    #FFFFFF 14px, #FFFFFF 18px,
+    #000000 18px, #000000 26px,
+    #FFFFFF 26px, #FFFFFF 30px,
+    #75AADB 30px, #75AADB 44px
+  );
+}
+
+/* Scroll-driven bike path */
+.road-line {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Image carousel */
+.carousel-track {
+  transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Site card hover */
+.site-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.site-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Booking form range input */
+input[type='range'] {
+  -webkit-appearance: none;
+  height: 4px;
+  background: #1A3A2A;
+  border-radius: 2px;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #C1440E;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Animated underline */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #D4A017;
+  transition: width 0.3s ease;
+}
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Section reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Bicycle cursor trail */
+.bike-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: left 0.15s ease, top 0.15s ease;
+}
+
+/* Gallery tab active */
+.gallery-tab.active {
+  background: #C1440E;
+  color: #F5EDD9;
+}
+
+/* Pulse ring on markers */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes bike-roll {
+  0% { transform: translateX(-120px); }
+  100% { transform: translateX(calc(100vw + 120px)); }
+}
+
+@keyframes wheel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.wheel-anim {
+  animation: wheel-spin 0.6s linear infinite;
+  transform-origin: center;
+}
+
+/* Hero scroll bike */
+#hero-bike {
+  transition: left 0.05s linear;
+}
+
+/* Diagonal divider */
+.clip-diagonal {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+
+/* Wavy section divider */
+.wavy-top::before {
+  content: '';
+  display: block;
+  height: 60px;
+  background: inherit;
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+  margin-top: -60px;
+}
