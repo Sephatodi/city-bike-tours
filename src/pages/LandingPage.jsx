@@ -4,6 +4,7 @@ import BikeSVG from "../components/BikeSVG";
 import Carousel from "../components/Carousel";
 import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
+import HillClimb from "../components/HillClimb";
 import { SITES } from "../data";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
@@ -127,36 +128,7 @@ function Hero() {
         </div>
       </div>
 
-      {/* Scroll-linked bike, climbing the hill */}
-      <div className="relative w-full overflow-hidden" style={{ height: "160px" }}>
-        <svg
-          className="absolute inset-0"
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M 0 92 C 25 88, 45 60, 100 8"
-            fill="none"
-            stroke="rgba(212,160,23,0.45)"
-            strokeWidth="0.8"
-            strokeDasharray="2 2"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-        <div
-          className="absolute"
-          style={{
-            left: `${bikeLeftPct}%`,
-            bottom: `${bikeBottomPx}px`,
-            transform: `translateX(-50%) rotate(${tilt}deg)`,
-            transition: "left 0.05s linear, bottom 0.05s linear, transform 0.05s linear",
-          }}
-        >
-          <BikeSVG size={48} color="#D4A017" />
-        </div>
-      </div>
+      <HillClimb />
     </section>
   );
 }
@@ -305,7 +277,7 @@ function GallerySection() {
                 border: `1px solid ${i === active ? "#C1440E" : "rgba(245,237,217,0.1)"}`,
               }}
             >
-              {s.emoji} {s.name.split(" ").slice(-1)[0]}
+              {s.name.split(" ").slice(-1)[0]}
             </button>
           ))}
         </div>
