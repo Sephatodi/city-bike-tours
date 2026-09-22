@@ -9,9 +9,11 @@ export const SITES = [
     color: "#1A3A2A",
     coords: [-24.6541, 25.9069],
     imgs: [
-      "/heritage/parliament/1.jfif",
-      "/heritage/parliament/2.jfif",
-      "/heritage/parliament/3.jfif",
+      "https://images.unsplash.com/photo-1591005383946-16532ba69aee?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383716-6f55494025f8?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383705-c7af6a4eedd0?w=800&h=600&fit=crop&auto=format",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/BotswanaParliament.jpg?width=800",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Parliament%20Buildings%2C%20Gaborone%2C%20Botswana.jpg?width=800",
     ],
   },
   {
@@ -24,8 +26,9 @@ export const SITES = [
     color: "#8B3008",
     coords: [-24.6528, 25.9089],
     imgs: [
-      "/government%20enclave.jfif",
-      "/heritage/enclave/1.jfif",
+      "https://images.unsplash.com/photo-1591005383705-c7af6a4eedd0?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383946-16532ba69aee?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1759130534259-273e015f70f9?w=800&h=600&fit=crop&auto=format",
     ],
   },
   {
@@ -38,8 +41,10 @@ export const SITES = [
     color: "#C1440E",
     coords: [-24.6573, 25.9124],
     imgs: [
-      "/national%20archives.jfif",
-      "/national%20archives1.jfif",
+      "https://images.unsplash.com/photo-1784253367189-f2d27494f024?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1738145133893-a9c9aa180f8f?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383946-16532ba69aee?w=800&h=600&fit=crop&auto=format",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Archives%20and%20Records%20management%20center%20Botswana%206.jpg?width=800",
     ],
   },
   {
@@ -52,8 +57,9 @@ export const SITES = [
     color: "#D4A017",
     coords: [-24.6558, 25.9098],
     imgs: [
-      "/post%20office.jfif",
-      "/postoffice.jfif",
+      "https://images.unsplash.com/photo-1677933182223-87080aa14ed5?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1691755769141-33b3afcb5bfb?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383716-6f55494025f8?w=800&h=600&fit=crop&auto=format",
     ],
   },
   {
@@ -66,8 +72,10 @@ export const SITES = [
     color: "#1A3A2A",
     coords: [-24.6582, 25.9115],
     imgs: [
-      "/museum.jfif",
-      "/national%20museum.jfif",
+      "https://images.unsplash.com/photo-1759216942476-c8e7f1d09b4f?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1784253367189-f2d27494f024?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1591005383946-16532ba69aee?w=800&h=600&fit=crop&auto=format",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Gaborone_National_Museum_20200211.jpg?width=800",
     ],
   },
   {
@@ -80,17 +88,10 @@ export const SITES = [
     color: "#C1440E",
     coords: [-24.6549, 25.9078],
     imgs: [
-      "/three%20chiefs.jfif",
-      "/orapa%20house.jfif",
-      "/heritage/monument/1.jfif",
-      "/heritage/monument/2.jfif",
-      "/heritage/monument/3.jfif",
-      "/heritage/monument/4.jfif",
-      "/heritage/monument/5.jfif",
-      "/heritage/monument/6.jfif",
-      "/heritage/monument/7.jfif",
-      "/heritage/monument/8.jfif",
-      "/heritage/monument/9.jfif",
+      "https://images.unsplash.com/photo-1738145133893-a9c9aa180f8f?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1759216942476-c8e7f1d09b4f?w=800&h=600&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1759130534259-273e015f70f9?w=800&h=600&fit=crop&auto=format",
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Dikgosis%20on%20the%203%20dikgosi%20monument.jpg?width=800",
     ],
   },
 ];
