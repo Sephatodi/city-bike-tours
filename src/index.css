@@ -309,6 +309,12 @@ input[type='range']::-webkit-slider-thumb {
   clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
 }
 
+@media (min-width: 1024px) {
+  .hero-feature-list {
+    padding-top: 12rem;
+  }
+}
+
 /* Wavy section divider */
 .wavy-top::before {
   content: '';

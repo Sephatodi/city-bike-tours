@@ -99,7 +99,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="hero-feature-list grid gap-4">
             {[
               { n: "01", label: "Guided heritage ride", sub: "Stories, landmarks, and a steady pace" },
               { n: "02", label: "Casual Saturday", sub: "A loose, social ride made for togetherness" },

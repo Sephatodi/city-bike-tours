@@ -52,12 +52,19 @@ function BikeSVG({ size = 48, color = "#D4A017" }) {
 
 export default function HillClimb() {
   const hillRef = useRef(null);
+  const previousScrollY = useRef(window.scrollY);
   const [progress, setProgress] = useState(0);
+  const [direction, setDirection] = useState(1);
 
   useEffect(() => {
     function onScroll() {
       const el = hillRef.current;
       if (!el) return;
+      const nextScrollY = window.scrollY;
+      if (nextScrollY !== previousScrollY.current) {
+        setDirection(nextScrollY > previousScrollY.current ? 1 : -1);
+        previousScrollY.current = nextScrollY;
+      }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       // 0 the instant the hill's top edge enters the bottom of the viewport,
@@ -105,8 +112,8 @@ export default function HillClimb() {
         viewBox={`0 0 100 ${HILL_HEIGHT}`}
         preserveAspectRatio="none"
       >
-        {/* Solid dark-brown hill silhouette */}
-        <path d={hillPath.fill} fill="#1A1008" />
+        {/* Match the page background so the hill reads as one continuous surface. */}
+        <path d={hillPath.fill} fill="#0D0805" />
         {/* Lighter dashed trail along the top edge the bike rides on */}
         <path
           d={hillPath.line}
@@ -122,7 +129,7 @@ export default function HillClimb() {
         style={{
           left: `${bikeLeftPct}%`,
           bottom: `${bikeBottomPx}px`,
-          transform: `translateX(-50%) rotate(${tilt}deg)`,
+          transform: `translateX(-50%) rotate(${tilt}deg) scaleX(${direction})`,
           transition: "left 0.05s linear, bottom 0.05s linear, transform 0.1s linear",
           opacity: BIKE_OPACITY,
           zIndex: 2,
