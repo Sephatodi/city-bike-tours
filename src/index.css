@@ -73,12 +73,19 @@ body {
 .header-bike-track {
   position: absolute;
   top: 50%;
-  left: -8rem;
   width: 180px;
   height: 130px;
   transform: translateY(-50%);
-  animation: header-bike-drift 18s ease-in-out infinite;
+  animation-duration: 18s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
   will-change: transform;
+}
+.header-bike-track-right {
+  animation-name: header-bike-drift-right;
+}
+.header-bike-track-left {
+  animation-name: header-bike-drift-left;
 }
 .header-bike-image {
   display: block;
@@ -87,16 +94,21 @@ body {
   object-fit: contain;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
 }
-@keyframes header-bike-drift {
-  0%, 8% { transform: translate(-8rem, -50%) scaleX(1) rotate(-2deg); }
-  44%, 50% { transform: translate(42vw, -58%) scaleX(1) rotate(3deg); }
-  52% { transform: translate(48vw, -58%) scaleX(-1) rotate(3deg); }
-  92%, 100% { transform: translate(calc(100vw - 8rem), -50%) scaleX(-1) rotate(-2deg); }
+@keyframes header-bike-drift-right {
+  0% { transform: translate(-12rem, -50%) scaleX(1) rotate(-2deg); }
+  50% { transform: translate(calc(50vw - 90px), -58%) scaleX(1) rotate(3deg); }
+  100% { transform: translate(100vw, -50%) scaleX(1) rotate(-2deg); }
+}
+@keyframes header-bike-drift-left {
+  0% { transform: translate(100vw, -50%) scaleX(-1) rotate(-2deg); }
+  50% { transform: translate(calc(50vw - 90px), -58%) scaleX(-1) rotate(3deg); }
+  100% { transform: translate(-12rem, -50%) scaleX(-1) rotate(-2deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .header-bike-track {
     animation: none;
     left: calc(50% - 90px);
+    transform: translateY(-50%);
   }
 }
 
