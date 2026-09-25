@@ -319,75 +319,110 @@ input[type='range']::-webkit-slider-thumb {
   margin-top: -60px;
 }
 
-/* Route story and booking drawer */
-.route-story {
-  position: relative;
-  min-height: 112vh;
-  overflow: hidden;
-  border-top: 1px solid rgba(245, 237, 217, 0.1);
-  border-bottom: 1px solid rgba(245, 237, 217, 0.1);
-}
-.route-story-intro {
-  position: sticky;
-  top: 18vh;
-  z-index: 1;
-  max-width: 30rem;
-  padding-top: 12vh;
-}
-.route-story-bike {
-  position: absolute;
-  top: 38vh;
-  left: -8rem;
-  z-index: 0;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
-  transition: transform 0.12s linear;
-  pointer-events: none;
-}
-.route-story-bike-image {
-  display: block;
-  width: 150px;
-  height: 90px;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
-}
-.route-story-panels {
-  position: relative;
-  z-index: 2;
+/* Routes page and booking drawer */
+.routes-intro {
   display: grid;
-  gap: 12vh;
-  max-width: 32rem;
-  margin: 14vh 0 0 auto;
-  padding-bottom: 14vh;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.9fr);
+  min-height: 24rem;
+  overflow: hidden;
+  background: #1A3A2A;
+  border: 1px solid rgba(212, 160, 23, 0.35);
 }
-.route-story-panel {
-  padding: 1.5rem;
-  background: rgba(15, 11, 6, 0.88);
-  border: 1px solid rgba(245, 237, 217, 0.14);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+.routes-intro-copy {
+  padding: clamp(2rem, 5vw, 4rem);
+  align-self: center;
 }
-.route-story-panel p {
-  margin: 0.75rem 0 1.25rem;
-  color: rgba(245, 237, 217, 0.68);
-  line-height: 1.65;
+.routes-intro-copy > p:not(.text-xs) {
+  max-width: 34rem;
+  line-height: 1.7;
 }
-.route-story-number {
+.routes-intro-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+.routes-intro-points span {
+  padding: 0.65rem 0.8rem;
+  color: rgba(245, 237, 217, 0.78);
+  background: rgba(13, 8, 5, 0.28);
+  border-left: 3px solid #D4A017;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+.routes-intro-points strong {
   display: block;
-  margin-bottom: 0.75rem;
-  color: #C1440E;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  color: #F5EDD9;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
 }
-.route-story-action {
-  color: #D4A017;
+.routes-intro-image {
+  position: relative;
+  min-height: 20rem;
+  overflow: hidden;
+}
+.routes-intro-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(26, 58, 42, 0.15), rgba(13, 8, 5, 0.08));
+}
+.routes-intro-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.routes-intro-image span {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1;
+  padding: 0.55rem 0.75rem;
+  color: #0D0805;
+  background: #D4A017;
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.route-story-action span {
-  margin-left: 0.4rem;
-  font-size: 1rem;
+.route-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(245, 237, 217, 0.16);
+}
+.route-card-rust {
+  background: #32150D;
+  border-color: rgba(193, 68, 14, 0.7);
+}
+.route-card-sage {
+  background: #10271E;
+  border-color: rgba(26, 58, 42, 0.95);
+}
+.route-card-image {
+  display: block;
+  width: 100%;
+  height: 13rem;
+  object-fit: cover;
+}
+.route-card-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 2rem;
+}
+.route-card-body > .absolute {
+  top: 1.5rem;
+  right: 1.5rem;
+}
+.routes-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
 }
 .booking-drawer-overlay {
   position: fixed;
@@ -477,19 +512,28 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 @media (max-width: 768px) {
-  .route-story {
-    min-height: 105vh;
+  .routes-intro {
+    display: block;
   }
-  .route-story-intro {
-    top: 12vh;
-    padding-top: 8vh;
+  .routes-intro-copy {
+    padding: 2rem 1.25rem;
   }
-  .route-story-bike {
-    top: 44vh;
-    left: -4rem;
+  .routes-intro-image {
+    min-height: 13rem;
   }
-  .route-story-panels {
-    gap: 9vh;
-    margin-top: 14vh;
+  .routes-intro-image span {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+  }
+  .route-card-image {
+    height: 11rem;
+  }
+  .route-card-body {
+    padding: 1.5rem 1.25rem;
+  }
+  .booking-drawer-card {
+    width: 100%;
+    padding: 2rem 1.25rem;
   }
 }

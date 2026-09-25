@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeritageMap from "../components/HeritageMap";
 import HeaderBike from "../components/HeaderBike";
-import UphillCyclist from "../components/UphillCyclist";
 import { ROUTES_DATA, SITES } from "../data";
 
 const PRIMARY_ROUTES = ROUTES_DATA.filter((route) => route.id === "complete" || route.id === "loop");
+const ROUTE_VISUALS = {
+  complete: { image: "/three%20chiefs.jfif", tone: "route-card-rust" },
+  loop: { image: "/museum.jfif", tone: "route-card-sage" },
+};
 
 function useScrollReveal() {
   useEffect(() => {
@@ -24,29 +27,6 @@ export default function RoutesPage() {
   useScrollReveal();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState("complete");
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const storyRef = useRef(null);
-
-  useEffect(() => {
-    function updateProgress() {
-      const story = storyRef.current;
-      if (!story) return;
-
-      const range = story.offsetHeight - window.innerHeight;
-      const progress = range > 0
-        ? (window.scrollY - story.offsetTop) / range
-        : 0;
-      setScrollProgress(Math.min(Math.max(progress, 0), 1));
-    }
-
-    updateProgress();
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("resize", updateProgress);
-    return () => {
-      window.removeEventListener("scroll", updateProgress);
-      window.removeEventListener("resize", updateProgress);
-    };
-  }, []);
 
   function openBooking(route = "complete") {
     setSelectedRoute(route);
@@ -79,38 +59,34 @@ export default function RoutesPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-16">
 
-        <section ref={storyRef} className="route-story mb-20 reveal">
-          <div className="route-story-bike" style={{ transform: `translate(${scrollProgress * 62}vw, ${-scrollProgress * 18}vh) rotate(${-8 - scrollProgress * 8}deg)` }}>
-            <UphillCyclist className="route-story-bike-image" />
-          </div>
-          <div className="route-story-intro">
+        <section className="routes-intro mb-16 reveal">
+          <div className="routes-intro-copy">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— Find your pace</p>
             <h2 className="font-display font-bold text-3xl md:text-5xl" style={{ color: "#F5EDD9" }}>Two ways through the city</h2>
+            <p className="mt-4" style={{ color: "rgba(245,237,217,0.72)" }}>
+              Choose a guided story-filled ride or a relaxed loop through Gaborone's heritage centre. Both routes start at Main Mall and include a bike, route map, and local context.
+            </p>
+            <div className="routes-intro-points">
+              <span><strong>6</strong> heritage stops</span>
+              <span><strong>12 km</strong> city-centre loop</span>
+              <span><strong>All levels</strong> welcome</span>
+            </div>
           </div>
-          <div className="route-story-panels">
-            <article className="route-story-panel">
-              <span className="route-story-number">01</span>
-              <h3 className="font-display font-bold text-2xl" style={{ color: "#F5EDD9" }}>Heritage City Ride</h3>
-              <p>Wednesday to Friday options, guided commentary, and time to take in all six landmarks. Choose the structured ride when the stories matter as much as the miles.</p>
-              <button type="button" onClick={() => openBooking("complete")} className="route-story-action">Book guided ride <span aria-hidden="true">→</span></button>
-            </article>
-            <article className="route-story-panel">
-              <span className="route-story-number">02</span>
-              <h3 className="font-display font-bold text-2xl" style={{ color: "#F5EDD9" }}>Casual Saturday</h3>
-              <p>A relaxed family loop for friends, first-timers, and anyone who wants to explore without a rigid schedule or a stopwatch.</p>
-              <button type="button" onClick={() => openBooking("loop")} className="route-story-action">Choose the loop <span aria-hidden="true">→</span></button>
-            </article>
+          <div className="routes-intro-image">
+            <img src="/government%20enclave.jfif" alt="Government Enclave heritage site in Gaborone" />
+            <span>Ride through living history</span>
           </div>
         </section>
 
         {/* Route cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16 reveal">
+        <div className="grid md:grid-cols-2 gap-6 mb-16 reveal">
           {PRIMARY_ROUTES.map((route) => (
             <div
               key={route.id}
-              className="p-8 rounded-sm relative flex flex-col"
-              style={{ backgroundColor: "#0F0B06", border: `1px solid rgba(245,237,217,0.12)` }}
+              className={`route-card ${ROUTE_VISUALS[route.id].tone}`}
             >
+              <img className="route-card-image" src={ROUTE_VISUALS[route.id].image} alt="" />
+              <div className="route-card-body">
               <div
                 className="absolute top-4 right-4 px-2 py-0.5 rounded-sm text-xs font-bold uppercase tracking-wider"
                 style={{ backgroundColor: route.badgeColor, color: "#F5EDD9" }}
@@ -160,6 +136,7 @@ export default function RoutesPage() {
               >
                 Book This Route
               </button>
+              </div>
             </div>
           ))}
         </div>
@@ -187,8 +164,8 @@ export default function RoutesPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center reveal">
-          <Link to="/pricing" className="inline-block mr-4 px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity" style={{ backgroundColor: "#D4A017", color: "#0D0805" }}>
+        <div className="routes-cta reveal">
+          <Link to="/pricing" className="inline-block px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity" style={{ backgroundColor: "#D4A017", color: "#0D0805" }}>
             See Pricing
           </Link>
           <button type="button" onClick={() => openBooking()} className="inline-block px-8 py-3 font-semibold uppercase tracking-widest text-sm rounded-sm border hover:bg-white/5 transition-colors" style={{ borderColor: "rgba(245,237,217,0.3)", color: "#F5EDD9" }}>
