@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import BikeSVG from "../components/BikeSVG";
 import Carousel from "../components/Carousel";
