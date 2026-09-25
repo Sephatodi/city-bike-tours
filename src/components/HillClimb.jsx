@@ -17,10 +17,11 @@ const HILL_TOP_PAD = BIKE_ICON_HEIGHT + 20;  // headroom = icon's own height + b
 const HILL_BOTTOM_PAD = 30;                  // px of ground below the bike's lowest point
 
 // yTop = distance from the TOP of the hill strip (SVG-style, grows downward).
-// f=0 (left) -> near the bottom. f=1 (right) -> near the top. Monotonic climb.
+// f=0 (left) -> near the top. f=1 (right) -> near the bottom. The landing
+// bicycle travels down and right while the page scrolls down.
 function hillYTop(f) {
   const usable = HILL_HEIGHT - HILL_TOP_PAD - HILL_BOTTOM_PAD;
-  return HILL_TOP_PAD + usable * (1 - Math.pow(f, 1.3));
+  return HILL_TOP_PAD + usable * Math.pow(f, 1.3);
 }
 
 function hillXPct(f) {
@@ -87,7 +88,7 @@ export default function HillClimb() {
   const bikeTopPx = hillYTop(progress);
   const bikeBottomPx = HILL_HEIGHT - bikeTopPx;
   const slopeSample = hillYTop(Math.min(progress + 0.02, 1)) - hillYTop(Math.max(progress - 0.02, 0));
-  const tilt = Math.max(-32, Math.min(-8, slopeSample * 8));
+  const tilt = Math.max(8, Math.min(32, slopeSample * 8));
 
   const hillPath = useMemo(() => {
     const steps = 32;
