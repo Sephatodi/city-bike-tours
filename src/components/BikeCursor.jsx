@@ -69,7 +69,7 @@ export default function BikeCursor() {
   return (
     <>
       <div ref={cursorRef} className="custom-cursor-follower" aria-hidden="true">
-        <BikeSVG size={34} color="#F97316" />
+          <BikeSVG size={48} color="#F97316" />
       </div>
       {touches.map((touch) => (
         <div
@@ -78,7 +78,7 @@ export default function BikeCursor() {
           style={{ left: touch.x, top: touch.y, "--touch-direction": touch.direction }}
           aria-hidden="true"
         >
-          <BikeSVG size={42} color="#F97316" />
+          <BikeSVG size={56} color="#F97316" />
         </div>
       ))}
     </>

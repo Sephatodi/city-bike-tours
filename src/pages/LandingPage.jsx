@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router";
 import BikeSVG from "../components/BikeSVG";
 import Carousel from "../components/Carousel";
 import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
-import HillClimb from "../components/HillClimb";
+import HeaderBike from "../components/HeaderBike";
 import { SITES } from "../data";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
@@ -24,26 +24,6 @@ function useScrollReveal() {
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 
 function Hero() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    function onScroll() {
-      // Tie the climb to ~1.1 viewport-heights of scroll so it's clearly
-      // visible and finishes right around when the hero leaves view,
-      // regardless of exact hero height at any breakpoint.
-      const p = Math.min(Math.max(window.scrollY / (window.innerHeight * 1.1), 0), 1);
-      setProgress(p);
-    }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Bike climbs diagonally, left-to-right and bottom-to-top, tilted uphill.
-  const bikeLeftPct = 6 + progress * 82;
-  const bikeBottomPx = 10 + progress * 110;
-  const tilt = -16 - progress * 6;
-
   return (
     <section className="relative min-h-screen flex flex-col justify-center overflow-hidden clip-diagonal" style={{ backgroundColor: "#0D0805" }}>
       <div className="absolute inset-0">
@@ -56,6 +36,7 @@ function Hero() {
         <div className="absolute inset-0 tribal-pattern" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(13,8,5,0.85) 0%, rgba(26,58,42,0.5) 50%, rgba(13,8,5,0.9) 100%)" }} />
       </div>
+      <HeaderBike />
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -119,7 +100,6 @@ function Hero() {
         </div>
       </div>
 
-      <HillClimb />
     </section>
   );
 }
