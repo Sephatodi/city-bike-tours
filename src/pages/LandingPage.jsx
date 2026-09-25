@@ -4,7 +4,6 @@ import BikeSVG from "../components/BikeSVG";
 import Carousel from "../components/Carousel";
 import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
-import HeaderBike from "../components/HeaderBike";
 import HillClimb from "../components/HillClimb";
 import { SITES } from "../data";
 
@@ -57,8 +56,6 @@ function Hero() {
         <div className="absolute inset-0 tribal-pattern" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(13,8,5,0.85) 0%, rgba(26,58,42,0.5) 50%, rgba(13,8,5,0.9) 100%)" }} />
       </div>
-      <HeaderBike />
-
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -101,7 +98,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="hero-feature-list grid gap-4">
+          <div className="grid gap-4">
             {[
               { n: "01", label: "Guided heritage ride", sub: "Stories, landmarks, and a steady pace" },
               { n: "02", label: "Casual Saturday", sub: "A loose, social ride made for togetherness" },

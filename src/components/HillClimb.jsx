@@ -17,11 +17,10 @@ const HILL_TOP_PAD = BIKE_ICON_HEIGHT + 20;  // headroom = icon's own height + b
 const HILL_BOTTOM_PAD = 30;                  // px of ground below the bike's lowest point
 
 // yTop = distance from the TOP of the hill strip (SVG-style, grows downward).
-// f=0 (left) -> near the top. f=1 (right) -> near the bottom. The landing
-// bicycle travels down and right while the page scrolls down.
+// f=0 (left) -> near the bottom. f=1 (right) -> near the top. Monotonic climb.
 function hillYTop(f) {
   const usable = HILL_HEIGHT - HILL_TOP_PAD - HILL_BOTTOM_PAD;
-  return HILL_TOP_PAD + usable * Math.pow(f, 1.3);
+  return HILL_TOP_PAD + usable * (1 - Math.pow(f, 1.3));
 }
 
 function hillXPct(f) {
@@ -53,19 +52,12 @@ function BikeSVG({ size = 48, color = "#D4A017" }) {
 
 export default function HillClimb() {
   const hillRef = useRef(null);
-  const previousScrollY = useRef(window.scrollY);
   const [progress, setProgress] = useState(0);
-  const [direction, setDirection] = useState(1);
 
   useEffect(() => {
     function onScroll() {
       const el = hillRef.current;
       if (!el) return;
-      const nextScrollY = window.scrollY;
-      if (nextScrollY !== previousScrollY.current) {
-        setDirection(nextScrollY > previousScrollY.current ? 1 : -1);
-        previousScrollY.current = nextScrollY;
-      }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       // 0 the instant the hill's top edge enters the bottom of the viewport,
@@ -88,7 +80,7 @@ export default function HillClimb() {
   const bikeTopPx = hillYTop(progress);
   const bikeBottomPx = HILL_HEIGHT - bikeTopPx;
   const slopeSample = hillYTop(Math.min(progress + 0.02, 1)) - hillYTop(Math.max(progress - 0.02, 0));
-  const tilt = Math.max(8, Math.min(32, slopeSample * 8));
+  const tilt = Math.max(-32, Math.min(-8, slopeSample * 8));
 
   const hillPath = useMemo(() => {
     const steps = 32;
@@ -113,8 +105,8 @@ export default function HillClimb() {
         viewBox={`0 0 100 ${HILL_HEIGHT}`}
         preserveAspectRatio="none"
       >
-        {/* Match the page background so the hill reads as one continuous surface. */}
-        <path d={hillPath.fill} fill="#0D0805" />
+        {/* Solid dark-brown hill silhouette */}
+        <path d={hillPath.fill} fill="#1A1008" />
         {/* Lighter dashed trail along the top edge the bike rides on */}
         <path
           d={hillPath.line}
@@ -130,7 +122,7 @@ export default function HillClimb() {
         style={{
           left: `${bikeLeftPct}%`,
           bottom: `${bikeBottomPx}px`,
-          transform: `translateX(-50%) rotate(${tilt}deg) scaleX(${direction})`,
+          transform: `translateX(-50%) rotate(${tilt}deg)`,
           transition: "left 0.05s linear, bottom 0.05s linear, transform 0.1s linear",
           opacity: BIKE_OPACITY,
           zIndex: 2,
