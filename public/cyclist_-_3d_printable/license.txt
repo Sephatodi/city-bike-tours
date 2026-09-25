@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cyclist - 3d printable
+* source:	https://sketchfab.com/3d-models/cyclist-3d-printable-45eac4df4fc7447596d95250fb717a0d
+* author:	Andy woodhead (https://sketchfab.com/Andywoodhead)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cyclist - 3d printable" (https://sketchfab.com/3d-models/cyclist-3d-printable-45eac4df4fc7447596d95250fb717a0d) by Andy woodhead (https://sketchfab.com/Andywoodhead) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

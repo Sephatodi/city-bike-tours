@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
+import HeaderBike from "../components/HeaderBike";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -21,10 +22,11 @@ export default function SchedulePage() {
     <div style={{ backgroundColor: "#0D0805", minHeight: "100vh" }}>
       {/* Page hero */}
       <div
-        className="relative pt-32 pb-16 tribal-pattern"
+        className="relative overflow-hidden pt-32 pb-16 tribal-pattern"
         style={{ backgroundColor: "#1A3A2A" }}
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <HeaderBike />
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— When We Ride</p>
           <h1 className="font-display font-bold" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", color: "#F5EDD9", lineHeight: 1.05 }}>
             Schedule &<br />Availability

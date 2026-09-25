@@ -29,6 +29,77 @@ body {
   overflow-x: hidden;
 }
 
+:root {
+  --cursor-direction: 1;
+}
+
+@media (pointer: fine) {
+  body.bike-cursor-enabled,
+  body.bike-cursor-enabled button,
+  body.bike-cursor-enabled a,
+  body.bike-cursor-enabled input,
+  body.bike-cursor-enabled select {
+    cursor: none;
+  }
+}
+
+.custom-cursor-follower,
+.touch-bicycle-pointer {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  line-height: 0;
+  will-change: transform;
+}
+.custom-cursor-follower {
+  top: 0;
+  left: 0;
+  transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+  transition: opacity 0.15s ease;
+}
+.touch-bicycle-pointer {
+  transform: translate(-50%, -50%) scaleX(var(--touch-direction, 1));
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+}
+
+.header-bike {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.16;
+}
+.header-bike-track {
+  position: absolute;
+  top: 50%;
+  left: -8rem;
+  width: 180px;
+  height: 130px;
+  transform: translateY(-50%);
+  animation: header-bike-drift 18s ease-in-out infinite;
+  will-change: transform;
+}
+.header-bike-image {
+  display: block;
+  width: 180px;
+  height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.3));
+}
+@keyframes header-bike-drift {
+  0%, 8% { transform: translate(-8rem, -50%) scaleX(1) rotate(-2deg); }
+  44%, 50% { transform: translate(42vw, -58%) scaleX(1) rotate(3deg); }
+  52% { transform: translate(48vw, -58%) scaleX(-1) rotate(3deg); }
+  92%, 100% { transform: translate(calc(100vw - 8rem), -50%) scaleX(-1) rotate(-2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-bike-track {
+    animation: none;
+    left: calc(50% - 90px);
+  }
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -192,6 +263,35 @@ input[type='range']::-webkit-slider-thumb {
   transition: left 0.05s linear;
 }
 
+.hill-bike-3d {
+  width: 260px;
+  height: 180px;
+  transform-origin: center center;
+  will-change: left, top, transform;
+  pointer-events: none;
+}
+.hill-climb-3d {
+  position: relative;
+  width: 100%;
+  height: clamp(220px, 32vw, 300px);
+  min-height: 220px;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint;
+}
+.hill-climb-3d canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.hill-bike-image {
+  display: block;
+  width: 260px;
+  height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.35));
+}
+
 /* Diagonal divider */
 .clip-diagonal {
   clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
@@ -205,4 +305,179 @@ input[type='range']::-webkit-slider-thumb {
   background: inherit;
   clip-path: polygon(0 100%, 100% 0, 100% 100%);
   margin-top: -60px;
+}
+
+/* Route story and booking drawer */
+.route-story {
+  position: relative;
+  min-height: 112vh;
+  overflow: hidden;
+  border-top: 1px solid rgba(245, 237, 217, 0.1);
+  border-bottom: 1px solid rgba(245, 237, 217, 0.1);
+}
+.route-story-intro {
+  position: sticky;
+  top: 18vh;
+  z-index: 1;
+  max-width: 30rem;
+  padding-top: 12vh;
+}
+.route-story-bike {
+  position: absolute;
+  top: 38vh;
+  left: -8rem;
+  z-index: 0;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
+  transition: transform 0.12s linear;
+  pointer-events: none;
+}
+.route-story-bike-image {
+  display: block;
+  width: 150px;
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
+}
+.route-story-panels {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12vh;
+  max-width: 32rem;
+  margin: 14vh 0 0 auto;
+  padding-bottom: 14vh;
+}
+.route-story-panel {
+  padding: 1.5rem;
+  background: rgba(15, 11, 6, 0.88);
+  border: 1px solid rgba(245, 237, 217, 0.14);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+.route-story-panel p {
+  margin: 0.75rem 0 1.25rem;
+  color: rgba(245, 237, 217, 0.68);
+  line-height: 1.65;
+}
+.route-story-number {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #C1440E;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+.route-story-action {
+  color: #D4A017;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.route-story-action span {
+  margin-left: 0.4rem;
+  font-size: 1rem;
+}
+.booking-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  visibility: hidden;
+  transition: visibility 0.35s ease;
+}
+.booking-drawer-overlay.active {
+  visibility: visible;
+}
+.booking-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.58);
+  border: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.booking-drawer-overlay.active .booking-drawer-backdrop {
+  opacity: 1;
+}
+.booking-drawer-card {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 28rem);
+  height: 100%;
+  padding: 2.5rem 1.75rem;
+  background: #12261E;
+  box-shadow: -20px 0 50px rgba(0, 0, 0, 0.35);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.booking-drawer-overlay.active .booking-drawer-card {
+  transform: translateX(0);
+}
+.drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(245, 237, 217, 0.12);
+}
+.close-drawer-btn {
+  color: #F5EDD9;
+  font-size: 2rem;
+  line-height: 1;
+}
+.booking-form-elements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.booking-form-elements label {
+  margin-top: 0.45rem;
+  color: rgba(245, 237, 217, 0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.booking-form-elements input,
+.booking-form-elements select {
+  width: 100%;
+  padding: 0.8rem;
+  color: #F5EDD9;
+  background: #0D1B15;
+  border: 1px solid rgba(245, 237, 217, 0.2);
+  border-radius: 2px;
+  font: inherit;
+}
+.submit-booking-action {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  color: #F5EDD9;
+  background: #C1440E;
+  border-radius: 2px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .route-story {
+    min-height: 105vh;
+  }
+  .route-story-intro {
+    top: 12vh;
+    padding-top: 8vh;
+  }
+  .route-story-bike {
+    top: 44vh;
+    left: -4rem;
+  }
+  .route-story-panels {
+    gap: 9vh;
+    margin-top: 14vh;
+  }
 }

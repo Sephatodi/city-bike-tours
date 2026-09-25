@@ -1,6 +1,11 @@
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from "react-leaflet";
 import L from "leaflet";
-import { SITES, MAIN_MALL } from "../data";
+import { SITES, MAIN_MALL, LOOP_ORDER } from "../data";
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const MAPBOX_TILE_URL = MAPBOX_TOKEN
+  ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
+  : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 function makeIcon(color, emoji) {
   return L.divIcon({
@@ -37,6 +42,9 @@ const meetIcon = L.divIcon({
 });
 
 export default function HeritageMap({ height = "480px" }) {
+  const sitesById = Object.fromEntries(SITES.map((site) => [site.id, site]));
+  const routeCoordinates = [MAIN_MALL, ...LOOP_ORDER.map((id) => sitesById[id].coords), MAIN_MALL];
+
   return (
     <div style={{ height, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(212,160,23,0.25)" }}>
       <MapContainer
@@ -46,10 +54,17 @@ export default function HeritageMap({ height = "480px" }) {
         scrollWheelZoom={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
+          attribution={MAPBOX_TOKEN
+            ? '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
+          url={MAPBOX_TILE_URL}
+          tileSize={MAPBOX_TOKEN ? 512 : 256}
+          zoomOffset={MAPBOX_TOKEN ? -1 : 0}
           maxZoom={19}
+        />
+        <Polyline
+          positions={routeCoordinates}
+          pathOptions={{ color: "#D4A017", weight: 5, dashArray: "8 8", opacity: 0.9 }}
         />
         <Circle
           center={MAIN_MALL}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
+import HeaderBike from "../components/HeaderBike";
 import { ROUTES_DATA } from "../data";
 
 export default function BookingPage() {
@@ -77,8 +78,9 @@ export default function BookingPage() {
   return (
     <div style={{ backgroundColor: "#0D0805", minHeight: "100vh" }}>
       {/* Page hero */}
-      <div className="relative pt-32 pb-16 tribal-pattern" style={{ backgroundColor: "#0F0B06" }}>
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="relative overflow-hidden pt-32 pb-16 tribal-pattern" style={{ backgroundColor: "#0F0B06" }}>
+        <HeaderBike />
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#C1440E" }}>— Reserve Your Spot</p>
           <h1 className="font-display font-bold" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", color: "#F5EDD9", lineHeight: 1.05 }}>
             Book a Ride

@@ -60,32 +60,24 @@ function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-semibold uppercase tracking-widest mb-6"
-              style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
-            >
-              📍 Meetup: Main Mall · Gaborone
-            </div>
             <h1 className="font-display font-bold leading-none mb-6" style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", color: "#F5EDD9" }}>
               Ride the<br />
               <span style={{ color: "#D4A017" }}>Heart</span> of<br />
-              Gaborone
+              the City
             </h1>
             <p className="text-lg leading-relaxed mb-8 max-w-lg" style={{ color: "#E8DFCC", opacity: 0.85 }}>
-              Experience the city's heritage from a new perspective. Meet us at the Main Mall
-              and begin your journey through history — parliament, archives, monuments and galleries
-              at the pace that lets you feel every stone and story.
+              Two ways to explore living heritage: a guided city ride for the curious, and a
+              carefree Saturday spin for friends and families.
             </p>
 
-            <div className="flex flex-wrap gap-3 mb-10">
-              <div className="px-4 py-2 rounded-sm text-sm font-semibold" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>
-                🗓 WED 14:30 — Weekly Ride
+            <div className="grid sm:grid-cols-2 gap-3 mb-8 max-w-2xl">
+              <div className="p-4 rounded-sm" style={{ backgroundColor: "rgba(193,68,14,0.88)", color: "#F5EDD9" }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2">Heritage City Ride</div>
+                <div className="text-sm leading-relaxed">Wed–Fri · 9am or 2pm · Guided · Max 10 riders</div>
               </div>
-              <div className="px-4 py-2 rounded-sm text-sm font-medium border" style={{ borderColor: "#D4A017", color: "#D4A017" }}>
-                📅 THU–FRI · On Request
-              </div>
-              <div className="px-4 py-2 rounded-sm text-sm font-medium border" style={{ borderColor: "rgba(245,237,217,0.3)", color: "#F5EDD9" }}>
-                🚲 SAT Lessons · P250
+              <div className="p-4 rounded-sm border" style={{ borderColor: "#D4A017", color: "#F5EDD9", backgroundColor: "rgba(26,58,42,0.78)" }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#D4A017" }}>Casual Saturday</div>
+                <div className="text-sm leading-relaxed">Friends, families, and randoms · no rigid schedule</div>
               </div>
             </div>
 
@@ -107,21 +99,21 @@ function Hero() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4">
             {[
-              { n: "6", label: "Heritage Sites", sub: "Parliament to Monument" },
-              { n: "~12km", label: "Full Route", sub: "City centre circuit" },
-              { n: "1966", label: "Independence", sub: "Botswana's founding year" },
-              { n: "P250", label: "Complete Tour", sub: "All 6 sites included" },
+              { n: "01", label: "Guided heritage ride", sub: "Stories, landmarks, and a steady pace" },
+              { n: "02", label: "Casual Saturday", sub: "A loose, social ride made for togetherness" },
             ].map((s) => (
               <div
                 key={s.n}
-                className="p-5 rounded-sm border"
+                className="p-5 rounded-sm border flex items-start gap-4"
                 style={{ borderColor: "rgba(212,160,23,0.25)", backgroundColor: "rgba(26,58,42,0.2)" }}
               >
-                <div className="font-display font-bold text-3xl leading-none mb-1" style={{ color: "#D4A017" }}>{s.n}</div>
-                <div className="font-semibold text-sm mb-0.5" style={{ color: "#F5EDD9" }}>{s.label}</div>
-                <div className="text-xs" style={{ color: "#E8DFCC", opacity: 0.6 }}>{s.sub}</div>
+                <div className="font-display font-bold text-2xl leading-none" style={{ color: "#D4A017" }}>{s.n}</div>
+                <div>
+                  <div className="font-semibold text-sm mb-0.5" style={{ color: "#F5EDD9" }}>{s.label}</div>
+                  <div className="text-xs" style={{ color: "#E8DFCC", opacity: 0.6 }}>{s.sub}</div>
+                </div>
               </div>
             ))}
           </div>
