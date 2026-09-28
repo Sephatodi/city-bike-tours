@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // position both come from these two functions, so the bike can't drift off
 // the line the way it can if they're calculated separately.
 
-const BIKE_SIZE = 32;               // visible size of the bike icon
+const BIKE_SIZE = 260;              // visible size of the bike icon
 const BIKE_ICON_HEIGHT = BIKE_SIZE * 0.6; // matches the bike SVG's own aspect ratio (viewBox 120x72)
 const BIKE_OPACITY = 0.92;          // "should be visible" — solid, not faint
 

@@ -15,7 +15,7 @@ export default function HeaderBike() {
               className="header-bike-rider"
               style={{ animationDelay: `${-(bikeIndex * 7 + layerIndex * 2)}s` }}
             >
-              <BikeSVG size={32} color="#D4A017" />
+              <BikeSVG size={220} color="#D4A017" />
             </div>
           ))}
         </div>
