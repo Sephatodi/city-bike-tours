@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { SITES, MAIN_MALL, LOOP_ORDER } from "../data";
 
@@ -41,18 +42,46 @@ const meetIcon = L.divIcon({
   popupAnchor: [0, -24],
 });
 
+function MapViewport({ bounds, markerRefs, request }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (request?.siteId) {
+      const site = SITES.find((entry) => entry.id === request.siteId);
+      if (!site) return;
+      map.flyTo(site.coords, 18, { duration: 0.8 });
+      markerRefs.current[site.id]?.openPopup();
+      return;
+    }
+
+    map.fitBounds(bounds.pad(0.2), { maxZoom: 16 });
+  }, [bounds, map, markerRefs, request]);
+
+  return null;
+}
+
 export default function HeritageMap({ height = "480px" }) {
   const sitesById = Object.fromEntries(SITES.map((site) => [site.id, site]));
   const routeCoordinates = [MAIN_MALL, ...LOOP_ORDER.map((id) => sitesById[id].coords), MAIN_MALL];
+  const bounds = useMemo(() => L.latLngBounds([MAIN_MALL, ...SITES.map((site) => site.coords)]), []);
+  const markerRefs = useRef({});
+  const [mapRequest, setMapRequest] = useState(null);
 
   return (
-    <div style={{ height, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(212,160,23,0.25)" }}>
-      <MapContainer
-        center={MAIN_MALL}
-        zoom={15}
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={false}
-      >
+    <div>
+      <div style={{ height, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(212,160,23,0.25)" }}>
+        <MapContainer
+          center={MAIN_MALL}
+          zoom={15}
+          minZoom={12}
+          maxZoom={19}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl
+          scrollWheelZoom
+          doubleClickZoom
+          touchZoom
+        >
+        <MapViewport bounds={bounds} markerRefs={markerRefs} request={mapRequest} />
         <TileLayer
           attribution={MAPBOX_TOKEN
             ? '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -83,10 +112,21 @@ export default function HeritageMap({ height = "480px" }) {
           </Popup>
         </Marker>
         {SITES.map((site) => (
-          <Marker key={site.id} position={site.coords} icon={makeIcon(site.color, site.emoji)}>
+          <Marker
+            key={site.id}
+            ref={(marker) => {
+              if (marker) markerRefs.current[site.id] = marker;
+            }}
+            position={site.coords}
+            icon={makeIcon(site.color, site.emoji)}
+            eventHandlers={{ click: () => setMapRequest({ siteId: site.id }) }}
+          >
             <Popup>
               <div style={{ fontFamily: "Outfit, sans-serif", minWidth: "180px" }}>
                 <strong style={{ color: site.color, fontSize: "13px" }}>{site.emoji} {site.name}</strong>
+                <div style={{ fontSize: "11px", marginTop: "4px", color: "#555", fontWeight: 600 }}>
+                  {site.street}, Gaborone
+                </div>
                 <div style={{ fontSize: "11px", marginTop: "4px", color: "#555", lineHeight: "1.4" }}>
                   {site.short}
                 </div>
@@ -94,7 +134,45 @@ export default function HeritageMap({ height = "480px" }) {
             </Popup>
           </Marker>
         ))}
-      </MapContainer>
+        </MapContainer>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "8px", marginTop: "12px" }}>
+        {SITES.map((site) => (
+          <button
+            key={site.id}
+            type="button"
+            onClick={() => setMapRequest({ siteId: site.id })}
+            style={{
+              padding: "10px 12px",
+              backgroundColor: "rgba(245,237,217,0.05)",
+              border: `1px solid ${site.color}66`,
+              borderRadius: "3px",
+              color: "#F5EDD9",
+              cursor: "pointer",
+              textAlign: "left",
+              fontSize: "12px",
+            }}
+          >
+            <span style={{ marginRight: "8px" }}>{site.emoji}</span>{site.name}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setMapRequest({ reset: true })}
+          style={{
+            padding: "10px 12px",
+            backgroundColor: "#D4A017",
+            border: "1px solid #D4A017",
+            borderRadius: "3px",
+            color: "#0D0805",
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: 700,
+          }}
+        >
+          Reset view
+        </button>
+      </div>
     </div>
   );
 }

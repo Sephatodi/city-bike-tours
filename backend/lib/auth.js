@@ -25,7 +25,7 @@ const providers = [
       const valid = await bcrypt.compare(credentials.password, user.passwordHash);
       if (!valid) return null;
 
-      return { id: user.id, name: user.name, email: user.email, image: user.image };
+      return { id: user.id, name: user.name, email: user.email, image: user.image, role: user.role };
     },
   }),
 ];
@@ -88,6 +88,7 @@ export const authOptions = {
           .set({ name: user.name ?? existing.name, image: user.image ?? existing.image })
           .where(eq(users.id, existing.id));
         user.id = existing.id;
+        user.role = existing.role;
       } else {
         const id = newId();
         await db.insert(users).values({
@@ -96,17 +97,26 @@ export const authOptions = {
           email,
           image: user.image ?? null,
           provider: account.provider,
+          role: "customer",
         });
         user.id = id;
+        user.role = "customer";
       }
       return true;
     },
     async jwt({ token, user }) {
-      if (user?.id) token.id = user.id;
+      if (user?.id) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) session.user.id = token.id;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.isAdmin = token.role === "admin";
+      }
       return session;
     },
   },

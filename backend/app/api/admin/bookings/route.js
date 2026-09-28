@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { asc, eq } from "drizzle-orm";
-import { authOptions } from "@/lib/auth";
+import { isAdmin } from "@/lib/admin";
 import { db } from "@/db/client";
 import { bookings, users } from "@/db/schema";
-
-async function isAdmin() {
-  const session = await getServerSession(authOptions);
-  return Boolean(session?.user?.email && process.env.ADMIN_EMAIL && session.user.email === process.env.ADMIN_EMAIL);
-}
 
 export async function GET() {
   if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
