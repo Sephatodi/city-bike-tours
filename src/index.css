@@ -75,15 +75,15 @@ body {
   top: calc(8% + var(--layer-index) * 5cm);
   left: 0;
   right: 0;
-  height: 132px;
+  height: 20px;
   overflow: hidden;
 }
 .header-bike-layer-forward .header-bike-rider,
 .header-bike-layer-backward .header-bike-rider {
   position: absolute;
   top: 0;
-  width: 220px;
-  height: 132px;
+  width: 32px;
+  height: 20px;
   animation-duration: 22s;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
@@ -104,18 +104,18 @@ body {
 }
 @keyframes header-bike-drift-forward {
   0% { transform: translate(-14rem, -50%) scaleX(1) rotate(-2deg); }
-  50% { transform: translate(calc(50vw - 110px), -58%) scaleX(1) rotate(2deg); }
+  50% { transform: translate(calc(50vw - 16px), -58%) scaleX(1) rotate(2deg); }
   100% { transform: translate(100vw, -50%) scaleX(1) rotate(-2deg); }
 }
 @keyframes header-bike-drift-backward {
   0% { transform: translate(100vw, -50%) scaleX(-1) rotate(-2deg); }
-  50% { transform: translate(calc(50vw - 110px), -58%) scaleX(-1) rotate(2deg); }
+  50% { transform: translate(calc(50vw - 16px), -58%) scaleX(-1) rotate(2deg); }
   100% { transform: translate(-14rem, -50%) scaleX(-1) rotate(-2deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .header-bike-rider {
     animation: none;
-    left: calc(50% - 110px);
+    left: calc(50% - 16px);
     transform: translateY(-50%);
   }
 }
@@ -124,16 +124,12 @@ body {
     opacity: 0.08;
   }
   .header-bike-layer {
-    height: 84px;
+    height: 20px;
   }
   .header-bike-layer-forward .header-bike-rider,
   .header-bike-layer-backward .header-bike-rider {
-    width: 140px;
-    height: 84px;
-  }
-  .header-bike-rider svg {
-    width: 140px;
-    height: 84px;
+    width: 32px;
+    height: 20px;
   }
 }
 @media (max-width: 480px) {
