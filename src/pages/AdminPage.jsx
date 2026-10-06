@@ -1,0 +1,35 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import AdminBookings from "../components/AdminBookings";
+import { getAdminSession } from "../components/adminAuth";
+
+export default function AdminPage() {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState("checking");
+
+  useEffect(() => {
+    let isMounted = true;
+    getAdminSession()
+      .then((session) => {
+        if (!isMounted) return;
+        if (session?.user?.isAdmin) setStatus("allowed");
+        else navigate("/admin/login", { replace: true });
+      })
+      .catch(() => {
+        if (isMounted) setStatus("error");
+      });
+
+    return () => { isMounted = false; };
+  }, [navigate]);
+
+  if (status === "allowed") return <AdminBookings />;
+  return (
+    <main className="admin-shell">
+      <div className="wrap">
+        {status === "error" ? (
+          <p className="admin-error" role="alert">Could not verify administrator access. Check the backend connection and try again.</p>
+        ) : <p className="admin-empty">Checking administrator access...</p>}
+      </div>
+    </main>
+  );
+}

@@ -5,6 +5,7 @@ import Carousel from "../components/Carousel";
 import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
+import Icon from "../components/Icon";
 import { SITES } from "../data";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ function Hero() {
               </div>
               <div className="p-4 rounded-sm border" style={{ borderColor: "#D4A017", color: "#F5EDD9", backgroundColor: "rgba(26,58,42,0.78)" }}>
                 <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#D4A017" }}>Casual Saturday</div>
-                <div className="text-sm leading-relaxed">Friends, families, and randoms · no rigid schedule</div>
+                <div className="text-sm leading-relaxed">Friends, families, and fellow riders · lessons for kids and adults included</div>
               </div>
             </div>
 
@@ -119,17 +120,17 @@ function AboutStrip() {
             </h2>
             <p className="text-base leading-relaxed mb-4" style={{ color: "#E8DFCC", opacity: 0.85 }}>
               City Bike Tours runs Gaborone's only heritage-focused bicycle tour, guiding riders through six landmark sites.
-              Every Wednesday at 14:30 we meet at <strong style={{ color: "#D4A017" }}>Main Mall</strong> and ride together — no special fitness needed, just curiosity.
+              Wednesday to Friday, we meet at <strong style={{ color: "#D4A017" }}>Main Mall</strong> at 9am or 2pm for a guided ride through Gaborone's heritage sites. Each group is limited to 10 riders.
             </p>
             <div className="flex flex-col gap-3 mb-6">
               {[
-                ["📍", "Meet at Main Mall, Gaborone City Centre"],
-                ["🕑", "Wednesday 14:30 — fixed weekly flagship ride"],
-                ["📞", "Thursday & Friday 9am–5pm — on request"],
-                ["🚲", "Saturday (1st & last) — cycling lessons, P250"],
+                ["mapPin", "Meet at Main Mall, Gaborone City Centre"],
+                ["clock", "Wednesday–Friday at 9am or 2pm — guided groups of up to 10"],
+                ["bicycle", "Casual Saturdays — relaxed ride with friends, family, and fellow riders"],
+                ["graduationCap", "Cycling lessons included on Casual Saturdays for kids and adults"],
               ].map(([icon, text]) => (
                 <div key={text} className="flex items-start gap-3 text-sm" style={{ color: "#E8DFCC" }}>
-                  <span className="mt-0.5">{icon}</span><span>{text}</span>
+                  <Icon name={icon} size={17} className="mt-0.5" style={{ color: "#D4A017" }} /><span>{text}</span>
                 </div>
               ))}
             </div>
@@ -186,7 +187,7 @@ function HeritageSiteCard({ site, index }) {
       <Carousel imgs={site.imgs} accent={site.color} />
       <div className="p-6 rounded-b-sm" style={{ backgroundColor: "rgba(13,8,5,0.9)", borderLeft: `4px solid ${site.color}` }}>
         <div className="flex items-start gap-3 mb-3">
-          <span className="text-2xl">{site.emoji}</span>
+          <Icon name={site.icon} size={24} style={{ color: site.color }} />
           <div>
             <h3 className="font-display font-bold text-xl leading-tight" style={{ color: "#F5EDD9" }}>{site.name}</h3>
             <p className="text-xs italic mt-0.5" style={{ color: site.color }}>{site.short}</p>
@@ -254,7 +255,7 @@ function GallerySection() {
         </div>
 
         <div className="mb-6 reveal">
-          <h3 className="font-display font-bold text-2xl" style={{ color: "#D4A017" }}>{site.emoji} {site.name}</h3>
+          <h3 className="flex items-center gap-2 font-display font-bold text-2xl" style={{ color: "#D4A017" }}><Icon name={site.icon} size={23} /> {site.name}</h3>
           <p className="text-sm mt-1 italic" style={{ color: "rgba(245,237,217,0.55)" }}>{site.short}</p>
         </div>
 
@@ -271,9 +272,6 @@ function GallerySection() {
           ))}
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: "rgba(245,237,217,0.3)" }}>
-          Drop your own photos into <code style={{ color: "#D4A017" }}>public/{"{site-name}"}/</code> folders to replace placeholders
-        </p>
       </div>
 
       {lightbox && (

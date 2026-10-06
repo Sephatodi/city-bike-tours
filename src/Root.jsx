@@ -5,6 +5,7 @@ import BikeCursor from "./components/BikeCursor";
 
 export default function Root() {
   const { pathname } = useLocation();
+  const isAdminArea = pathname.startsWith("/admin");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -12,11 +13,9 @@ export default function Root() {
 
   return (
     <>
-      <Nav />
-      <BikeCursor />
-      <div className="shine-wrap">
-        <Outlet />
-      </div>
+      {!isAdminArea && <Nav />}
+      {!isAdminArea && <BikeCursor />}
+      {isAdminArea ? <Outlet /> : <div className="shine-wrap"><Outlet /></div>}
     </>
   );
 }

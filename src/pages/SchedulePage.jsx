@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
+import HeritageMap from "../components/HeritageMap";
+import Icon from "../components/Icon";
+import { SITES } from "../data";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -19,139 +22,122 @@ export default function SchedulePage() {
   useScrollReveal();
 
   return (
-    <div style={{ backgroundColor: "#0D0805", minHeight: "100vh" }}>
-      {/* Page hero */}
-      <div
-        className="relative overflow-hidden pt-32 pb-16 tribal-pattern"
-        style={{ backgroundColor: "#1A3A2A" }}
-      >
+    <div className="schedule-page">
+      <header className="schedule-hero">
         <HeaderBike />
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— When We Ride</p>
-          <h1 className="font-display font-bold" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", color: "#F5EDD9", lineHeight: 1.05 }}>
-            Schedule &<br />Availability
-          </h1>
-          <p className="mt-4 text-base max-w-lg" style={{ color: "rgba(245,237,217,0.65)" }}>
-            Every Wednesday at 14:30 we're at Main Mall without fail. For other days, book ahead.
-          </p>
+        <div className="schedule-hero-inner">
+          <p className="schedule-eyebrow">GABORONE · BOTSWANA</p>
+          <h1>Ride schedule</h1>
+          <p>Choose your ride, find a time that works, and meet us at Main Mall.</p>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-
-        {/* Three schedule cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16 reveal">
-
-          {/* Wednesday */}
-          <div className="p-8 rounded-sm relative overflow-hidden" style={{ backgroundColor: "#C1440E", border: "1px solid rgba(245,237,217,0.1)" }}>
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style={{ backgroundColor: "#F5EDD9", transform: "translate(30%, -30%)" }} />
-            <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(245,237,217,0.75)" }}>The Signature Adventure</div>
-            <div className="font-display font-bold text-4xl mb-1 leading-tight" style={{ color: "#F5EDD9" }}>
-              Wednesday<br />Weekly Guided<br />Adventure
-            </div>
-            <div className="flex items-center gap-2 mt-3 mb-4">
-              <span>🕑</span>
-              <span className="font-bold text-lg" style={{ color: "#F5EDD9" }}>2:30 PM Every Wednesday</span>
-            </div>
-            <div className="h-px mb-4" style={{ backgroundColor: "rgba(245,237,217,0.3)" }} />
-            <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(245,237,217,0.88)" }}>
-              Join a community of explorers on our flagship tour. This comprehensive ride covers the most significant historical landmarks in Gaborone, led by expert local guides who bring the past to life.
-            </p>
-            <div className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-sm inline-block" style={{ backgroundColor: "rgba(245,237,217,0.2)", color: "#F5EDD9" }}>
-              Our Premier Guided Experience
-            </div>
+      <main className="schedule-content">
+        <section className="schedule-options reveal">
+          <div className="schedule-section-heading">
+            <div><p className="schedule-section-kicker">CHOOSE YOUR PACE</p><h2>When would you like to ride?</h2></div>
+            <p>Choose a guided weekday tour or join the easygoing Saturday ride with friends and family.</p>
           </div>
-
-          {/* Thu–Fri */}
-          <div className="p-8 rounded-sm relative overflow-hidden" style={{ backgroundColor: "#0D0805", border: "1px solid rgba(212,160,23,0.3)" }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>Flexible Touring Options</div>
-            <div className="font-display font-bold text-3xl mb-1 leading-tight" style={{ color: "#F5EDD9" }}>
-              Private Tours<br />(Thu / Fri)
-            </div>
-            <div className="inline-block text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm mb-4 mt-2" style={{ backgroundColor: "rgba(212,160,23,0.2)", color: "#D4A017" }}>
-              Request Only
-            </div>
-            <div className="h-px mb-4" style={{ backgroundColor: "rgba(212,160,23,0.2)" }} />
-            <div className="flex items-center gap-2 mb-3">
-              <span>📅</span>
-              <span className="font-semibold text-sm" style={{ color: "#F5EDD9" }}>Available 9:00 AM – 5:00 PM</span>
-            </div>
-            <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(245,237,217,0.75)" }}>
-              Perfect for private groups or specific itinerary requests. Choose your route within the heritage radius — we'll confirm and guide.
-            </p>
-            <Link to="/book" className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-sm transition-opacity hover:opacity-80" style={{ backgroundColor: "#D4A017", color: "#0D0805" }}>
-              ✉ Inquire Now
-            </Link>
+          <div className="schedule-card-grid">
+            <article className="schedule-option-card schedule-option-featured">
+              <div className="schedule-option-topline"><span>THE HERITAGE CITY RIDE</span><span className="schedule-status-pill">GUIDED · MAX 10</span></div>
+              <h3>Heritage City<br />Ride</h3>
+              <div className="schedule-option-time">◷ <strong>9:00 AM or 2:00 PM</strong></div>
+              <p>Ride with a local guide through Gaborone's heritage sites and hear the stories behind each landmark.</p>
+              <div className="schedule-option-bottom"><span>Wednesday–Friday · Groups up to 10</span><Link to="/book">Reserve a place ↗</Link></div>
+            </article>
+            <article className="schedule-option-card">
+              <div className="schedule-option-topline"><span>COME AS YOU ARE</span><span className="schedule-status-pill schedule-status-request">CASUAL · ALL WELCOME</span></div>
+              <h3>Casual<br />Saturday</h3>
+              <div className="schedule-option-time">◷ <strong>Relaxed & flexible</strong> <span>No rigid schedule</span></div>
+              <p>A fun, easygoing ride for friends, families, and anyone who wants to join. Cycling lessons are included for kids and adults.</p>
+              <div className="schedule-option-bottom"><span>Lessons included · Main Mall</span><Link to="/book">Join the ride ↗</Link></div>
+            </article>
           </div>
+        </section>
 
-          {/* Saturday */}
-          <div className="p-8 rounded-sm relative overflow-hidden" style={{ backgroundColor: "#0D0805", border: "1px solid rgba(245,237,217,0.15)" }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(245,237,217,0.5)" }}>Flexible Touring Options</div>
-            <div className="font-display font-bold text-3xl mb-1 leading-tight" style={{ color: "#F5EDD9" }}>
-              Saturday<br />Cycling Lessons
-            </div>
-            <div className="inline-block text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm mb-4 mt-2" style={{ backgroundColor: "rgba(193,68,14,0.25)", color: "#C1440E" }}>
-              P250
-            </div>
-            <div className="h-px mb-4" style={{ backgroundColor: "rgba(245,237,217,0.1)" }} />
-            <div className="flex items-center gap-2 mb-3">
-              <span>🗓</span>
-              <span className="font-semibold text-sm" style={{ color: "#F5EDD9" }}>1st & last Saturday of every month</span>
-            </div>
-            <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(245,237,217,0.75)" }}>
-              Build confidence and learn essential cycling skills in a supportive environment before tackling the main routes.
-            </p>
-            <div className="text-xs" style={{ color: "rgba(245,237,217,0.4)" }}>Kids · Adults · All welcome · Main Mall</div>
-          </div>
-        </div>
-
-        {/* Meeting point callout */}
-        <div className="p-6 rounded-sm flex items-center gap-4 mb-16 reveal" style={{ backgroundColor: "rgba(212,160,23,0.08)", border: "1px solid rgba(212,160,23,0.25)" }}>
-          <span className="text-4xl">📍</span>
-          <div>
-            <div className="font-bold text-sm uppercase tracking-widest" style={{ color: "#D4A017" }}>Meeting Point — Every Ride</div>
-            <div className="font-display font-bold text-2xl" style={{ color: "#F5EDD9" }}>Main Mall, Gaborone City Centre</div>
-            <div className="text-sm mt-0.5" style={{ color: "rgba(245,237,217,0.6)" }}>Look for the orange City Bike Tours flag at the main entrance</div>
-          </div>
-        </div>
-
-        {/* Weekly calendar strip */}
-        <div className="mb-16 reveal">
-          <h2 className="font-display font-bold text-2xl mb-6" style={{ color: "#F5EDD9" }}>Weekly at a Glance</h2>
-          <div className="grid grid-cols-7 gap-1">
+        <section className="schedule-week reveal">
+          <div className="schedule-section-heading"><div><p className="schedule-section-kicker">PLAN AHEAD</p><h2>Our week, at a glance.</h2></div></div>
+          <div className="schedule-week-grid">
             {[
               { day: "Mon", label: "Closed", active: false },
               { day: "Tue", label: "Closed", active: false },
-              { day: "Wed", label: "14:30\nFlagship", active: true, color: "#C1440E" },
-              { day: "Thu", label: "9–17\nOn request", active: true, color: "#D4A017" },
-              { day: "Fri", label: "9–17\nOn request", active: true, color: "#D4A017" },
-              { day: "Sat", label: "1st & last\nLessons", active: true, color: "#1A3A2A" },
+              { day: "Wed", label: "9am & 2pm\nGuided ride", active: true, color: "#C1440E" },
+              { day: "Thu", label: "9am & 2pm\nGuided ride", active: true, color: "#C1440E" },
+              { day: "Fri", label: "9am & 2pm\nGuided ride", active: true, color: "#C1440E" },
+              { day: "Sat", label: "Casual ride\nLessons included", active: true, color: "#1A3A2A" },
               { day: "Sun", label: "Closed", active: false },
             ].map(({ day, label, active, color }) => (
               <div
                 key={day}
-                className="p-3 rounded-sm text-center"
+                className={`schedule-day ${active ? "schedule-day-active" : ""}`}
                 style={{
-                  backgroundColor: active ? `${color}22` : "rgba(245,237,217,0.03)",
-                  border: `1px solid ${active ? color + "55" : "rgba(245,237,217,0.06)"}`,
+                  "--day-accent": active ? color : "#A7A99F",
                 }}
               >
-                <div className="font-bold text-xs uppercase tracking-widest mb-2" style={{ color: active ? color : "rgba(245,237,217,0.3)" }}>{day}</div>
-                <div className="text-xs leading-tight whitespace-pre-line" style={{ color: active ? "rgba(245,237,217,0.8)" : "rgba(245,237,217,0.2)" }}>
-                  {label}
-                </div>
+                <div>{day}</div><span>{label}</span>
               </div>
             ))}
           </div>
+        </section>
+
+        <div className="schedule-meeting-point reveal">
+          <span className="schedule-meeting-icon">↗</span>
+          <div>
+            <div className="schedule-section-kicker">MEETING POINT · EVERY RIDE</div>
+            <strong>Main Mall, Gaborone City Centre</strong>
+            <p>Look for the orange City Bike Tours flag at the main entrance.</p>
+          </div>
         </div>
 
+        <section className="schedule-map-feature reveal">
+          <div className="schedule-map-copy">
+            <p className="schedule-section-kicker">YOUR RIDE, AT A GLANCE</p>
+            <h2>Gaborone is better<br />seen by bike.</h2>
+            <p className="schedule-map-description">
+              A relaxed loop through the landmarks, people, and moments that shaped Botswana. Tap a pin to explore a stop.
+            </p>
+            <div className="schedule-stats">
+              <div><strong>~12 km</strong><span>Scenic city loop</span></div>
+              <div><strong>6 stops</strong><span>Stories of Botswana</span></div>
+              <div><strong>1–1.5 hrs</strong><span>Easy guided pace</span></div>
+            </div>
+            <div className="schedule-map-meet">
+              <span aria-hidden="true">●</span>
+              <div><strong>Start & finish</strong><span>Main Mall, Gaborone City Centre</span></div>
+            </div>
+            <Link to="/book" className="schedule-primary-button">Find your ride <span aria-hidden="true">↗</span></Link>
+          </div>
+          <div className="schedule-live-map" aria-label="Interactive map of the Gaborone heritage ride">
+            <div className="schedule-map-label"><span className="schedule-live-dot" /> HERITAGE LOOP <span>GABORONE, BW</span></div>
+            <HeritageMap height="560px" routeId="complete" />
+          </div>
+        </section>
+
+        <section className="schedule-highlights reveal">
+          <div className="schedule-section-heading">
+            <div><p className="schedule-section-kicker">A FEW PLACES ALONG THE WAY</p><h2>Stories worth stopping for.</h2></div>
+            <p>Six landmarks, each with a different piece of Botswana's story.</p>
+          </div>
+          <div className="schedule-photo-grid">
+            {SITES.filter((site) => ["monument", "museum", "archives"].includes(site.id)).map((site, index) => (
+              <article className="schedule-photo-card" key={site.id}>
+                <img src={site.imgs[0]} alt={site.name} loading="lazy" />
+                <div className="schedule-photo-shade" />
+                <span className="schedule-photo-number">0{index + 1} / 06</span>
+                <div className="schedule-photo-caption"><Icon name={site.icon} size={20} /><h3>{site.name}</h3><p>{site.short}</p></div>
+              </article>
+            ))}
+          </div>
+        </section>
+
         {/* CTA */}
-        <div className="text-center reveal">
-          <Link to="/book" className="inline-block px-10 py-4 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>
-            Book Your Ride Now
+        <div className="schedule-cta reveal">
+          <div><p className="schedule-section-kicker">THE CITY IS WAITING</p><h2>Let’s go find a story.</h2></div>
+          <Link to="/book" className="schedule-primary-button">Book your ride <span aria-hidden="true">↗</span>
           </Link>
         </div>
-      </div>
+      </main>
 
       <Footer />
     </div>

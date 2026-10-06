@@ -2,7 +2,7 @@ export const SITES = [
   {
     id: "parliament",
     name: "Parliament Building",
-    emoji: "🏛",
+    icon: "landmark",
     short: "The seat of Botswana's democratic power",
     history:
       "Built at independence in 1966, the National Assembly of Botswana stands as a proud symbol of Africa's most stable multiparty democracy. Its clean modernist lines reflect a nation that chose dialogue over conflict — Botswana has never experienced a coup. Guided tours reveal the debating chambers where laws that transformed a cattle-herding nation into one of Africa's fastest-growing economies were born.",
@@ -19,7 +19,7 @@ export const SITES = [
   {
     id: "enclave",
     name: "Government Enclave",
-    emoji: "🏢",
+    icon: "building",
     short: "The administrative heartbeat of the nation",
     history:
       "The Government Enclave in Gaborone's city centre is where Botswana's public service machinery operates. Conceived during the post-independence planning era of the late 1960s, its tree-lined avenues and civic buildings tell the story of a deliberate, unhurried nation-building project. Riding through on two wheels gives you an intimate look at how governance and daily life intersect in one of Africa's most transparent administrations.",
@@ -34,7 +34,7 @@ export const SITES = [
   {
     id: "archives",
     name: "Botswana National Archives",
-    emoji: "📜",
+    icon: "scroll",
     short: "The memory of a nation preserved in paper and silence",
     history:
       "The Botswana National Archives and Records Services is the custodian of the nation's documentary heritage. Its collections stretch from pre-colonial correspondence with British Protectorate officials to the landmark Seretse Khama independence files. Photographs, maps, and oral history transcriptions housed here paint a vivid picture of a people who navigated colonial rule through diplomacy and cultural resilience. A visit is a direct encounter with the documents that shaped modern Botswana.",
@@ -50,7 +50,7 @@ export const SITES = [
   {
     id: "gallery",
     name: "Botswana Post Office Gallery",
-    emoji: "🎨",
+    icon: "palette",
     short: "Where postal history became a canvas for national identity",
     history:
       "Housed within a heritage building that once handled the correspondence of a nascent republic, the Botswana Post Office Gallery celebrates the intersection of communication and culture. Its rotating exhibitions of stamps, philatelic art, and contemporary Botswana visual work chronicle the nation's self-expression since 1966. The gallery is a quiet, surprisingly moving space — each stamp an official declaration of what Botswana chose to show the world.",
@@ -65,7 +65,7 @@ export const SITES = [
   {
     id: "museum",
     name: "National Museum & Art Gallery",
-    emoji: "🦁",
+    icon: "landmark",
     short: "Botswana's story told through artefact and art",
     history:
       "Established in 1968, the Botswana National Museum and Art Gallery is one of Southern Africa's finest cultural institutions. Permanent exhibitions explore the San Bushmen's ancient relationship with the Kalahari, the cattle culture that underpins Tswana identity, and the colonial encounter that produced a uniquely resilient society. The adjacent art gallery showcases contemporary Botswana artists navigating tradition and modernity — a conversation happening in paint, sculpture, and fibre.",
@@ -81,7 +81,7 @@ export const SITES = [
   {
     id: "monument",
     name: "Three Chiefs Monument & Poso House",
-    emoji: "⚔️",
+    icon: "flag",
     short: "Where diplomacy saved a nation — twice",
     history:
       "The Three Chiefs Monument commemorates the 1895 journey of Khama III, Sebele I, and Bathoen I to London — three Tswana chiefs who lobbied the British government directly and successfully prevented Bechuanaland from being absorbed into Cecil Rhodes' British South Africa Company. Their diplomatic triumph preserved what would become Botswana. Poso House, nearby, was the first government building of the newly independent republic and remains a landmark of institutional continuity.",

@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import BikeSVG from "./BikeSVG";
+import Icon from "./Icon";
 
 export default function Footer() {
   return (
@@ -40,19 +41,18 @@ export default function Footer() {
           <div>
             <div className="font-bold text-sm uppercase tracking-widest mb-4" style={{ color: "#D4A017" }}>Schedule</div>
             <div className="space-y-2 text-sm" style={{ color: "rgba(245,237,217,0.6)" }}>
-              <div>Wednesday 14:30 — Weekly Ride</div>
-              <div>Thu & Fri — On Request (9am–5pm)</div>
-              <div>Saturday (1st & last) — Lessons</div>
+              <div>Wed–Fri, 9am or 2pm — Guided Heritage City Ride (max 10)</div>
+              <div>Saturday — Casual ride with lessons for kids and adults</div>
             </div>
           </div>
 
           <div>
             <div className="font-bold text-sm uppercase tracking-widest mb-4" style={{ color: "#D4A017" }}>Find Us</div>
             <div className="space-y-2 text-sm" style={{ color: "rgba(245,237,217,0.6)" }}>
-              <div>📍 Main Mall, Gaborone</div>
-              <div>📱 WhatsApp bookings welcome</div>
-              <div>🚲 Bikes provided · All levels</div>
-              <div>🇧🇼 Botswana, since independence</div>
+              <div className="flex items-center gap-2"><Icon name="mapPin" size={15} /> Main Mall, Gaborone</div>
+              <div className="flex items-center gap-2"><Icon name="phone" size={15} /> WhatsApp bookings welcome</div>
+              <div className="flex items-center gap-2"><Icon name="bicycle" size={15} /> Bikes provided · All levels</div>
+              <div className="flex items-center gap-2"><Icon name="flag" size={15} /> Botswana, since independence</div>
             </div>
           </div>
         </div>
@@ -63,6 +63,13 @@ export default function Footer() {
         >
           <span>© 2026 City Bike Tours · Gaborone, Botswana</span>
           <span>Built with pride in Botswana 🇧🇼</span>
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"
+            style={{ borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}
+          >
+            Admin Login
+          </Link>
         </div>
       </div>
     </footer>

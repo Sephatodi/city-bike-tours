@@ -13,4 +13,10 @@ The booking form sends requests to `POST /api/booking-requests`. Requests are va
 
 ## Administrator access
 
-Set `ADMIN_EMAIL`, `ADMIN_NAME`, and a unique `ADMIN_PASSWORD` (at least 12 characters) in `backend/.env`, apply the database migrations, then run `cd backend && npm run admin:provision`. Sign in at `http://localhost:3000/admin/login`. Public registration always creates a customer role and cannot grant administrator access.
+Set `ADMIN_EMAIL`, `ADMIN_NAME`, and a unique `ADMIN_PASSWORD` (at least 12 characters) in `backend/.env`, apply the database migrations, then run `cd backend && npm run admin:provision`. Sign in at `http://localhost:5173/admin/login`; the frontend proxies authentication and admin requests to the backend. Public registration always creates a customer role and cannot grant administrator access.
+
+## Ride passes and check-in
+
+After a booking is confirmed, the customer receives a signed ride-pass link by each configured Twilio channel. The link opens a QR pass at `/ticket/:token`; staff can use **Ride check-in** in the admin dashboard to scan it. Passes can only be redeemed once, for a confirmed booking on its scheduled date in Gaborone.
+
+Before enabling check-in, apply migrations from the active `city-tours-backend` directory with `npm run db:migrate`. Set `PUBLIC_FRONTEND_URL` to the public Vite site origin and configure a stable `RIDE_PASS_SECRET` (or retain the same `NEXTAUTH_SECRET` across deployments). WhatsApp requires `TWILIO_WHATSAPP_FROM` and an approved `TWILIO_WHATSAPP_CONTENT_SID` template with placeholders `{{1}}` rider, `{{2}}` route, `{{3}}` date, `{{4}}` riders, `{{5}}` pass URL, and `{{6}}` reference. SMS also requires an SMS-capable `TWILIO_PHONE_NUMBER`. Camera scanning requires HTTPS in production.
