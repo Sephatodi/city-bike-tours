@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import BikeSVG from "./BikeSVG";
 import Icon from "./Icon";
+import { BACKEND_BASE_URL } from "../api/backend";
 
 export default function Footer() {
   return (
@@ -29,6 +30,7 @@ export default function Footer() {
                 { label: "Schedule", to: "/schedule" },
                 { label: "Routes", to: "/routes" },
                 { label: "Pricing", to: "/pricing" },
+                { label: "Gallery", to: "/gallery" },
                 { label: "Book a Ride", to: "/book" },
               ].map(({ label, to }) => (
                 <Link key={to} to={to} className="text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(245,237,217,0.6)" }}>
@@ -63,13 +65,23 @@ export default function Footer() {
         >
           <span>© 2026 City Bike Tours · Gaborone, Botswana</span>
           <span>Built with pride in Botswana 🇧🇼</span>
-          <Link
-            to="/admin/login"
-            className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"
-            style={{ borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}
-          >
-            Admin Login
-          </Link>
+          {BACKEND_BASE_URL ? (
+            <a
+              href={`${BACKEND_BASE_URL}/admin/login`}
+              className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"
+              style={{ borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}
+            >
+              Admin Login
+            </a>
+          ) : (
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"
+              style={{ borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}
+            >
+              Admin Login
+            </Link>
+          )}
         </div>
       </div>
     </footer>

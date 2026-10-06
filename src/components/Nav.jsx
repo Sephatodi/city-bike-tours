@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: "Schedule", to: "/schedule" },
   { label: "Routes", to: "/routes" },
   { label: "Pricing", to: "/pricing" },
+  { label: "Gallery", to: "/gallery" },
   { label: "Book", to: "/book" },
 ];
 

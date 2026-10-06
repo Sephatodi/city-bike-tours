@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
-import { ROUTES_DATA } from "../data";
+import { useLiveData } from "../hooks/LiveDataContext";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -35,10 +35,11 @@ function Cell({ value }) {
 
 export default function PricingPage() {
   useScrollReveal();
+  const { routes } = useLiveData();
   const [riders, setRiders] = useState(1);
   const [selected, setSelected] = useState("complete");
 
-  const route = ROUTES_DATA.find((r) => r.id === selected);
+  const route = routes.find((r) => r.id === selected) || routes[0];
   const total = route.price * riders;
   const maxRiders = selected === "complete" ? 10 : 20;
 
@@ -62,7 +63,7 @@ export default function PricingPage() {
 
         {/* Price cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-20 reveal">
-          {ROUTES_DATA.map((r) => (
+          {routes.map((r) => (
             <div
               key={r.id}
               className="p-8 rounded-sm flex flex-col relative"
@@ -122,7 +123,7 @@ export default function PricingPage() {
               <thead>
                 <tr style={{ backgroundColor: "rgba(26,58,42,0.6)" }}>
                   <th className="text-left p-4 text-xs font-bold uppercase tracking-widest" style={{ color: "rgba(245,237,217,0.5)", width: "40%" }}>Feature</th>
-                  {ROUTES_DATA.map((r) => (
+                  {routes.map((r) => (
                     <th key={r.id} className="p-4 text-center text-xs font-bold uppercase tracking-widest" style={{ color: r.badgeColor }}>
                       {r.name.split(" ").slice(0, 2).join(" ")}<br />
                       <span className="font-display text-xl" style={{ color: "#F5EDD9" }}>P{r.price}</span>
@@ -137,7 +138,7 @@ export default function PricingPage() {
                     style={{ backgroundColor: i % 2 === 0 ? "rgba(245,237,217,0.02)" : "rgba(245,237,217,0.005)", borderTop: "1px solid rgba(245,237,217,0.05)" }}
                   >
                     <td className="p-4 text-sm" style={{ color: "rgba(245,237,217,0.75)" }}>{f.label}</td>
-                    {ROUTES_DATA.map((r) => <td key={r.id} className="p-4 text-center"><Cell value={f[r.id]} /></td>)}
+                    {routes.map((r) => <td key={r.id} className="p-4 text-center"><Cell value={f[r.id]} /></td>)}
                   </tr>
                 ))}
               </tbody>
@@ -152,7 +153,7 @@ export default function PricingPage() {
             <div>
               <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#D4A017" }}>Select Route</div>
               <div className="flex flex-col gap-2 mb-8">
-                {ROUTES_DATA.map((r) => (
+                {routes.map((r) => (
                   <label
                     key={r.id}
                     className="flex items-center gap-3 p-4 rounded-sm cursor-pointer transition-all"

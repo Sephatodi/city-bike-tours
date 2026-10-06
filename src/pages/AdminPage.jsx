@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import AdminBookings from "../components/AdminBookings";
 import { getAdminSession } from "../components/adminAuth";
+import { BACKEND_BASE_URL } from "../api/backend";
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
+    if (BACKEND_BASE_URL) {
+      window.location.replace(`${BACKEND_BASE_URL}/admin`);
+      return;
+    }
     let isMounted = true;
     getAdminSession()
       .then((session) => {
@@ -22,6 +27,7 @@ export default function AdminPage() {
     return () => { isMounted = false; };
   }, [navigate]);
 
+  if (BACKEND_BASE_URL) return <main className="admin-shell"><div className="wrap">Opening backend dashboard...</div></main>;
   if (status === "allowed") return <AdminBookings />;
   return (
     <main className="admin-shell">

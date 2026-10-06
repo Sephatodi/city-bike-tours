@@ -6,7 +6,7 @@ import { companyRoutesConfig } from "@/db/schema";
 export const dynamic = "force-dynamic";
 
 // Public: live route names, prices (BWP) and departure times, editable by the admin.
-// The Vite site merges these over its static route details (src/hooks/useLiveData.js).
+// The Vite site merges these over its static route details (src/hooks/LiveDataContext.jsx).
 export async function GET() {
   try {
     const routes = await db.select().from(companyRoutesConfig).orderBy(asc(companyRoutesConfig.routeId));

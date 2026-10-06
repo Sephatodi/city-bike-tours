@@ -4,9 +4,9 @@ import Footer from "../components/Footer";
 import HeritageMap from "../components/HeritageMap";
 import HeaderBike from "../components/HeaderBike";
 import Icon from "../components/Icon";
-import { ROUTES_DATA, SITES } from "../data";
+import { SITES } from "../data";
+import { useLiveData } from "../hooks/LiveDataContext";
 
-const PRIMARY_ROUTES = ROUTES_DATA.filter((route) => route.id === "complete" || route.id === "loop");
 const ROUTE_VISUALS = {
   complete: { image: "/three%20chiefs.jfif", tone: "route-card-rust" },
   loop: { image: "/museum.jfif", tone: "route-card-sage" },
@@ -26,6 +26,8 @@ function useScrollReveal() {
 
 export default function RoutesPage() {
   useScrollReveal();
+  const { routes } = useLiveData();
+  const primaryRoutes = routes.filter((route) => route.id === "complete" || route.id === "loop");
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState("complete");
 
@@ -81,7 +83,7 @@ export default function RoutesPage() {
 
         {/* Route cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-16 reveal">
-          {PRIMARY_ROUTES.map((route) => (
+          {primaryRoutes.map((route) => (
             <div
               key={route.id}
               className={`route-card ${ROUTE_VISUALS[route.id].tone}`}
@@ -181,7 +183,7 @@ export default function RoutesPage() {
           <form onSubmit={handleBookingSubmit} className="booking-form-elements">
             <label htmlFor="route-choice">Excursion path</label>
             <select id="route-choice" value={selectedRoute} onChange={(event) => setSelectedRoute(event.target.value)} required>
-              {PRIMARY_ROUTES.map((route) => <option key={route.id} value={route.id}>{route.name}</option>)}
+              {primaryRoutes.map((route) => <option key={route.id} value={route.id}>{route.name}</option>)}
             </select>
             <label htmlFor="excursion-date">Excursion date</label>
             <input id="excursion-date" type="date" required />

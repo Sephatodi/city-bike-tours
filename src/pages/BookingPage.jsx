@@ -4,8 +4,11 @@ import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
 import HeritageMap from "../components/HeritageMap";
 import { ROUTES_DATA } from "../data";
+import { backendUrl } from "../api/backend";
+import { useLiveData } from "../hooks/LiveDataContext";
 
 export default function BookingPage() {
+  const { routes } = useLiveData();
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -18,7 +21,7 @@ export default function BookingPage() {
   const [submitError, setSubmitError] = useState("");
   const [requestId, setRequestId] = useState("");
 
-  const selectedRoute = ROUTES_DATA.find((r) => r.id === route);
+  const selectedRoute = routes.find((r) => r.id === route) || ROUTES_DATA.find((r) => r.id === route);
   const total = selectedRoute.price * riders;
   const maxRiders = route === "complete" ? 10 : 20;
 
@@ -42,8 +45,7 @@ export default function BookingPage() {
     setSubmitError("");
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
-      const response = await fetch(`${apiBaseUrl}/api/booking-requests`, {
+      const response = await fetch(backendUrl("/api/booking-requests"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -168,11 +170,11 @@ export default function BookingPage() {
           </div>
 
           <section className="booking-route-panel">
-            <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">01 / SELECT A RIDE</span><h3>Available routes</h3></div><span className="booking-route-count">{ROUTES_DATA.length} ride options</span></div>
+            <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">01 / SELECT A RIDE</span><h3>Available routes</h3></div><span className="booking-route-count">{routes.length} ride options</span></div>
             <div className="booking-route-table-wrap">
               <table className="booking-route-table">
                 <thead><tr><th>Route</th><th>Duration</th><th>Distance</th><th>Availability</th><th>Price / rider</th><th>Choose</th></tr></thead>
-                <tbody>{ROUTES_DATA.map((ride) => (
+                <tbody>{routes.map((ride) => (
                   <tr key={ride.id} className={route === ride.id ? "selected" : ""} onClick={() => handleRouteChange(ride.id)}>
                     <td><strong>{ride.name}</strong><span>{ride.badge}</span></td>
                     <td>{ride.duration}</td><td>{ride.distance}</td><td>{ride.when.split(" · ")[0]}</td><td className="booking-route-price">P{ride.price}</td>

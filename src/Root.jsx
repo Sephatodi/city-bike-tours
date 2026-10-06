@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router";
 import { useEffect } from "react";
 import Nav from "./components/Nav";
 import BikeCursor from "./components/BikeCursor";
+import { LiveDataProvider } from "./hooks/LiveDataContext";
 
 export default function Root() {
   const { pathname } = useLocation();
@@ -12,10 +13,12 @@ export default function Root() {
   }, [pathname]);
 
   return (
-    <>
-      {!isAdminArea && <Nav />}
-      {!isAdminArea && <BikeCursor />}
-      {isAdminArea ? <Outlet /> : <div className="shine-wrap"><Outlet /></div>}
-    </>
+    <LiveDataProvider>
+      <>
+        {!isAdminArea && <Nav />}
+        {!isAdminArea && <BikeCursor />}
+        {isAdminArea ? <Outlet /> : <div className="shine-wrap"><Outlet /></div>}
+      </>
+    </LiveDataProvider>
   );
 }

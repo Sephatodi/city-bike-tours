@@ -5,6 +5,7 @@ import SchedulePage from "./pages/SchedulePage";
 import RoutesPage from "./pages/RoutesPage";
 import PricingPage from "./pages/PricingPage";
 import BookingPage from "./pages/BookingPage";
+import GalleryPage from "./pages/GalleryPage";
 import AdminPage from "./pages/AdminPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import RideTicketPage from "./pages/RideTicketPage";
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: "routes", Component: RoutesPage },
       { path: "pricing", Component: PricingPage },
       { path: "book", Component: BookingPage },
+      { path: "gallery", Component: GalleryPage },
       { path: "admin", Component: AdminPage },
       { path: "admin/login", Component: AdminLoginPage },
       { path: "ticket/:token", Component: RideTicketPage },

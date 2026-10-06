@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
+import { backendUrl } from "../api/backend";
 
 export default function RideTicketPage() {
   const { token } = useParams();
@@ -11,7 +12,7 @@ export default function RideTicketPage() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch(`/api/tickets/${encodeURIComponent(token)}`, { cache: "no-store" })
+    fetch(backendUrl(`/api/tickets/${encodeURIComponent(token)}`), { cache: "no-store" })
       .then(async (response) => {
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || "This ride pass is unavailable.");
