@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
-import HeritageMap from "../components/HeritageMap";
 import { ROUTES_DATA } from "../data";
 import { backendUrl } from "../api/backend";
 import { useLiveData } from "../hooks/LiveDataContext";
@@ -161,11 +160,6 @@ export default function BookingPage() {
               </div>
               <img src="/bike1.jfif" alt="Tour bicycle ready for your ride" />
               <div className="booking-bike-caption"><span>{route === "complete" ? "Bike and local guide included" : "Bike and cycling lessons included"}</span><strong>P{selectedRoute.price} <small>/ rider</small></strong></div>
-            </section>
-
-            <section className="booking-map-panel">
-              <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">RIDE AREA</span><h3>Gaborone heritage route</h3></div><span className="booking-map-pin" style={{ color: selectedRoute.badgeColor, borderColor: selectedRoute.badgeColor }}>{selectedRoute.name}</span></div>
-              <HeritageMap height="330px" routeId={route} />
             </section>
           </div>
 
