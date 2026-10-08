@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
-import { ROUTES_DATA } from "../data";
+import { useLiveData } from "../hooks/LiveDataContext";
 
 function useScrollReveal() {
   useEffect(() => {
@@ -17,17 +17,14 @@ function useScrollReveal() {
 }
 
 const FEATURES = [
-  { label: "Expert local guide", complete: true, loop: false, own: false },
-  { label: "All 6 heritage sites", complete: true, loop: true, own: "Custom" },
-  { label: "Guided commentary", complete: true, loop: false, own: false },
-  { label: "Site viewing time", complete: true, loop: false, own: false },
-  { label: "Bike provided", complete: true, loop: true, own: true },
-  { label: "Route map", complete: true, loop: true, own: true },
-  { label: "Self-guided option", complete: false, loop: true, own: true },
-  { label: "Custom route planning", complete: false, loop: false, own: true },
-  { label: "Heritage radius confirmed", complete: true, loop: true, own: true },
-  { label: "Wed 14:30 fixed slot", complete: true, loop: false, own: false },
-  { label: "Thu–Fri on request", complete: true, loop: true, own: true },
+  { label: "Expert local guide", complete: true, loop: false },
+  { label: "Guided heritage stories", complete: true, loop: false },
+  { label: "All 6 heritage sites", complete: true, loop: true },
+  { label: "Cycling lessons for kids and adults", complete: false, loop: true },
+  { label: "Bike provided", complete: true, loop: true },
+  { label: "Wednesday–Friday · 9am or 2pm", complete: true, loop: false },
+  { label: "Maximum 10 riders per group", complete: "10 riders", loop: false },
+  { label: "Casual Saturday · no rigid schedule", complete: false, loop: true },
 ];
 
 function Cell({ value }) {
@@ -38,11 +35,13 @@ function Cell({ value }) {
 
 export default function PricingPage() {
   useScrollReveal();
+  const { routes } = useLiveData();
   const [riders, setRiders] = useState(1);
   const [selected, setSelected] = useState("complete");
 
-  const route = ROUTES_DATA.find((r) => r.id === selected);
+  const route = routes.find((r) => r.id === selected) || routes[0];
   const total = route.price * riders;
+  const maxRiders = selected === "complete" ? 10 : 20;
 
   return (
     <div style={{ backgroundColor: "#0D0805", minHeight: "100vh" }}>
@@ -63,8 +62,8 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto px-6 py-16">
 
         {/* Price cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-20 reveal">
-          {ROUTES_DATA.map((r) => (
+        <div className="grid md:grid-cols-2 gap-6 mb-20 reveal">
+          {routes.map((r) => (
             <div
               key={r.id}
               className="p-8 rounded-sm flex flex-col relative"
@@ -108,35 +107,23 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Saturday lessons callout */}
-        <div className="mb-20 p-8 rounded-sm reveal flex flex-col md:flex-row md:items-center justify-between gap-6" style={{ backgroundColor: "#0F0B06", border: "1px solid rgba(212,160,23,0.25)" }}>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#D4A017" }}>Saturday Cycling Lessons</div>
-            <div className="font-display font-bold text-2xl mb-1" style={{ color: "#F5EDD9" }}>1st & Last Saturday of Every Month</div>
-            <p className="text-sm" style={{ color: "rgba(245,237,217,0.65)" }}>
-              Build confidence and learn essential cycling skills. Kids and adults welcome. Held at Main Mall.
-            </p>
-          </div>
-          <div className="flex-shrink-0 text-center">
-            <div className="font-display font-bold" style={{ fontSize: "3rem", color: "#C1440E", lineHeight: 1 }}>P250</div>
-            <div className="text-xs mt-1 mb-4" style={{ color: "rgba(245,237,217,0.4)" }}>per session</div>
-            <Link to="/book" className="block px-6 py-2 font-bold uppercase tracking-widest text-xs rounded-sm hover:opacity-90" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>
-              Book Lesson
-            </Link>
-          </div>
+        <div className="mb-20 p-5 rounded-sm reveal" style={{ backgroundColor: "#0F0B06", border: "1px solid rgba(212,160,23,0.25)" }}>
+          <p className="text-sm" style={{ color: "rgba(245,237,217,0.75)" }}>
+            Cycling lessons for kids and adults are included with the Casual Saturday ride. There is no separate lesson booking or lesson fee.
+          </p>
         </div>
 
         {/* Feature comparison table */}
         <div className="mb-20 reveal">
           <h2 className="font-display font-bold text-2xl mb-2" style={{ color: "#F5EDD9" }}>What's Included — Full Comparison</h2>
-          <p className="text-sm mb-8" style={{ color: "rgba(245,237,217,0.5)" }}>All routes include a bicycle and a route map. Only the Complete Route includes a guide and site viewing.</p>
+          <p className="text-sm mb-8" style={{ color: "rgba(245,237,217,0.5)" }}>Compare our two rides: a guided weekday heritage tour and a relaxed Saturday ride with cycling lessons included.</p>
 
           <div className="overflow-x-auto rounded-sm" style={{ border: "1px solid rgba(245,237,217,0.08)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Outfit, sans-serif" }}>
               <thead>
                 <tr style={{ backgroundColor: "rgba(26,58,42,0.6)" }}>
                   <th className="text-left p-4 text-xs font-bold uppercase tracking-widest" style={{ color: "rgba(245,237,217,0.5)", width: "40%" }}>Feature</th>
-                  {ROUTES_DATA.map((r) => (
+                  {routes.map((r) => (
                     <th key={r.id} className="p-4 text-center text-xs font-bold uppercase tracking-widest" style={{ color: r.badgeColor }}>
                       {r.name.split(" ").slice(0, 2).join(" ")}<br />
                       <span className="font-display text-xl" style={{ color: "#F5EDD9" }}>P{r.price}</span>
@@ -151,9 +138,7 @@ export default function PricingPage() {
                     style={{ backgroundColor: i % 2 === 0 ? "rgba(245,237,217,0.02)" : "rgba(245,237,217,0.005)", borderTop: "1px solid rgba(245,237,217,0.05)" }}
                   >
                     <td className="p-4 text-sm" style={{ color: "rgba(245,237,217,0.75)" }}>{f.label}</td>
-                    <td className="p-4 text-center"><Cell value={f.complete} /></td>
-                    <td className="p-4 text-center"><Cell value={f.loop} /></td>
-                    <td className="p-4 text-center"><Cell value={f.own} /></td>
+                    {routes.map((r) => <td key={r.id} className="p-4 text-center"><Cell value={f[r.id]} /></td>)}
                   </tr>
                 ))}
               </tbody>
@@ -168,7 +153,7 @@ export default function PricingPage() {
             <div>
               <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#D4A017" }}>Select Route</div>
               <div className="flex flex-col gap-2 mb-8">
-                {ROUTES_DATA.map((r) => (
+                {routes.map((r) => (
                   <label
                     key={r.id}
                     className="flex items-center gap-3 p-4 rounded-sm cursor-pointer transition-all"
@@ -182,7 +167,10 @@ export default function PricingPage() {
                       name="calc-route"
                       value={r.id}
                       checked={selected === r.id}
-                      onChange={() => setSelected(r.id)}
+                      onChange={() => {
+                        setSelected(r.id);
+                        if (r.id === "complete") setRiders((current) => Math.min(current, 10));
+                      }}
                       style={{ accentColor: r.badgeColor }}
                     />
                     <div className="flex-1">
@@ -200,13 +188,13 @@ export default function PricingPage() {
               <input
                 type="range"
                 min={1}
-                max={20}
+                max={maxRiders}
                 value={riders}
                 onChange={(e) => setRiders(Number(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs mt-1" style={{ color: "rgba(245,237,217,0.3)" }}>
-                <span>1 rider</span><span>20 riders</span>
+                <span>1 rider</span><span>{maxRiders} riders{selected === "complete" ? " · group limit" : ""}</span>
               </div>
             </div>
 
@@ -235,10 +223,11 @@ export default function PricingPage() {
           <h2 className="font-display font-bold text-2xl mb-6" style={{ color: "#F5EDD9" }}>Common Questions</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { q: "Do I need to book in advance?", a: "Wednesday rides need no booking — just arrive at Main Mall by 14:25. For Thu/Fri private rides and Saturday lessons, please book ahead." },
+              { q: "When do the guided rides run?", a: "The Heritage City Ride runs Wednesday to Friday, with 9am and 2pm start times. Each guided group is limited to 10 riders." },
+              { q: "What happens on Saturdays?", a: "Saturdays are casual, flexible rides for friends, families, and other riders. Cycling lessons for kids and adults are included." },
               { q: "Is a bike provided?", a: "Yes, all routes include a bicycle. You're welcome to bring your own if you prefer." },
               { q: "When do I pay?", a: "Payment is on the day of your ride. No deposit, no online payment required." },
-              { q: "Are children welcome?", a: "Absolutely. Saturday cycling lessons are specifically designed for kids and adults. The Wednesday ride is open to all ages and fitness levels." },
+              { q: "Are children welcome?", a: "Yes. Kids and adults are welcome on Casual Saturday rides, and cycling lessons are included. The guided Heritage City Ride welcomes all ages and fitness levels." },
             ].map(({ q, a }) => (
               <div key={q} className="p-5 rounded-sm" style={{ backgroundColor: "rgba(245,237,217,0.03)", border: "1px solid rgba(245,237,217,0.07)" }}>
                 <div className="font-semibold text-sm mb-2" style={{ color: "#D4A017" }}>{q}</div>

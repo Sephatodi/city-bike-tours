@@ -3,10 +3,14 @@ import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
 import { ROUTES_DATA } from "../data";
+import { backendUrl } from "../api/backend";
+import { useLiveData } from "../hooks/LiveDataContext";
 
 export default function BookingPage() {
+  const { routes } = useLiveData();
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
   const [riders, setRiders] = useState(1);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -16,20 +20,43 @@ export default function BookingPage() {
   const [submitError, setSubmitError] = useState("");
   const [requestId, setRequestId] = useState("");
 
-  const selectedRoute = ROUTES_DATA.find((r) => r.id === route);
+  const selectedRoute = routes.find((r) => r.id === route) || ROUTES_DATA.find((r) => r.id === route);
   const total = selectedRoute.price * riders;
+  const maxRiders = route === "complete" ? 10 : 20;
+
+  const handleRouteChange = (routeId) => {
+    setRoute(routeId);
+    setRiders((current) => Math.min(current, routeId === "complete" ? 10 : 20));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const day = new Date(`${date}T00:00:00.000Z`).getUTCDay();
+    if (route === "complete" && ![3, 4, 5].includes(day)) {
+      setSubmitError("The Heritage City Ride runs Wednesday to Friday. Please choose one of those days.");
+      return;
+    }
+    if (route === "loop" && day !== 6) {
+      setSubmitError("Casual Saturday rides run on Saturdays. Please choose a Saturday.");
+      return;
+    }
     setIsSubmitting(true);
     setSubmitError("");
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
-      const response = await fetch(`${apiBaseUrl}/api/booking-requests`, {
+      const response = await fetch(backendUrl("/api/booking-requests"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, routeId: route, dateIso: date, riders, notes }),
+        body: JSON.stringify({
+          name,
+          phone,
+          routeId: route,
+          dateIso: date,
+          riders,
+          notes: route === "complete"
+            ? [`Preferred start time: ${startTime}`, notes].filter(Boolean).join("\n")
+            : notes,
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
@@ -111,153 +138,72 @@ export default function BookingPage() {
             Book a Ride
           </h1>
           <p className="mt-4 text-base max-w-lg" style={{ color: "rgba(245,237,217,0.65)" }}>
-            Wednesday rides need no advance booking — just show up at Main Mall by 14:25.
-            For private rides and Saturday lessons, book ahead so we can confirm.
+            Reserve a guided Heritage City Ride Wednesday to Friday at 9am or 2pm (maximum 10 riders per group), or request a place on the relaxed Casual Saturday ride. Saturday rides include cycling lessons for kids and adults.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid lg:grid-cols-5 gap-12">
+      <div className="booking-dashboard-wrap">
+        <div className="booking-dashboard-meta">
+          <div><span className="booking-dashboard-kicker">RIDE RESERVATION</span><h2>Plan your Gaborone ride</h2></div>
+          <span className="booking-live-indicator"><i /> Booking requests open</span>
+        </div>
 
-          {/* Left — info + summary */}
-          <div className="lg:col-span-2">
-            {/* Price summary */}
-            <div className="p-6 rounded-sm mb-6 sticky top-28" style={{ backgroundColor: "rgba(26,58,42,0.25)", border: "1px solid rgba(26,58,42,0.5)" }}>
-              <div className="font-bold text-sm uppercase tracking-widest mb-5" style={{ color: "#D4A017" }}>Price Summary</div>
-
-              <div className="flex justify-between text-sm mb-2" style={{ color: "rgba(245,237,217,0.7)" }}>
-                <span>{selectedRoute.name}</span>
-                <span>P{selectedRoute.price}</span>
+        <form onSubmit={handleSubmit} className="booking-dashboard-form">
+          <div className="booking-showcase-grid">
+            <section className="booking-bike-feature">
+              <div className="booking-bike-copy">
+                <span className="booking-dashboard-kicker">CITY BIKE TOURS · GABORONE</span>
+                <h3>{selectedRoute.name}</h3>
+                <p>{selectedRoute.desc}</p>
+                <div className="booking-bike-facts"><span>{selectedRoute.distance}</span><span>{selectedRoute.duration}</span><span>{selectedRoute.sites} stops</span></div>
               </div>
-              <div className="flex justify-between text-sm mb-4" style={{ color: "rgba(245,237,217,0.5)" }}>
-                <span>Riders</span>
-                <span>× {riders}</span>
-              </div>
-              <div className="h-px mb-4" style={{ backgroundColor: "rgba(245,237,217,0.1)" }} />
-              <div className="flex justify-between font-bold text-2xl mb-1">
-                <span style={{ color: "#F5EDD9" }}>Total</span>
-                <span style={{ color: "#D4A017" }}>P{total}</span>
-              </div>
-              <div className="text-xs" style={{ color: "rgba(245,237,217,0.35)" }}>Payable on the day · No deposit</div>
-
-              <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(245,237,217,0.08)" }}>
-                {[
-                  ["📍", "Main Mall, Gaborone"],
-                  ["🚲", "Bike provided"],
-                  ["📱", "WhatsApp confirmation"],
-                  ["💳", "Cash on the day"],
-                ].map(([icon, text]) => (
-                  <div key={text} className="flex items-center gap-3 text-xs mb-2" style={{ color: "rgba(245,237,217,0.55)" }}>
-                    <span>{icon}</span><span>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+              <img src="/bike1.jfif" alt="Tour bicycle ready for your ride" />
+              <div className="booking-bike-caption"><span>{route === "complete" ? "Bike and local guide included" : "Bike and cycling lessons included"}</span><strong>P{selectedRoute.price} <small>/ rider</small></strong></div>
+            </section>
           </div>
 
-          {/* Right — form */}
-          <form onSubmit={handleSubmit} className="lg:col-span-3 space-y-6">
+          <section className="booking-route-panel">
+            <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">01 / SELECT A RIDE</span><h3>Available routes</h3></div><span className="booking-route-count">{routes.length} ride options</span></div>
+            <div className="booking-route-table-wrap">
+              <table className="booking-route-table">
+                <thead><tr><th>Route</th><th>Duration</th><th>Distance</th><th>Availability</th><th>Price / rider</th><th>Choose</th></tr></thead>
+                <tbody>{routes.map((ride) => (
+                  <tr key={ride.id} className={route === ride.id ? "selected" : ""} onClick={() => handleRouteChange(ride.id)}>
+                    <td><strong>{ride.name}</strong><span>{ride.badge}</span></td>
+                    <td>{ride.duration}</td><td>{ride.distance}</td><td>{ride.when.split(" · ")[0]}</td><td className="booking-route-price">P{ride.price}</td>
+                    <td><label className="booking-route-choice" aria-label={`Select ${ride.name}`}><input type="radio" name="route" value={ride.id} checked={route === ride.id} onChange={() => handleRouteChange(ride.id)} /><span /></label></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </section>
 
-            {/* Route selection */}
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#D4A017" }}>Choose Your Route</div>
-              <div className="flex flex-col gap-3">
-                {ROUTES_DATA.map((r) => (
-                  <label
-                    key={r.id}
-                    className="flex items-start gap-4 p-5 rounded-sm cursor-pointer transition-all"
-                    style={{
-                      backgroundColor: route === r.id ? `${r.badgeColor}18` : "rgba(245,237,217,0.04)",
-                      border: `1px solid ${route === r.id ? r.badgeColor : "rgba(245,237,217,0.08)"}`,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="route"
-                      value={r.id}
-                      checked={route === r.id}
-                      onChange={() => setRoute(r.id)}
-                      className="mt-1"
-                      style={{ accentColor: r.badgeColor }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-bold text-sm mb-0.5" style={{ color: "#F5EDD9" }}>{r.name}</div>
-                      <div className="text-xs mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>{r.when}</div>
-                      <div className="text-xs" style={{ color: "rgba(245,237,217,0.4)" }}>{r.duration} · {r.distance}</div>
-                    </div>
-                    <div className="font-display font-bold text-xl flex-shrink-0" style={{ color: r.badgeColor }}>P{r.price}</div>
-                  </label>
-                ))}
+          <div className="booking-details-grid">
+            <section className="booking-details-panel">
+              <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">02 / YOUR DETAILS</span><h3>When are you riding?</h3></div><span className="booking-step-mark">02</span></div>
+              <div className="booking-input-grid">
+                <label className="booking-field">Preferred date<input type="date" required min={new Date().toISOString().slice(0, 10)} value={date} onChange={(event) => setDate(event.target.value)} style={inputStyle} /></label>
+                <label className="booking-field booking-rider-field">Riders <span className="booking-rider-value">{riders}</span><input type="range" min={1} max={maxRiders} value={riders} onChange={(event) => setRiders(Number(event.target.value))} /><span className="booking-range-labels"><small>1 rider</small><small>{maxRiders} riders{route === "complete" ? " · group limit" : ""}</small></span></label>
+                {route === "complete" && <label className="booking-field">Preferred start time<select value={startTime} onChange={(event) => setStartTime(event.target.value)} style={inputStyle}><option value="09:00">9:00 AM</option><option value="14:00">2:00 PM</option></select></label>}
+                <label className="booking-field">Full name<input type="text" required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" style={inputStyle} /></label>
+                <label className="booking-field">Phone / WhatsApp<input type="tel" required autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+267 7X XXX XXX" style={inputStyle} /></label>
+                <label className="booking-field booking-notes-field">Notes <span className="booking-optional">Optional</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Accessibility needs, school group, or other requests" style={{ ...inputStyle, resize: "vertical" }} /></label>
               </div>
-            </div>
+            </section>
 
-            {/* Name */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>Full Name</label>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" style={inputStyle} />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>Phone / WhatsApp</label>
-              <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+267 7X XXX XXX" style={inputStyle} />
-            </div>
-
-            {/* Date + riders */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>Preferred Date</label>
-                <input type="date" required min={new Date().toISOString().slice(0, 10)} value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>
-                  Riders · <span style={{ color: "#D4A017" }}>{riders}</span>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={20}
-                  value={riders}
-                  onChange={(e) => setRiders(Number(e.target.value))}
-                  className="w-full mt-3"
-                />
-                <div className="flex justify-between text-xs mt-1" style={{ color: "rgba(245,237,217,0.3)" }}>
-                  <span>1</span><span>20</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>
-                Notes <span style={{ opacity: 0.5 }}>(optional)</span>
-              </label>
-              <textarea
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Your own route? Accessibility needs? School group?"
-                style={{ ...inputStyle, resize: "none" }}
-              />
-            </div>
-
-            {submitError && (
-              <p role="alert" className="text-sm" style={{ color: "#FCA5A5" }}>{submitError}</p>
-            )}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 font-bold uppercase tracking-widest text-sm rounded-sm transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
-            >
-              {isSubmitting ? "Submitting Request…" : `Send Booking Request — P${total}`}
-            </button>
-            <p className="text-center text-xs" style={{ color: "rgba(245,237,217,0.3)" }}>
-              We will WhatsApp you a confirmation. No payment taken online.
-            </p>
-          </form>
-        </div>
+            <aside className="booking-order-panel">
+              <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">03 / YOUR SUMMARY</span><h3>Booking estimate</h3></div><span className="booking-step-mark">03</span></div>
+              <div className="booking-order-line"><span>{selectedRoute.name}</span><strong>P{selectedRoute.price}</strong></div>
+              <div className="booking-order-line"><span>{riders} rider{riders === 1 ? "" : "s"}</span><strong>× {riders}</strong></div>
+              <div className="booking-order-total"><span>Estimated total</span><strong>P{total}</strong></div>
+              <p className="booking-payment-note">Pay on the day at Main Mall. No online payment or deposit required.</p>
+              {submitError && <p role="alert" className="booking-submit-error">{submitError}</p>}
+              <button type="submit" disabled={isSubmitting} className="booking-submit-button">{isSubmitting ? "Sending request..." : "Request this ride"}</button>
+              <p className="booking-confirmation-note">We will contact you on WhatsApp to confirm availability.</p>
+            </aside>
+          </div>
+        </form>
       </div>
 
       <Footer />

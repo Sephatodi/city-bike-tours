@@ -30,6 +30,7 @@ export const bookings = pgTable("bookings", {
   // Null = price confirmed at booking time by a human (weekday/holiday rates).
   price: numeric("price", { precision: 8, scale: 2 }),
   status: bookingStatusEnum("status").notNull().default("confirmed"),
+  checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -42,6 +43,7 @@ export const bookingRequests = pgTable("website_booking_requests", {
   riders: integer("riders").notNull(),
   notes: text("notes"),
   status: text("status").notNull().default("pending"),
+  checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -59,5 +61,6 @@ export const siteContent = pgTable("site_content", {
   mediaUrl: text("media_url"),
   bodyText: text("body_text"),
   isFeatured: boolean("is_featured").notNull().default(false),
+  isPublished: boolean("is_published").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

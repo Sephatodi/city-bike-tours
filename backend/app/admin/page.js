@@ -1,14 +1,12 @@
-import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import AdminDashboard from "@/components/AdminDashboard";
 import { authOptions } from "@/lib/auth";
-import { hasAdminAccess } from "@/lib/admin";
-import AdminBookings from "@/components/AdminBookings";
 
-export const metadata = { title: "Admin operations — City Bike Tours" };
+export const metadata = { title: "Admin dashboard — City Bike Tours" };
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/admin/login");
-  if (!hasAdminAccess(session)) redirect("/");
-  return <AdminBookings />;
+  if (!session?.user?.isAdmin) redirect("/admin/login");
+  return <AdminDashboard name={session.user.name || session.user.email} />;
 }

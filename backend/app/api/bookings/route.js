@@ -3,12 +3,13 @@ import { getServerSession } from "next-auth";
 import { and, eq, count, desc } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db/client";
-import { bookings } from "@/db/schema";
+import { bookings, users } from "@/db/schema";
 import { bookingSchema } from "@/lib/validators";
 import { validateBooking } from "@/lib/booking-rules";
 import { computePrice } from "@/lib/pricing";
 import { RIDE_CAPACITY } from "@/lib/data";
 import { newId } from "@/lib/id";
+import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { sendBookingConfirmation } from "@/lib/sms";
 
 export async function GET() {
@@ -79,7 +80,23 @@ export async function POST(request) {
     })
     .returning();
 
-  await sendBookingConfirmation({ user: session.user, booking: created, routeId });
+  const ticketUrl = createRidePassUrl(createRidePassToken(created.id, "booking"), request.url);
+  const [bookingUser] = await db.select({ name: users.name, phone: users.phone }).from(users).where(eq(users.id, session.user.id));
+  const reference = created.id.slice(0, 8).toUpperCase();
+  const notifications = await sendBookingConfirmation({
+    user: bookingUser,
+    booking: created,
+    routeId,
+    ticketUrl,
+    whatsappVariables: {
+      "1": bookingUser.name,
+      "2": routeId ?? "cycling lesson",
+      "3": created.rideDate,
+      "4": "1",
+      "5": ticketUrl,
+      "6": reference,
+    },
+  });
 
-  return NextResponse.json({ booking: created }, { status: 201 });
+  return NextResponse.json({ booking: created, notifications }, { status: 201 });
 }

@@ -1,5 +1,5 @@
 {
-  "name": "kgale-cycles",
+  "name": "city-tours-backend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node scripts/migrate.mjs",
     "admin:provision": "node scripts/provision-admin.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.33.0",
     "next": "^14.2.0",

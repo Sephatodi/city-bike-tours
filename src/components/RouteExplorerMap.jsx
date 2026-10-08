@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { SITES, MAIN_MALL, LOOP_ORDER } from "../data";
+import Icon, { iconSvgMarkup } from "./Icon";
 
 const STORAGE_KEY = "cbt_custom_routes";
 
@@ -27,10 +28,10 @@ function siteIcon(site, { selected, order } = {}) {
         border:${ring};
         border-radius:50%;
         display:flex;align-items:center;justify-content:center;
-        font-size:16px;
+        color:#F5EDD9;
         box-shadow:0 2px 8px rgba(0,0,0,0.5);
         cursor:pointer;
-      ">${site.emoji}</div>
+      ">${iconSvgMarkup(site.icon, 18)}</div>
       ${badge}
     </div>`,
     iconSize: [36, 36],
@@ -47,9 +48,9 @@ const meetIcon = L.divIcon({
     border:3px solid #F5EDD9;
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    font-size:20px;
+    color:#0D0805;
     box-shadow:0 2px 12px rgba(212,160,23,0.6);
-  ">📍</div>`,
+  ">${iconSvgMarkup("mapPin", 22)}</div>`,
   iconSize: [44, 44],
   iconAnchor: [22, 22],
   popupAnchor: [0, -24],
@@ -73,6 +74,73 @@ function pathDistanceKm(points) {
   return total;
 }
 
+function readChildText(node, name) {
+  return Array.from(node.children).find((child) => child.localName === name)?.textContent?.trim() || "";
+}
+
+function samplePoints(points, limit) {
+  if (points.length <= limit) return points;
+  return Array.from({ length: limit }, (_, index) => points[Math.round((index * (points.length - 1)) / (limit - 1))]);
+}
+
+function parseGpx(text) {
+  const documentNode = new DOMParser().parseFromString(text, "application/xml");
+  if (documentNode.querySelector("parsererror")) throw new Error("This GPX file could not be read.");
+
+  const trackNodes = Array.from(documentNode.getElementsByTagNameNS("*", "trkpt"));
+  const routeNodes = Array.from(documentNode.getElementsByTagNameNS("*", "rtept"));
+  const pointNodes = trackNodes.length ? trackNodes : routeNodes;
+  if (pointNodes.length < 2 || pointNodes.length > 50000) throw new Error("Choose a GPX track with 2 to 50,000 points.");
+
+  const trackPoints = pointNodes.map((point) => {
+    const lat = Number(point.getAttribute("lat"));
+    const lon = Number(point.getAttribute("lon"));
+    const elevationText = readChildText(point, "ele");
+    const elevation = elevationText ? Number(elevationText) : null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      throw new Error("The GPX file contains invalid coordinates.");
+    }
+    return { coords: [lat, lon], elevation: Number.isFinite(elevation) ? elevation : null };
+  });
+
+  const waypointNodes = Array.from(documentNode.getElementsByTagNameNS("*", "wpt")).slice(0, 100);
+  const waypoints = waypointNodes.map((point) => ({
+    name: readChildText(point, "name") || "Waypoint",
+    coords: [Number(point.getAttribute("lat")), Number(point.getAttribute("lon"))],
+  })).filter((point) => point.coords.every(Number.isFinite));
+  const track = Array.from(documentNode.getElementsByTagNameNS("*", "trk"))[0];
+  const route = Array.from(documentNode.getElementsByTagNameNS("*", "rte"))[0];
+  const namedParent = track || route;
+  const surfaceNode = Array.from(documentNode.getElementsByTagNameNS("*", "surface"))[0];
+  const elevations = trackPoints.map((point) => point.elevation).filter(Number.isFinite);
+  let elevationGainM = 0;
+  for (let index = 1; index < elevations.length; index++) {
+    if (elevations[index] > elevations[index - 1]) elevationGainM += elevations[index] - elevations[index - 1];
+  }
+
+  return {
+    name: namedParent ? readChildText(namedParent, "name") : "",
+    trackPoints: samplePoints(trackPoints, 5000),
+    distanceKm: Math.round(pathDistanceKm(trackPoints.map((point) => point.coords)) * 10) / 10,
+    elevationGainM: elevations.length > 1 ? Math.round(elevationGainM) : null,
+    elevationProfile: elevations.length > 1 ? samplePoints(elevations, 256) : [],
+    waypoints,
+    surfaceType: surfaceNode?.textContent?.trim() || "Unspecified",
+  };
+}
+
+function TrackViewport({ trackPoints }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (trackPoints.length > 1) {
+      map.fitBounds(L.latLngBounds(trackPoints.map((point) => point.coords)).pad(0.12), { maxZoom: 16 });
+    }
+  }, [map, trackPoints]);
+
+  return null;
+}
+
 // ─── MODES ────────────────────────────────────────────────────────────────────
 
 const MODES = [
@@ -86,6 +154,12 @@ export default function RouteExplorerMap({ height = "520px" }) {
   const [customSeq, setCustomSeq] = useState([]); // array of site ids, in click order
   const [savedRoutes, setSavedRoutes] = useState([]);
   const [routeName, setRouteName] = useState("");
+  const [customTrack, setCustomTrack] = useState([]);
+  const [customWaypoints, setCustomWaypoints] = useState([]);
+  const [elevationProfile, setElevationProfile] = useState([]);
+  const [elevationGainM, setElevationGainM] = useState(null);
+  const [surfaceType, setSurfaceType] = useState("Unspecified");
+  const [importError, setImportError] = useState("");
 
   useEffect(() => {
     try {
@@ -113,15 +187,22 @@ export default function RouteExplorerMap({ height = "520px" }) {
   );
 
   const customTrail = useMemo(() => {
+    if (customTrack.length > 1) return customTrack.map((point) => point.coords);
     if (customSeq.length === 0) return [];
     return [MAIN_MALL, ...customSeq.map((id) => sitesById[id].coords), MAIN_MALL];
-  }, [customSeq, sitesById]);
+  }, [customSeq, customTrack, sitesById]);
 
-  const customDistance = useMemo(() => pathDistanceKm(customTrail), [customTrail]);
+  const customDistance = useMemo(() => customTrack.length > 1
+    ? pathDistanceKm(customTrack.map((point) => point.coords))
+    : pathDistanceKm(customTrail), [customTrack, customTrail]);
   const activeMode = MODES.find((m) => m.id === mode);
 
   function toggleSite(id) {
     if (mode !== "own") return;
+    setCustomTrack([]);
+    setCustomWaypoints([]);
+    setElevationProfile([]);
+    setElevationGainM(null);
     setCustomSeq((seq) => (seq.includes(id) ? seq.filter((s) => s !== id) : [...seq, id]));
   }
 
@@ -135,20 +216,61 @@ export default function RouteExplorerMap({ height = "520px" }) {
       id: Date.now(),
       name: routeName.trim(),
       siteIds: customSeq,
+      trackPoints: customTrack,
+      waypoints: customWaypoints.length ? customWaypoints : customSeq.map((id) => ({ name: sitesById[id].name, coords: sitesById[id].coords })),
       distanceKm: Math.round(customDistance * 10) / 10,
+      elevationGainM,
+      elevationProfile,
+      surfaceType,
+      source: customTrack.length ? "GPX" : "Custom waypoints",
     };
     persist([entry, ...savedRoutes]);
     setRouteName("");
+    setImportError("");
   }
 
   function loadRoute(entry) {
     setCustomSeq(entry.siteIds.filter((id) => sitesById[id]));
+    setCustomTrack(entry.trackPoints || []);
+    setCustomWaypoints(entry.waypoints || []);
+    setElevationProfile(entry.elevationProfile || []);
+    setElevationGainM(entry.elevationGainM ?? null);
+    setSurfaceType(entry.surfaceType || "Unspecified");
+    setRouteName(entry.name);
     setMode("own");
   }
 
   function deleteRoute(id) {
     persist(savedRoutes.filter((r) => r.id !== id));
   }
+
+  async function importGpx(file) {
+    if (!file) return;
+    setImportError("");
+    try {
+      if (file.size > 5 * 1024 * 1024) throw new Error("GPX files must be 5 MB or smaller.");
+      const imported = parseGpx(await file.text());
+      const entry = {
+        id: Date.now(),
+        name: imported.name || file.name.replace(/\.gpx$/i, "") || "Imported GPS route",
+        siteIds: [],
+        ...imported,
+        surfaceType: imported.surfaceType === "Unspecified" ? surfaceType : imported.surfaceType,
+        source: "GPX · Ride with GPS compatible",
+      };
+      persist([entry, ...savedRoutes]);
+      loadRoute(entry);
+      setRouteName(entry.name);
+    } catch (error) {
+      setImportError(error.message || "Could not import this GPX file.");
+    }
+  }
+
+  const elevationSamples = elevationProfile.length > 48
+    ? elevationProfile.filter((_, index) => index % Math.ceil(elevationProfile.length / 48) === 0)
+    : elevationProfile;
+  const minElevation = Math.min(...elevationSamples);
+  const maxElevation = Math.max(...elevationSamples);
 
   return (
     <div>
@@ -173,6 +295,7 @@ export default function RouteExplorerMap({ height = "520px" }) {
       <div className="grid lg:grid-cols-[1fr_320px] gap-4">
         <div style={{ height, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(212,160,23,0.25)" }}>
           <MapContainer center={MAIN_MALL} zoom={15} style={{ height: "100%", width: "100%" }} scrollWheelZoom={false}>
+            <TrackViewport trackPoints={customTrack} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -200,10 +323,16 @@ export default function RouteExplorerMap({ height = "520px" }) {
               <Polyline positions={customTrail} pathOptions={{ color: "#D4A017", weight: 4, opacity: 0.9, dashArray: "4 4" }} />
             )}
 
+            {mode === "own" && customTrack.length > 1 && customWaypoints.map((waypoint, index) => (
+              <Marker key={`${waypoint.name}-${index}`} position={waypoint.coords} icon={siteIcon({ color: "#D4A017", icon: "flag" }, { selected: true, order: index + 1 })}>
+                <Popup><strong>{waypoint.name}</strong></Popup>
+              </Marker>
+            ))}
+
             <Marker position={MAIN_MALL} icon={meetIcon}>
               <Popup>
                 <div style={{ fontFamily: "Outfit, sans-serif", minWidth: "160px" }}>
-                  <strong style={{ color: "#C1440E", fontSize: "13px" }}>📍 Main Mall</strong>
+                  <strong style={{ color: "#C1440E", fontSize: "13px" }}><Icon name="mapPin" size={14} /> Main Mall</strong>
                   <div style={{ fontSize: "11px", marginTop: "4px", color: "#555" }}>
                     Start and end point for every route.
                   </div>
@@ -226,7 +355,7 @@ export default function RouteExplorerMap({ height = "520px" }) {
                   <Popup>
                     <div style={{ fontFamily: "Outfit, sans-serif", minWidth: "180px" }}>
                       <strong style={{ color: site.color, fontSize: "13px" }}>
-                        {site.emoji} {site.name}
+                        <Icon name={site.icon} size={14} /> {site.name}
                       </strong>
                       <div style={{ fontSize: "11px", marginTop: "4px", color: "#555", lineHeight: "1.4" }}>
                         {site.short}
@@ -251,13 +380,13 @@ export default function RouteExplorerMap({ height = "520px" }) {
                 {activeMode.label} order
               </div>
               <ol className="text-sm" style={{ color: "rgba(245,237,217,0.8)" }}>
-                <li className="mb-1.5">📍 Main Mall (start)</li>
+                <li className="mb-1.5"><Icon name="mapPin" size={14} /> Main Mall (start)</li>
                 {LOOP_ORDER.map((id, i) => (
                   <li key={id} className="mb-1.5">
-                    {i + 1}. {sitesById[id].emoji} {sitesById[id].name}
+                    {i + 1}. <Icon name={sitesById[id].icon} size={14} /> {sitesById[id].name}
                   </li>
                 ))}
-                <li>📍 Main Mall (finish)</li>
+                <li><Icon name="mapPin" size={14} /> Main Mall (finish)</li>
               </ol>
             </div>
           )}
@@ -278,7 +407,7 @@ export default function RouteExplorerMap({ height = "520px" }) {
                   <ol className="text-sm mb-3" style={{ color: "rgba(245,237,217,0.85)" }}>
                     {customSeq.map((id, i) => (
                       <li key={id} className="flex items-center justify-between mb-1.5">
-                        <span>{i + 1}. {sitesById[id].emoji} {sitesById[id].name}</span>
+                        <span>{i + 1}. <Icon name={sitesById[id].icon} size={14} /> {sitesById[id].name}</span>
                         <button
                           type="button"
                           onClick={() => removeAt(i)}
@@ -299,6 +428,27 @@ export default function RouteExplorerMap({ height = "520px" }) {
                   </div>
                 )}
 
+                {customTrack.length > 1 && (
+                  <div className="route-library-metadata">
+                    <span>{customDistance.toFixed(1)} km track</span>
+                    <span>{elevationGainM == null ? "Elevation unavailable" : `${elevationGainM} m ascent`}</span>
+                    <span>{surfaceType} surface</span>
+                    <span>{customWaypoints.length} named waypoints</span>
+                  </div>
+                )}
+
+                {elevationSamples.length > 1 && (
+                  <div className="route-elevation-panel">
+                    <div><strong>Elevation profile</strong><span>{minElevation}–{maxElevation} m</span></div>
+                    <div className="route-elevation-chart" role="img" aria-label={`Elevation profile from ${minElevation} to ${maxElevation} meters`}>
+                      {elevationSamples.map((elevation, index) => {
+                        const range = maxElevation - minElevation || 1;
+                        return <span key={`${index}-${elevation}`} style={{ height: `${Math.max(8, ((elevation - minElevation) / range) * 100)}%` }} />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 mb-3">
                   <button
                     type="button"
@@ -310,6 +460,13 @@ export default function RouteExplorerMap({ height = "520px" }) {
                     Clear
                   </button>
                 </div>
+
+                <label className="route-library-field">
+                  Surface type
+                  <select value={surfaceType} onChange={(event) => setSurfaceType(event.target.value)}>
+                    <option>Unspecified</option><option>Asphalt</option><option>Paved</option><option>Gravel</option><option>Mixed</option><option>Trail</option>
+                  </select>
+                </label>
 
                 <input
                   type="text"
@@ -328,6 +485,11 @@ export default function RouteExplorerMap({ height = "520px" }) {
                 >
                   Save this route
                 </button>
+                <label className="route-gpx-import">
+                  Import GPX from Ride with GPS
+                  <input type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" onChange={(event) => importGpx(event.target.files?.[0])} />
+                </label>
+                {importError && <p className="route-import-error" role="alert">{importError}</p>}
                 {customSeq.length > 0 && customSeq.length < 2 && (
                   <p className="text-xs mt-2" style={{ color: "rgba(245,237,217,0.4)" }}>Pick at least 2 stops to save.</p>
                 )}
@@ -346,8 +508,8 @@ export default function RouteExplorerMap({ height = "520px" }) {
                         style={{ backgroundColor: "rgba(245,237,217,0.04)", border: "1px solid rgba(245,237,217,0.08)" }}
                       >
                         <div>
-                          <div style={{ color: "#F5EDD9", fontWeight: 600 }}>🗺️ {r.name}</div>
-                          <div style={{ color: "rgba(245,237,217,0.4)" }}>{r.siteIds.length} stops · ~{r.distanceKm} km</div>
+                          <div style={{ color: "#F5EDD9", fontWeight: 600 }}><Icon name="map" size={14} /> {r.name}</div>
+                          <div style={{ color: "rgba(245,237,217,0.4)" }}>{r.waypoints?.length || r.siteIds?.length || 0} waypoints · ~{r.distanceKm} km · {r.surfaceType || "Unspecified"}</div>
                         </div>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => loadRoute(r)} className="hover:opacity-70" style={{ color: "#D4A017" }}>
