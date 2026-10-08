@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingRequests, companyRoutesConfig } from "@/db/schema";
 import { bookingRequestUpdateSchema } from "@/lib/validators";
 import { isAdmin } from "@/lib/admin";
-import { notify, notifyBoth } from "@/lib/sms";
+import { notify, notifyWhatsApp } from "@/lib/sms";
 import { normalizePhone } from "@/lib/phone";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
+import { getDailyRiderCount } from "@/lib/capacity";
+import { RIDE_CAPACITY } from "@/lib/data";
+import { createBookingConfirmation } from "@/lib/confirmation";
 
 const MESSAGES = {
   confirmed: "is CONFIRMED. See you at Main Mall!",
@@ -23,35 +26,66 @@ export async function PATCH(request, { params }) {
   const [current] = await db.select().from(bookingRequests).where(eq(bookingRequests.id, params.id));
   if (!current) return NextResponse.json({ error: "Booking request not found." }, { status: 404 });
 
-  const { dateIso, phone, ...changes } = parsed.data;
+  const { dateIso, phone, resendConfirmation, ...changes } = parsed.data;
+  if (resendConfirmation && current.status !== "confirmed") {
+    return NextResponse.json({ error: "Only confirmed bookings can have a confirmation resent." }, { status: 409 });
+  }
   const updates = {
     ...changes,
     ...(dateIso ? { rideDate: dateIso } : {}),
     ...(phone ? { phone: normalizePhone(phone) } : {}),
   };
+  if (phone && !updates.phone) {
+    return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
+  }
 
-  const [updated] = await db.update(bookingRequests)
-    .set(updates)
-    .where(eq(bookingRequests.id, params.id))
-    .returning();
+  const nextStatus = updates.status ?? current.status;
+  const nextRideDate = updates.rideDate ?? current.rideDate;
+  const nextRiders = updates.riders ?? current.riders;
+  const needsCapacityCheck =
+    ["pending", "confirmed"].includes(nextStatus) &&
+    (nextStatus !== current.status || nextRideDate !== current.rideDate || nextRiders !== current.riders);
+
+  if (needsCapacityCheck) {
+    const booked = await getDailyRiderCount(nextRideDate, current.id);
+    const remaining = Math.max(0, RIDE_CAPACITY - booked);
+    if (nextRiders > remaining) {
+      return NextResponse.json({
+        error: `This date has room for only ${remaining} more rider${remaining === 1 ? "" : "s"}.`,
+        remaining,
+      }, { status: 409 });
+    }
+  }
+
+  let updated = current;
+  if (Object.keys(updates).length) {
+    [updated] = await db.update(bookingRequests)
+      .set(updates)
+      .where(and(eq(bookingRequests.id, params.id), eq(bookingRequests.status, current.status)))
+      .returning();
+    if (!updated) {
+      return NextResponse.json({ error: "This booking request changed. Refresh and try again." }, { status: 409 });
+    }
+  }
 
   let notifications = null;
   let ticketUrl = null;
 
-  if (current.status !== updated.status && updated.status === "confirmed") {
+  if (updated.status === "confirmed" && (current.status !== "confirmed" || resendConfirmation)) {
     const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, updated.routeId));
     ticketUrl = createRidePassUrl(createRidePassToken(updated.id), request.url);
-    const routeName = route?.routeName || "City Bike Tours ride";
-    const reference = updated.id.slice(0, 8).toUpperCase();
-    const body = `Dumela ${updated.name}! Your ${routeName} is confirmed for ${updated.rideDate} for ${updated.riders} rider${updated.riders === 1 ? "" : "s"}. Meet at Main Mall, Gaborone. Show your ride pass at check-in: ${ticketUrl} Ref: ${reference}`;
-    notifications = await notifyBoth(updated.phone, body, {
-      "1": updated.name,
-      "2": routeName,
-      "3": updated.rideDate,
-      "4": String(updated.riders),
-      "5": ticketUrl,
-      "6": reference,
+    const preferredTime = updated.notes?.match(/Preferred start time:\s*(\d{2}:\d{2})/)?.[1] || "09:00";
+    const confirmation = await createBookingConfirmation({
+      name: updated.name,
+      date: updated.rideDate,
+      time: preferredTime,
+      guests: updated.riders,
+      link: ticketUrl,
     });
+    notifications = {
+      whatsapp: await notifyWhatsApp(updated.phone, confirmation.body, confirmation.whatsappVariables, confirmation.contentSid),
+      template: confirmation.templateKey,
+    };
   }
 
   // Send operational status changes through the existing best-effort channel.

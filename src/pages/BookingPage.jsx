@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import HeaderBike from "../components/HeaderBike";
@@ -19,10 +19,45 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [requestId, setRequestId] = useState("");
+  const [availability, setAvailability] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   const selectedRoute = routes.find((r) => r.id === route) || ROUTES_DATA.find((r) => r.id === route);
   const total = selectedRoute.price * riders;
   const maxRiders = route === "complete" ? 10 : 20;
+  const insufficientCapacity = availability && riders > availability.remaining;
+
+  useEffect(() => {
+    if (!date) {
+      setAvailability(null);
+      setAvailabilityError("");
+      setCheckingAvailability(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setAvailability(null);
+    setAvailabilityError("");
+    setCheckingAvailability(true);
+
+    fetch(backendUrl(`/api/availability?date=${encodeURIComponent(date)}`), { signal: controller.signal, cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Could not check date availability.");
+        setAvailability(result);
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setAvailabilityError(error.message || "Could not check date availability.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCheckingAvailability(false);
+      });
+
+    return () => controller.abort();
+  }, [date]);
 
   const handleRouteChange = (routeId) => {
     setRoute(routeId);
@@ -31,6 +66,10 @@ export default function BookingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!availability || availability.full || insufficientCapacity || availabilityError) {
+      setSubmitError(availabilityError || "Please choose a date with enough available spaces.");
+      return;
+    }
     const day = new Date(`${date}T00:00:00.000Z`).getUTCDay();
     if (route === "complete" && ![3, 4, 5].includes(day)) {
       setSubmitError("The Heritage City Ride runs Wednesday to Friday. Please choose one of those days.");
@@ -59,6 +98,14 @@ export default function BookingPage() {
         }),
       });
       const result = await response.json().catch(() => ({}));
+      if (response.status === 409 && Number.isInteger(result.remaining)) {
+        setAvailability((current) => current && {
+          ...current,
+          booked: current.capacity - result.remaining,
+          remaining: result.remaining,
+          full: result.remaining === 0,
+        });
+      }
       if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
 
       setRequestId(result.request.id);
@@ -183,7 +230,12 @@ export default function BookingPage() {
             <section className="booking-details-panel">
               <div className="booking-panel-heading"><div><span className="booking-dashboard-kicker">02 / YOUR DETAILS</span><h3>When are you riding?</h3></div><span className="booking-step-mark">02</span></div>
               <div className="booking-input-grid">
-                <label className="booking-field">Preferred date<input type="date" required min={new Date().toISOString().slice(0, 10)} value={date} onChange={(event) => setDate(event.target.value)} style={inputStyle} /></label>
+                <label className="booking-field">Preferred date<input type="date" required min={new Date().toISOString().slice(0, 10)} value={date} onChange={(event) => setDate(event.target.value)} style={inputStyle} />
+                  {checkingAvailability && <small role="status">Checking available spaces…</small>}
+                  {!checkingAvailability && availabilityError && <small role="alert">{availabilityError}</small>}
+                  {!checkingAvailability && availability?.full && <small role="status">This date is fully booked. Please choose another date.</small>}
+                  {!checkingAvailability && availability && !availability.full && <small role="status">{availability.remaining} rider{availability.remaining === 1 ? "" : "s"} available on this date.</small>}
+                </label>
                 <label className="booking-field booking-rider-field">Riders <span className="booking-rider-value">{riders}</span><input type="range" min={1} max={maxRiders} value={riders} onChange={(event) => setRiders(Number(event.target.value))} /><span className="booking-range-labels"><small>1 rider</small><small>{maxRiders} riders{route === "complete" ? " · group limit" : ""}</small></span></label>
                 {route === "complete" && <label className="booking-field">Preferred start time<select value={startTime} onChange={(event) => setStartTime(event.target.value)} style={inputStyle}><option value="09:00">9:00 AM</option><option value="14:00">2:00 PM</option></select></label>}
                 <label className="booking-field">Full name<input type="text" required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" style={inputStyle} /></label>
@@ -199,7 +251,8 @@ export default function BookingPage() {
               <div className="booking-order-total"><span>Estimated total</span><strong>P{total}</strong></div>
               <p className="booking-payment-note">Pay on the day at Main Mall. No online payment or deposit required.</p>
               {submitError && <p role="alert" className="booking-submit-error">{submitError}</p>}
-              <button type="submit" disabled={isSubmitting} className="booking-submit-button">{isSubmitting ? "Sending request..." : "Request this ride"}</button>
+              {insufficientCapacity && <p role="alert" className="booking-submit-error">Only {availability.remaining} rider{availability.remaining === 1 ? "" : "s"} remain available on this date.</p>}
+              <button type="submit" disabled={isSubmitting || checkingAvailability || Boolean(date && (!availability || availability.full || insufficientCapacity || availabilityError))} className="booking-submit-button">{isSubmitting ? "Sending request..." : "Request this ride"}</button>
               <p className="booking-confirmation-note">We will contact you on WhatsApp to confirm availability.</p>
             </aside>
           </div>

@@ -221,73 +221,6 @@ function HeritageSection() {
   );
 }
 
-// ─── GALLERY ──────────────────────────────────────────────────────────────────
-
-function GallerySection() {
-  const [active, setActive] = useState(0);
-  const [lightbox, setLightbox] = useState(null);
-  const site = SITES[active];
-  const gridImgs = [...site.imgs, ...site.imgs, ...site.imgs].slice(0, 9);
-
-  return (
-    <section id="gallery" className="py-24" style={{ backgroundColor: "#0F0B06" }}>
-      <div className="max-w-7xl mx-auto px-6 relative">
-        <div className="text-center mb-12 reveal">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— Photo Gallery</p>
-          <h2 className="font-display font-bold" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#F5EDD9" }}>See the Sites</h2>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-2 mb-10 reveal">
-          {SITES.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setActive(i)}
-              className="gallery-tab px-4 py-2 rounded-sm text-xs font-bold uppercase tracking-widest transition-all"
-              style={{
-                backgroundColor: i === active ? "#C1440E" : "rgba(245,237,217,0.08)",
-                color: i === active ? "#F5EDD9" : "rgba(245,237,217,0.6)",
-                border: `1px solid ${i === active ? "#C1440E" : "rgba(245,237,217,0.1)"}`,
-              }}
-            >
-              {s.name.split(" ").slice(-1)[0]}
-            </button>
-          ))}
-        </div>
-
-        <div className="mb-6 reveal">
-          <h3 className="flex items-center gap-2 font-display font-bold text-2xl" style={{ color: "#D4A017" }}><Icon name={site.icon} size={23} /> {site.name}</h3>
-          <p className="text-sm mt-1 italic" style={{ color: "rgba(245,237,217,0.55)" }}>{site.short}</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 reveal">
-          {gridImgs.map((src, i) => (
-            <div
-              key={i}
-              onClick={() => setLightbox(src)}
-              className="overflow-hidden rounded-sm cursor-pointer group"
-              style={{ aspectRatio: i % 5 === 0 ? "16/9" : "4/3", backgroundColor: "#1A3A2A" }}
-            >
-              <img src={src} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-            </div>
-          ))}
-        </div>
-
-      </div>
-
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.92)" }}
-          onClick={() => setLightbox(null)}
-        >
-          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-sm object-contain" />
-          <button className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>×</button>
-        </div>
-      )}
-    </section>
-  );
-}
-
 // ─── MAP SECTION ──────────────────────────────────────────────────────────────
 
 function MapSection() {
@@ -359,7 +292,6 @@ export default function LandingPage() {
       <Hero />
       <AboutStrip />
       <HeritageSection />
-      <GallerySection />
       <MapSection />
       <Footer />
     </div>

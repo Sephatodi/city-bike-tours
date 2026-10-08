@@ -63,6 +63,7 @@ export const bookingRequestStatusSchema = z.object({
 
 export const bookingRequestUpdateSchema = z.object({
   status: z.enum(["pending", "confirmed", "declined", "cancelled"]).optional(),
+  resendConfirmation: z.boolean().optional(),
   name: z.string().trim().min(1, "Enter the rider's name.").max(160).optional(),
   phone: z.string().trim().min(7, "Enter a valid phone number.").max(30).optional(),
   routeId: z.enum(["complete", "loop", "own"]).optional(),

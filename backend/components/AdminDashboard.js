@@ -59,17 +59,23 @@ export default function AdminDashboard({ name }) {
     }
   }
 
-  async function updateRequest(requestId, status) {
+  async function updateRequest(requestId, status, resendConfirmation = false) {
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await requestJson(`/api/admin/booking-requests/${encodeURIComponent(requestId)}`, {
+      const result = await requestJson(`/api/admin/booking-requests/${encodeURIComponent(requestId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...(resendConfirmation ? { resendConfirmation: true } : {}) }),
       }, "Could not update the booking request.");
-      setNotice("Booking request updated.");
+      if (status === "confirmed" && result.notifications) {
+        setNotice(result.notifications.whatsapp
+          ? "Booking confirmed. The unique ride pass was sent by WhatsApp."
+          : "Booking confirmed, but WhatsApp delivery failed. Check the Twilio WhatsApp configuration, then use Resend WhatsApp.");
+      } else {
+        setNotice("Booking request updated.");
+      }
       await loadDashboard();
     } catch (reason) {
       setError(reason.message || "Could not update the booking request.");
@@ -207,7 +213,10 @@ export default function AdminDashboard({ name }) {
                             <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => updateRequest(request.id, "confirmed")}>Confirm</button>
                             <button type="button" className="btn btn-sm" disabled={busy} onClick={() => updateRequest(request.id, "declined")}>Decline</button>
                           </>}
-                          {request.status === "confirmed" && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => updateRequest(request.id, "cancelled")}>Cancel</button>}
+                          {request.status === "confirmed" && <>
+                            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => updateRequest(request.id, "confirmed", true)}>Resend WhatsApp</button>
+                            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => updateRequest(request.id, "cancelled")}>Cancel</button>
+                          </>}
                         </td>
                       </tr>
                     ))}
