@@ -2,6 +2,7 @@ export const SITES = [
   {
     id: "parliament",
     name: "Parliament Building",
+    street: "Government Enclave",
     emoji: "🏛",
     short: "The seat of Botswana's democratic power",
     history:
@@ -17,6 +18,7 @@ export const SITES = [
   {
     id: "enclave",
     name: "Government Enclave",
+    street: "Government Enclave",
     emoji: "🏢",
     short: "The administrative heartbeat of the nation",
     history:
@@ -31,6 +33,7 @@ export const SITES = [
   {
     id: "archives",
     name: "Botswana National Archives",
+    street: "Independence Avenue",
     emoji: "📜",
     short: "The memory of a nation preserved in paper and silence",
     history:
@@ -45,6 +48,7 @@ export const SITES = [
   {
     id: "gallery",
     name: "Botswana Post Office Gallery",
+    street: "Main Mall",
     emoji: "🎨",
     short: "Where postal history became a canvas for national identity",
     history:
@@ -59,6 +63,7 @@ export const SITES = [
   {
     id: "museum",
     name: "National Museum & Art Gallery",
+    street: "Independence Avenue",
     emoji: "🦁",
     short: "Botswana's story told through artefact and art",
     history:
@@ -73,6 +78,7 @@ export const SITES = [
   {
     id: "monument",
     name: "Three Chiefs Monument & Poso House",
+    street: "Government Enclave",
     emoji: "⚔️",
     short: "Where diplomacy saved a nation — twice",
     history:

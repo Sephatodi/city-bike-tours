@@ -12,13 +12,35 @@ export default function BookingPage() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [requestId, setRequestId] = useState("");
 
   const selectedRoute = ROUTES_DATA.find((r) => r.id === route);
   const total = selectedRoute.price * riders;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
+      const response = await fetch(`${apiBaseUrl}/api/booking-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, routeId: route, dateIso: date, riders, notes }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
+
+      setRequestId(result.request.id);
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message || "The booking service is unavailable. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputStyle = {
@@ -46,8 +68,11 @@ export default function BookingPage() {
             </div>
             <h2 className="font-display font-bold text-4xl mb-4" style={{ color: "#F5EDD9" }}>Booking Received!</h2>
             <p className="text-base mb-2" style={{ color: "rgba(245,237,217,0.7)" }}>
-              We'll confirm your <strong style={{ color: "#D4A017" }}>{selectedRoute.name}</strong> for{" "}
+              Your request for <strong style={{ color: "#D4A017" }}>{selectedRoute.name}</strong> has been saved. We'll confirm it for{" "}
               {riders} rider{riders > 1 ? "s" : ""} via WhatsApp or phone within a few hours.
+            </p>
+            <p className="text-xs mb-2" style={{ color: "rgba(245,237,217,0.45)" }}>
+              Request reference: {requestId}
             </p>
             <p className="text-base mb-10" style={{ color: "rgba(245,237,217,0.7)" }}>
               Total of <strong style={{ color: "#C1440E" }}>P{total}</strong> is payable on the day at Main Mall.
@@ -183,7 +208,7 @@ export default function BookingPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>Preferred Date</label>
-                <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
+                <input type="date" required min={new Date().toISOString().slice(0, 10)} value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(245,237,217,0.5)" }}>
@@ -217,12 +242,16 @@ export default function BookingPage() {
               />
             </div>
 
+            {submitError && (
+              <p role="alert" className="text-sm" style={{ color: "#FCA5A5" }}>{submitError}</p>
+            )}
             <button
               type="submit"
-              className="w-full py-4 font-bold uppercase tracking-widest text-sm rounded-sm transition-opacity hover:opacity-90"
+              disabled={isSubmitting}
+              className="w-full py-4 font-bold uppercase tracking-widest text-sm rounded-sm transition-opacity hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
             >
-              Confirm Booking — P{total}
+              {isSubmitting ? "Submitting Request…" : `Send Booking Request — P${total}`}
             </button>
             <p className="text-center text-xs" style={{ color: "rgba(245,237,217,0.3)" }}>
               We will WhatsApp you a confirmation. No payment taken online.
