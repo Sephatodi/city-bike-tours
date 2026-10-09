@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookingRequests, companyRoutesConfig } from "@/db/schema";
+import { bookingRequests, companyRoutesConfig, infobipSmsLogs } from "@/db/schema";
 import { bookingRequestUpdateSchema } from "@/lib/validators";
 import { isAdmin } from "@/lib/admin";
-import { notify, notifyWhatsApp } from "@/lib/sms";
+import { notify, sendWhatsAppMessage } from "@/lib/sms";
 import { normalizePhone } from "@/lib/phone";
-import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
+import { createRidePassQrUrl, createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { getDailyRiderCount } from "@/lib/capacity";
 import { RIDE_CAPACITY } from "@/lib/data";
 import { createBookingConfirmation } from "@/lib/confirmation";
@@ -73,7 +73,9 @@ export async function PATCH(request, { params }) {
 
   if (updated.status === "confirmed" && (current.status !== "confirmed" || resendConfirmation)) {
     const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, updated.routeId));
-    ticketUrl = createRidePassUrl(createRidePassToken(updated.id), request.url);
+    const ridePassToken = createRidePassToken(updated.id);
+    ticketUrl = createRidePassUrl(ridePassToken, request.url);
+    const qrImageUrl = createRidePassQrUrl(ridePassToken, request.url);
     const preferredTime = updated.notes?.match(/Preferred start time:\s*(\d{2}:\d{2})/)?.[1] || "09:00";
     const confirmation = await createBookingConfirmation({
       name: updated.name,
@@ -82,9 +84,33 @@ export async function PATCH(request, { params }) {
       guests: updated.riders,
       link: ticketUrl,
     });
+    const qrTemplateSid = process.env.TWILIO_WHATSAPP_QR_CONTENT_SID;
+    const whatsappVariables = qrTemplateSid
+      ? { ...confirmation.whatsappVariables, "6": qrImageUrl }
+      : confirmation.whatsappVariables;
+    const messageLog = await db.insert(infobipSmsLogs).values({
+      bookingRequestId: updated.id,
+      provider: "twilio",
+      channel: "whatsapp",
+      recipient: updated.phone,
+      message: confirmation.body,
+      status: "QUEUED",
+    }).returning({ id: infobipSmsLogs.id });
+    const delivery = await sendWhatsAppMessage(
+      updated.phone,
+      confirmation.body,
+      whatsappVariables,
+      qrTemplateSid,
+      qrTemplateSid ? qrImageUrl : qrImageUrl,
+    );
+    await db.update(infobipSmsLogs)
+      .set({ messageId: delivery.messageId, status: delivery.status, statusUpdatedAt: new Date() })
+      .where(and(eq(infobipSmsLogs.id, messageLog[0].id), eq(infobipSmsLogs.status, "QUEUED")));
     notifications = {
-      whatsapp: await notifyWhatsApp(updated.phone, confirmation.body, confirmation.whatsappVariables, confirmation.contentSid),
-      template: confirmation.templateKey,
+      whatsapp: delivery.sent,
+      messageId: delivery.messageId,
+      status: delivery.status,
+      template: qrTemplateSid ? "QR" : confirmation.templateKey,
     };
   }
 

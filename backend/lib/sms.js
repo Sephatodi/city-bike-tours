@@ -42,28 +42,43 @@ export async function notify(to, body) {
   return false;
 }
 
-export async function notifyWhatsApp(to, body, whatsappVariables = null, contentSid = null) {
+export async function sendWhatsAppMessage(to, body, whatsappVariables = null, contentSid = null, mediaUrl = null) {
   const twilioClient = getClient();
   const from = process.env.TWILIO_WHATSAPP_FROM;
-  if (!twilioClient || !from || !to || !isE164(to)) return false;
+  if (!twilioClient || !from || !to || !isE164(to)) {
+    return { sent: false, messageId: null, status: "FAILED" };
+  }
+
+  const message = {
+    from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
+    to: `whatsapp:${to}`,
+  };
+  if (contentSid) {
+    message.contentSid = contentSid;
+    message.contentVariables = JSON.stringify(whatsappVariables || { "1": body });
+  } else {
+    message.body = body;
+  }
+  if (mediaUrl && !contentSid) message.mediaUrl = [mediaUrl];
+  const backendOrigin = process.env.PUBLIC_BACKEND_URL?.replace(/\/$/, "");
+  if (backendOrigin) message.statusCallback = `${backendOrigin}/api/webhooks/twilio/status`;
 
   try {
-    const message = {
-      from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
-      to: `whatsapp:${to}`,
+    const result = await twilioClient.messages.create(message);
+    return {
+      sent: true,
+      messageId: result.sid ?? null,
+      status: result.status?.toUpperCase() || "SENT",
     };
-    if (contentSid) {
-      message.contentSid = contentSid;
-      message.contentVariables = JSON.stringify(whatsappVariables || { "1": body });
-    } else {
-      message.body = body;
-    }
-    await twilioClient.messages.create(message);
-    return true;
   } catch (error) {
     console.error("WhatsApp confirmation could not be sent:", error.message);
-    return false;
+    return { sent: false, messageId: null, status: "FAILED" };
   }
+}
+
+export async function notifyWhatsApp(to, body, whatsappVariables = null, contentSid = null) {
+  const result = await sendWhatsAppMessage(to, body, whatsappVariables, contentSid);
+  return result.sent;
 }
 
 export async function notifyBoth(to, body, whatsappVariables = null, contentSid = null) {
