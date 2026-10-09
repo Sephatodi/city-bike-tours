@@ -184,7 +184,7 @@ function AboutStrip() {
 function HeritageSiteCard({ site, index }) {
   return (
     <div className="site-card reveal" style={{ transitionDelay: `${index * 0.08}s` }}>
-      <Carousel imgs={site.imgs} accent={site.color} />
+      <Carousel imgs={site.imgs} accent={site.color} title={site.name} subtitle={site.street} />
       <div className="p-6 rounded-b-sm" style={{ backgroundColor: "rgba(13,8,5,0.9)", borderLeft: `4px solid ${site.color}` }}>
         <div className="flex items-start gap-3 mb-3">
           <Icon name={site.icon} size={24} style={{ color: site.color }} />

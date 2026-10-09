@@ -227,6 +227,30 @@ export default function AdminDashboard({ name }) {
           </section>
 
           <section className="admin-section">
+            <h2>Message delivery history</h2>
+            {data.messageLogs?.length ? (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead><tr><th>Customer</th><th>Channel</th><th>Provider</th><th>Status</th><th>Sent</th></tr></thead>
+                  <tbody>
+                    {data.messageLogs.map((log) => {
+                      const booking = data.bookingRequests?.find((item) => item.id === log.bookingRequestId)
+                        || data.bookings?.find((item) => item.id === log.bookingId);
+                      return (
+                        <tr key={log.id}>
+                          <td>{booking?.name || log.recipient}<small>{log.recipient}</small></td>
+                          <td>{log.channel}</td><td>{log.provider}</td><td>{log.status}</td>
+                          <td>{new Date(log.statusUpdatedAt || log.sentAt).toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p>No message delivery records yet.</p>}
+          </section>
+
+          <section className="admin-section">
             <h2>Published site content</h2>
             <form className="admin-card admin-content-form" onSubmit={saveContent}>
               <label>Content type<select value={contentForm.contentType} onChange={(event) => setContentForm((current) => ({ ...current, contentType: event.target.value }))}>

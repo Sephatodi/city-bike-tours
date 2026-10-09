@@ -64,6 +64,20 @@
       "when": 1791489600000,
       "tag": "0008_booking_confirmation_rotation",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791534649500,
+      "tag": "0009_motionless_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791536603643,
+      "tag": "0010_handy_johnny_storm",
+      "breakpoints": true
     }
   ]
 }

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { asc, desc, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookingRequests, bookings, companyRoutesConfig, siteContent, users } from "@/db/schema";
+import { bookingRequests, bookings, companyRoutesConfig, infobipSmsLogs, siteContent, users } from "@/db/schema";
 import { isAdmin } from "@/lib/admin";
 
 export async function GET() {
   if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
 
   try {
-    const [confirmedBookings, requestRows, routesConfig, content, monthlyStats] = await Promise.all([
+    const [confirmedBookings, requestRows, routesConfig, content, monthlyStats, messageLogs] = await Promise.all([
       db.select({
         id: bookings.id,
         name: users.name,
@@ -37,6 +37,7 @@ export async function GET() {
         GROUP BY 1
         ORDER BY 1
       `),
+      db.select().from(infobipSmsLogs).orderBy(desc(infobipSmsLogs.sentAt)).limit(100),
     ]);
 
     const pendingCount = requestRows.filter((request) => request.status === "pending").length;
@@ -49,6 +50,7 @@ export async function GET() {
         pendingCount,
       },
       monthlyStats: monthlyStats.rows,
+      messageLogs,
       routesConfig,
       content,
     });

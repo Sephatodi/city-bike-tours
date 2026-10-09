@@ -49,3 +49,8 @@ export function createRidePassUrl(token, requestUrl) {
     .split(",")[0].trim().replace(/\/$/, "") || new URL(requestUrl).origin;
   return `${frontendOrigin}/ticket/${token}`;
 }
+
+export function createRidePassQrUrl(token, requestUrl) {
+  const backendOrigin = (process.env.PUBLIC_BACKEND_URL || "").replace(/\/$/, "") || new URL(requestUrl).origin;
+  return `${backendOrigin}/api/tickets/${encodeURIComponent(token)}/qr`;
+}

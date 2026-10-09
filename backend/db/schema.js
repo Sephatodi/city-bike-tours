@@ -64,3 +64,17 @@ export const siteContent = pgTable("site_content", {
   isPublished: boolean("is_published").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const infobipSmsLogs = pgTable("infobip_sms_logs", {
+  id: serial("id").primaryKey(),
+  bookingRequestId: text("booking_request_id").references(() => bookingRequests.id, { onDelete: "set null" }),
+  bookingId: text("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  provider: text("provider").notNull().default("infobip"),
+  channel: text("channel").notNull().default("sms"),
+  recipient: text("recipient").notNull(),
+  message: text("message").notNull(),
+  messageId: text("message_id"),
+  status: text("status").notNull(),
+  sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
