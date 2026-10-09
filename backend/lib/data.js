@@ -14,8 +14,7 @@ export const WEEKLY_ADVENTURE = {
   note: "our fixed weekly group ride, open to all levels.",
 };
 
-// Server-side capacity per (date, timeSlot) — enforced in app/api/bookings
-// and app/api/availability, not just decoration here.
+// Maximum active riders across all routes and times on one date.
 export const RIDE_CAPACITY = 12;
 
 export const ROUTES = [

@@ -13,6 +13,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "@vercel/blob": "^2.8.0",
+    "awesome-phonenumber": "^7.8.0",
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.33.0",
     "next": "^14.2.0",

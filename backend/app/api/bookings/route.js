@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { and, eq, count, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db/client";
 import { bookings, users } from "@/db/schema";
@@ -11,6 +11,7 @@ import { RIDE_CAPACITY } from "@/lib/data";
 import { newId } from "@/lib/id";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { sendBookingConfirmation } from "@/lib/sms";
+import { getDailyRiderCount } from "@/lib/capacity";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -53,14 +54,9 @@ export async function POST(request) {
     return NextResponse.json({ error: validation.message }, { status: 400 });
   }
 
-  // Capacity check.
-  const [{ value: booked }] = await db
-    .select({ value: count() })
-    .from(bookings)
-    .where(and(eq(bookings.rideDate, dateIso), eq(bookings.timeSlot, timeSlot), eq(bookings.status, "confirmed")));
-
-  if (Number(booked) >= RIDE_CAPACITY) {
-    return NextResponse.json({ error: "That ride is fully booked. Pick another date or time." }, { status: 409 });
+  const booked = await getDailyRiderCount(dateIso);
+  if (booked >= RIDE_CAPACITY) {
+    return NextResponse.json({ error: "That date is fully booked. Pick another date." }, { status: 409 });
   }
 
   const price = computePrice({ category, routeId, isKid });
@@ -82,20 +78,10 @@ export async function POST(request) {
 
   const ticketUrl = createRidePassUrl(createRidePassToken(created.id, "booking"), request.url);
   const [bookingUser] = await db.select({ name: users.name, phone: users.phone }).from(users).where(eq(users.id, session.user.id));
-  const reference = created.id.slice(0, 8).toUpperCase();
   const notifications = await sendBookingConfirmation({
     user: bookingUser,
     booking: created,
-    routeId,
     ticketUrl,
-    whatsappVariables: {
-      "1": bookingUser.name,
-      "2": routeId ?? "cycling lesson",
-      "3": created.rideDate,
-      "4": "1",
-      "5": ticketUrl,
-      "6": reference,
-    },
   });
 
   return NextResponse.json({ booking: created, notifications }, { status: 201 });

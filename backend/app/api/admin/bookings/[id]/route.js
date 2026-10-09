@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookings, companyRoutesConfig, users } from "@/db/schema";
+import { bookings, users } from "@/db/schema";
 import { bookingStatusSchema } from "@/lib/validators";
 import { isAdmin } from "@/lib/admin";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
-import { notify, notifyBoth } from "@/lib/sms";
+import { notify, notifyWhatsApp } from "@/lib/sms";
+import { createBookingConfirmation } from "@/lib/confirmation";
 
 const MESSAGES = {
   cancelled: "has been CANCELLED. Contact City Bike Tours if this is a mistake.",
@@ -34,21 +35,18 @@ export async function PATCH(request, { params }) {
   let notifications = null;
   let ticketUrl = null;
   if (current.status !== updated.status && updated.status === "confirmed") {
-    const [route] = updated.routeId
-      ? await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, updated.routeId))
-      : [];
     ticketUrl = createRidePassUrl(createRidePassToken(updated.id, "booking"), request.url);
-    const routeName = route?.routeName || "cycling lesson";
-    const reference = updated.id.slice(0, 8).toUpperCase();
-    const body = `Dumela ${current.name}! Your City Bike Tours ${routeName} is confirmed for ${updated.rideDate} (${updated.timeSlot}). Meet at Main Mall, Gaborone. Show your ride pass at check-in: ${ticketUrl} Ref: ${reference}`;
-    notifications = await notifyBoth(current.phone, body, {
-      "1": current.name,
-      "2": routeName,
-      "3": updated.rideDate,
-      "4": "1",
-      "5": ticketUrl,
-      "6": reference,
+    const confirmation = await createBookingConfirmation({
+      name: current.name,
+      date: updated.rideDate,
+      time: updated.timeSlot,
+      guests: 1,
+      link: ticketUrl,
     });
+    notifications = {
+      whatsapp: await notifyWhatsApp(current.phone, confirmation.body, confirmation.whatsappVariables, confirmation.contentSid),
+      template: confirmation.templateKey,
+    };
   } else if (current.status !== updated.status && MESSAGES[updated.status]) {
     await notify(current.phone, `City Bike Tours: your ${updated.rideDate} booking ${MESSAGES[updated.status]} Ref: ${updated.id.slice(0, 8)}`);
   }

@@ -1,5 +1,6 @@
 import twilio from "twilio";
 import { isE164 } from "@/lib/phone";
+import { createBookingConfirmation } from "@/lib/confirmation";
 
 let client;
 
@@ -41,32 +42,36 @@ export async function notify(to, body) {
   return false;
 }
 
-export async function notifyBoth(to, body, whatsappVariables = null) {
+export async function notifyWhatsApp(to, body, whatsappVariables = null, contentSid = null) {
+  const twilioClient = getClient();
+  const from = process.env.TWILIO_WHATSAPP_FROM;
+  if (!twilioClient || !from || !to || !isE164(to)) return false;
+
+  try {
+    const message = {
+      from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
+      to: `whatsapp:${to}`,
+    };
+    if (contentSid) {
+      message.contentSid = contentSid;
+      message.contentVariables = JSON.stringify(whatsappVariables || { "1": body });
+    } else {
+      message.body = body;
+    }
+    await twilioClient.messages.create(message);
+    return true;
+  } catch (error) {
+    console.error("WhatsApp confirmation could not be sent:", error.message);
+    return false;
+  }
+}
+
+export async function notifyBoth(to, body, whatsappVariables = null, contentSid = null) {
   const twilioClient = getClient();
   if (!twilioClient || !to || !isE164(to)) return { whatsapp: false, sms: false };
 
   const [whatsapp, sms] = await Promise.all([
-    (async () => {
-      const from = process.env.TWILIO_WHATSAPP_FROM;
-      if (!from) return false;
-      try {
-        const message = {
-          from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
-          to: `whatsapp:${to}`,
-        };
-        if (process.env.TWILIO_WHATSAPP_CONTENT_SID) {
-          message.contentSid = process.env.TWILIO_WHATSAPP_CONTENT_SID;
-          message.contentVariables = JSON.stringify(whatsappVariables || { "1": body });
-        } else {
-          message.body = body;
-        }
-        await twilioClient.messages.create(message);
-        return true;
-      } catch (error) {
-        console.error("WhatsApp confirmation could not be sent:", error.message);
-        return false;
-      }
-    })(),
+    notifyWhatsApp(to, body, whatsappVariables, contentSid),
     (async () => {
       const from = process.env.TWILIO_PHONE_NUMBER;
       if (!from) return false;
@@ -89,11 +94,14 @@ export function isValidTwilioRequest(signature, url, params) {
   return twilio.validateRequest(process.env.TWILIO_AUTH_TOKEN, signature, url, params);
 }
 
-export async function sendBookingConfirmation({ user, booking, routeId, ticketUrl, whatsappVariables }) {
+export async function sendBookingConfirmation({ user, booking, ticketUrl }) {
   if (!user?.phone) return { whatsapp: false, sms: false };
-  return notifyBoth(
-    user.phone,
-    `Dumela ${user.name}! Your City Bike Tours ${routeId ?? "cycling lesson"} booking is confirmed for ${booking.rideDate} (${booking.timeSlot}). Meet at Main Mall, Gaborone. Show your ride pass at check-in: ${ticketUrl} Ref: ${booking.id.slice(0, 8).toUpperCase()}`,
-    whatsappVariables
-  );
+  const confirmation = await createBookingConfirmation({
+    name: user.name,
+    date: booking.rideDate,
+    time: booking.timeSlot,
+    guests: 1,
+    link: ticketUrl,
+  });
+  return notifyBoth(user.phone, confirmation.body, confirmation.whatsappVariables, confirmation.contentSid);
 }

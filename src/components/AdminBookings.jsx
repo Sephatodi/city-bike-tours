@@ -51,20 +51,19 @@ export default function AdminBookings() {
     return result;
   }
 
-  async function updateStatus(resource, id, status) {
+  async function updateStatus(resource, id, status, resendConfirmation = false) {
     setNotice("");
     setError("");
     try {
       const result = await adminFetch(`/api/admin/${resource}/${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...(resendConfirmation ? { resendConfirmation: true } : {}) }),
       }, "Could not update status.");
       if (status === "confirmed" && result.notifications) {
-        const { whatsapp, sms } = result.notifications;
-        setNotice(whatsapp && sms
-          ? "Booking confirmed. The ride pass was sent by WhatsApp and SMS."
-          : `Booking confirmed. Pass delivery: WhatsApp ${whatsapp ? "sent" : "unavailable"}, SMS ${sms ? "sent" : "unavailable"}.`);
+        setNotice(result.notifications.whatsapp
+          ? "Booking confirmed. The unique ride pass was sent by WhatsApp."
+          : "Booking confirmed, but WhatsApp delivery failed. Check the Twilio WhatsApp configuration, then use Resend WhatsApp.");
       } else {
         setNotice("Status updated.");
       }
@@ -276,7 +275,10 @@ export default function AdminBookings() {
             <td><strong>{request.name}</strong><span>{request.notes || "No notes"}</span></td>
             <td>{request.routeId}</td><td>{request.rideDate}</td><td>{request.riders}</td><td>{request.phone}</td>
             <td><select aria-label={`Status for ${request.name}`} value={request.status} onChange={(event) => updateStatus("booking-requests", request.id, event.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option></select></td>
-            <td><button type="button" className="admin-action-button" onClick={() => { setError(""); setEditingRequest({ ...request }); }}>Edit</button></td>
+            <td>
+              <button type="button" className="admin-action-button" onClick={() => { setError(""); setEditingRequest({ ...request }); }}>Edit</button>
+              {request.status === "confirmed" && <button type="button" className="admin-action-button" onClick={() => updateStatus("booking-requests", request.id, "confirmed", true)}>Resend WhatsApp</button>}
+            </td>
           </tr>
         ))}</tbody>
       </table>{!data.bookingRequests.length && <p className="admin-empty">No website requests yet.</p>}</div>

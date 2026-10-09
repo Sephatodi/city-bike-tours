@@ -7,6 +7,8 @@ import { newId } from "@/lib/id";
 import { normalizePhone } from "@/lib/phone";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { notify, notifyAdmin } from "@/lib/sms";
+import { getDailyRiderCount } from "@/lib/capacity";
+import { RIDE_CAPACITY } from "@/lib/data";
 
 export async function POST(request) {
   // Each request can trigger WhatsApp/SMS messages that cost money, so throttle per IP.
@@ -27,8 +29,22 @@ export async function POST(request) {
   }
   const { dateIso, ...rest } = parsed.data;
   const phone = normalizePhone(rest.phone);
+  if (!phone) {
+    return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
+  }
 
   try {
+    const booked = await getDailyRiderCount(dateIso);
+    const remaining = Math.max(0, RIDE_CAPACITY - booked);
+    if (rest.riders > remaining) {
+      return NextResponse.json({
+        error: remaining === 0
+          ? "This date is fully booked. Please choose another date."
+          : `Only ${remaining} rider${remaining === 1 ? "" : "s"} remain available for this date.`,
+        remaining,
+      }, { status: 409 });
+    }
+
     const [created] = await db
       .insert(bookingRequests)
       .values({ id: newId(), ...rest, phone, rideDate: dateIso, status: "pending" })

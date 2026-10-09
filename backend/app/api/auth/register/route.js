@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { registerSchema } from "@/lib/validators";
 import { newId } from "@/lib/id";
+import { normalizePhone } from "@/lib/phone";
 
 export async function POST(request) {
   let body;
@@ -19,6 +20,10 @@ export async function POST(request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input." }, { status: 400 });
   }
   const { name, email, password, phone } = parsed.data;
+  const normalizedPhone = phone ? normalizePhone(phone) : "";
+  if (phone && !normalizedPhone) {
+    return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
+  }
 
   const [existing] = await db.select().from(users).where(eq(users.email, email));
   if (existing) {
@@ -29,7 +34,7 @@ export async function POST(request) {
 
   const [created] = await db
     .insert(users)
-    .values({ id: newId(), name, email, phone: phone || null, passwordHash, provider: "credentials" })
+    .values({ id: newId(), name, email, phone: normalizedPhone || null, passwordHash, provider: "credentials" })
     .returning({ id: users.id, name: users.name, email: users.email });
 
   return NextResponse.json({ user: created }, { status: 201 });
