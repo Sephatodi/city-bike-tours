@@ -204,7 +204,7 @@ This is different from the Vite site’s public request flow, which stores a pen
 | `GET /api/tickets/:token` | Return public details for a confirmed signed pass |
 | `POST /api/webhooks/whatsapp` | Twilio inbound WhatsApp webhook; replies with the sender’s latest request status |
 
-Public website endpoints, including availability, use CORS configured through `FRONTEND_ORIGIN`. Set it to the exact website origin (scheme and hostname, no path or trailing slash); multiple origins can be comma-separated. Admin APIs are session-protected and are not opened to the public website by that CORS middleware.
+Public website endpoints, including availability, use CORS configured through `FRONTEND_ORIGIN` and `PUBLIC_FRONTEND_URL`. The production origin `https://city-bike-tours.vercel.app` is allowed by default. Set the environment variables to exact additional website origins (scheme and hostname, no path or trailing slash); multiple origins can be comma-separated. Admin APIs are session-protected and are not opened to the public website by that CORS middleware.
 
 ## 6. Data and integrations
 

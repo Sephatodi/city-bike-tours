@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 
+const DEFAULT_FRONTEND_ORIGIN = "https://city-bike-tours.vercel.app";
+
 // FRONTEND_ORIGIN may list several origins, comma separated (e.g. production + preview).
 function allowedOrigins() {
-  return (process.env.FRONTEND_ORIGIN || "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
+  const configured = [process.env.FRONTEND_ORIGIN, process.env.PUBLIC_FRONTEND_URL]
+    .filter(Boolean)
+    .flatMap((origins) => origins.split(","))
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
+  return new Set([DEFAULT_FRONTEND_ORIGIN, ...configured]);
 }
 
 function corsHeaders(origin) {
@@ -17,7 +25,7 @@ function corsHeaders(origin) {
 
 export function middleware(request) {
   const origin = request.headers.get("origin");
-  const allowed = origin && allowedOrigins().includes(origin);
+  const allowed = origin && allowedOrigins().has(origin);
 
   if (request.method === "OPTIONS") {
     if (!allowed) return new NextResponse(null, { status: 403 });
