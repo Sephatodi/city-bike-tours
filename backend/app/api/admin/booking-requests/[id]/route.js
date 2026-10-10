@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookingRequests, companyRoutesConfig, infobipSmsLogs } from "@/db/schema";
+import { bookingRequests, infobipSmsLogs } from "@/db/schema";
 import { bookingRequestUpdateSchema } from "@/lib/validators";
 import { isAdmin } from "@/lib/admin";
 import { notify, sendWhatsAppMessage } from "@/lib/sms";
@@ -16,6 +16,24 @@ const MESSAGES = {
   declined: "could not be accommodated. Please contact us to pick another date.",
   cancelled: "has been CANCELLED. Contact us if this is a mistake.",
 };
+
+async function sendLoggedWhatsApp({ bookingRequestId, recipient, message, variables, contentSid, mediaUrl }) {
+  const [log] = await db.insert(infobipSmsLogs).values({
+    bookingRequestId,
+    provider: "twilio",
+    channel: "whatsapp",
+    recipient,
+    message,
+    status: "QUEUED",
+  }).returning({ id: infobipSmsLogs.id });
+
+  const delivery = await sendWhatsAppMessage(recipient, message, variables, contentSid, mediaUrl);
+  await db.update(infobipSmsLogs)
+    .set({ messageId: delivery.messageId, status: delivery.status, statusUpdatedAt: new Date() })
+    .where(and(eq(infobipSmsLogs.id, log.id), eq(infobipSmsLogs.status, "QUEUED")));
+
+  return delivery;
+}
 
 export async function PATCH(request, { params }) {
   if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
@@ -72,7 +90,6 @@ export async function PATCH(request, { params }) {
   let ticketUrl = null;
 
   if (updated.status === "confirmed" && (current.status !== "confirmed" || resendConfirmation)) {
-    const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, updated.routeId));
     const ridePassToken = createRidePassToken(updated.id);
     ticketUrl = createRidePassUrl(ridePassToken, request.url);
     const qrImageUrl = createRidePassQrUrl(ridePassToken, request.url);
@@ -85,32 +102,34 @@ export async function PATCH(request, { params }) {
       link: ticketUrl,
     });
     const qrTemplateSid = process.env.TWILIO_WHATSAPP_QR_CONTENT_SID;
-    const whatsappVariables = qrTemplateSid
-      ? { ...confirmation.whatsappVariables, "6": qrImageUrl }
-      : confirmation.whatsappVariables;
-    const messageLog = await db.insert(infobipSmsLogs).values({
+    const confirmationDelivery = await sendLoggedWhatsApp({
       bookingRequestId: updated.id,
-      provider: "twilio",
-      channel: "whatsapp",
       recipient: updated.phone,
       message: confirmation.body,
-      status: "QUEUED",
-    }).returning({ id: infobipSmsLogs.id });
-    const delivery = await sendWhatsAppMessage(
-      updated.phone,
-      confirmation.body,
-      whatsappVariables,
-      qrTemplateSid,
-      qrTemplateSid ? qrImageUrl : qrImageUrl,
-    );
-    await db.update(infobipSmsLogs)
-      .set({ messageId: delivery.messageId, status: delivery.status, statusUpdatedAt: new Date() })
-      .where(and(eq(infobipSmsLogs.id, messageLog[0].id), eq(infobipSmsLogs.status, "QUEUED")));
+      variables: confirmation.whatsappVariables,
+      contentSid: confirmation.contentSid,
+    });
+    const qrVariables = { ...confirmation.whatsappVariables, "6": qrImageUrl };
+    const qrMessage = `Your City Bike Tours ride pass QR code is attached. Please show it when you arrive. Ref: ${updated.id.slice(0, 8)}.`;
+    const qrDelivery = confirmationDelivery.sent
+      ? await sendLoggedWhatsApp({
+        bookingRequestId: updated.id,
+        recipient: updated.phone,
+        message: qrMessage,
+        variables: qrVariables,
+        contentSid: qrTemplateSid,
+        mediaUrl: qrImageUrl,
+      })
+      : { sent: false, messageId: null, status: "SKIPPED" };
     notifications = {
-      whatsapp: delivery.sent,
-      messageId: delivery.messageId,
-      status: delivery.status,
-      template: qrTemplateSid ? "QR" : confirmation.templateKey,
+      whatsapp: confirmationDelivery.sent,
+      messageId: confirmationDelivery.messageId,
+      status: confirmationDelivery.status,
+      template: confirmation.templateKey,
+      qrWhatsapp: qrDelivery.sent,
+      qrMessageId: qrDelivery.messageId,
+      qrStatus: qrDelivery.status,
+      qrTemplate: qrTemplateSid ? "QR" : "MEDIA",
     };
   }
 
