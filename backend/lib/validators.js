@@ -94,7 +94,6 @@ export const siteContentSchema = z.object({
   }
 });
 
-
 export const siteContentUpdateSchema = z.object({
   title: z.string().trim().min(1).max(255).optional(),
   mediaUrl: z.string().trim().url().max(2000).optional().or(z.literal("")),
@@ -105,4 +104,76 @@ export const siteContentUpdateSchema = z.object({
 
 export const aiDraftSchema = z.object({
   prompt: z.string().trim().min(3, "Give the AI a topic or brief.").max(1000),
+});
+
+export const adminUserSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  email: z.string().trim().toLowerCase().email("Enter a valid email."),
+  adminRole: z.enum(["super_admin", "editor", "viewer"]),
+  teamId: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+  password: z.string().min(8).optional(),
+});
+
+export const adminUserUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  adminRole: z.enum(["super_admin", "editor", "viewer"]).optional(),
+  teamId: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+  password: z.string().min(8).optional(),
+}).refine((v) => Object.keys(v).length > 0, "Nothing to update.");
+
+export const teamSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(500).optional(),
+  permissions: z.record(z.unknown()).default({}),
+});
+
+export const siteSettingsSchema = z.object({
+  key: z.string().trim().min(1).max(100),
+  value: z.unknown(),
+  description: z.string().trim().max(500).optional(),
+  category: z.string().trim().min(1).max(50).default("general"),
+  isPublic: z.boolean().default(false),
+});
+
+export const seoSettingsSchema = z.object({
+  pagePath: z.string().trim().min(1).max(255),
+  metaTitle: z.string().trim().max(60).optional(),
+  metaDescription: z.string().trim().max(160).optional(),
+  metaKeywords: z.string().trim().max(255).optional(),
+  ogTitle: z.string().trim().max(60).optional(),
+  ogDescription: z.string().trim().max(160).optional(),
+  ogImage: z.string().trim().url().optional().or(z.literal("")),
+  twitterCard: z.string().trim().max(50).optional(),
+  canonicalUrl: z.string().trim().url().optional().or(z.literal("")),
+  robotsTxt: z.string().trim().max(5000).optional(),
+  structuredData: z.record(z.unknown()).optional(),
+});
+
+export const integrationSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  name: z.string().trim().min(1).max(100),
+  type: z.string().trim().min(1).max(50),
+  config: z.record(z.unknown()).default({}),
+  isEnabled: z.boolean().default(false),
+});
+
+export const backupSchema = z.object({
+  type: z.enum(["database", "files", "full"]),
+});
+
+export const securitySettingsSchema = z.object({
+  key: z.string().trim().min(1).max(100),
+  value: z.unknown(),
+  description: z.string().trim().max(500).optional(),
+});
+
+export const softwareUpdateSchema = z.object({
+  component: z.string().trim().min(1).max(100),
+  currentVersion: z.string().trim().min(1).max(50),
+  latestVersion: z.string().trim().max(50).optional(),
+  status: z.enum(["unknown", "available", "updating", "updated", "error"]).default("unknown"),
+  releaseNotes: z.string().trim().max(5000).optional(),
+  downloadUrl: z.string().trim().url().optional().or(z.literal("")),
 });
