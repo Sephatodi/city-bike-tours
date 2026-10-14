@@ -7,10 +7,11 @@ import { bookings, users } from "@/db/schema";
 import { bookingSchema } from "@/lib/validators";
 import { validateBooking } from "@/lib/booking-rules";
 import { computePrice } from "@/lib/pricing";
-import { RIDE_CAPACITY } from "@/lib/data";
+import { getDailyCapacity } from "@/lib/settings";
 import { newId } from "@/lib/id";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
-import { sendBookingConfirmation } from "@/lib/sms";
+import { buildWaLink, logWaMessage } from "@/lib/wa";
+import { createBookingConfirmation } from "@/lib/confirmation";
 import { getDailyRiderCount } from "@/lib/capacity";
 
 export async function GET() {
@@ -55,7 +56,7 @@ export async function POST(request) {
   }
 
   const booked = await getDailyRiderCount(dateIso);
-  if (booked >= RIDE_CAPACITY) {
+  if (booked >= (await getDailyCapacity())) {
     return NextResponse.json({ error: "That date is fully booked. Pick another date." }, { status: 409 });
   }
 
@@ -78,11 +79,23 @@ export async function POST(request) {
 
   const ticketUrl = createRidePassUrl(createRidePassToken(created.id, "booking"), request.url);
   const [bookingUser] = await db.select({ name: users.name, phone: users.phone }).from(users).where(eq(users.id, session.user.id));
-  const notifications = await sendBookingConfirmation({
-    user: bookingUser,
-    booking: created,
-    ticketUrl,
+  const confirmation = await createBookingConfirmation({
+    name: bookingUser.name,
+    date: created.rideDate,
+    time: created.timeSlot,
+    guests: 1,
+    link: ticketUrl,
   });
+  const waLink = buildWaLink(bookingUser.phone, confirmation.body);
+  let notifications = { whatsapp: false, sms: false };
+  if (waLink) {
+    notifications = { whatsapp: true, sms: false };
+    await logWaMessage(db, (await import("@/db/schema")).infobipSmsLogs, {
+      bookingId: created.id,
+      recipient: bookingUser.phone,
+      message: confirmation.body,
+    });
+  }
 
-  return NextResponse.json({ booking: created, notifications }, { status: 201 });
+  return NextResponse.json({ booking: created, notifications, waLink, ticketUrl }, { status: 201 });
 }

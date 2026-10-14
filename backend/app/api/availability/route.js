@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDailyRiderCount } from "@/lib/capacity";
-import { RIDE_CAPACITY } from "@/lib/data";
+import { getDailyCapacity } from "@/lib/settings";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -17,12 +17,13 @@ export async function GET(request) {
 
   const booked = await getDailyRiderCount(dateIso);
 
-  const remaining = Math.max(0, RIDE_CAPACITY - booked);
+  const capacity = await getDailyCapacity();
+  const remaining = Math.max(0, capacity - booked);
 
   return NextResponse.json({
     date: dateIso,
     timeSlot,
-    capacity: RIDE_CAPACITY,
+    capacity,
     booked,
     remaining,
     full: remaining === 0,

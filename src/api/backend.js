@@ -1,4 +1,5 @@
 export const BACKEND_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
+export const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_BASE_URL?.replace(/\/+$/, "") ?? "";
 
 export function backendUrl(path) {
   return `${BACKEND_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;

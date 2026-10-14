@@ -2,18 +2,23 @@ import { NextResponse } from "next/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingRequests, bookings, companyRoutesConfig, users } from "@/db/schema";
-import { isAdmin } from "@/lib/admin";
-import { verifyRidePassToken } from "@/lib/ride-pass";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
+import { createRidePassToken, verifyRidePassToken } from "@/lib/ride-pass";
 
 function gaboroneDate() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Gaborone" }).format(new Date());
 }
 
 export async function POST(request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("checkin:write");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
 
   const body = await request.json().catch(() => null);
-  const pass = verifyRidePassToken(body?.token);
+  // Staff can check someone in by scanning/pasting their pass, or straight from the manifest by booking id.
+  const manual = body?.id && ["request", "booking"].includes(body?.type) ? createRidePassToken(String(body.id), body.type) : null;
+  const pass = verifyRidePassToken(body?.token || manual);
   if (!pass) return NextResponse.json({ error: "This QR pass is not valid." }, { status: 400 });
 
   let booking;
@@ -60,6 +65,7 @@ export async function POST(request) {
   const [route] = checkedIn.routeId
     ? await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, checkedIn.routeId))
     : [];
+  await logAudit(staff, "checkin", `Checked in ${pass.type === "booking" ? booking.name : checkedIn.name} (${checkedIn.id.slice(0, 8).toUpperCase()})`, { targetType: pass.type, targetId: checkedIn.id });
   return NextResponse.json({
     ticket: {
       reference: checkedIn.id.slice(0, 8).toUpperCase(),

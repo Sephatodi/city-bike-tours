@@ -32,7 +32,6 @@ export default function Nav() {
         backdropFilter: solid ? "blur(12px)" : "none",
       }}
     >
-      <div className="h-1 tribal-border" />
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <BikeSVG size={36} color="#D4A017" />

@@ -31,5 +31,5 @@ export function middleware(request) {
 
 // Public endpoints used by the Vite site. Admin APIs are NOT listed: they stay same-origin + session-protected.
 export const config = {
-  matcher: ["/api/booking-requests", "/api/health", "/api/routes-config", "/api/content", "/api/availability", "/api/tickets/:path*"],
+  matcher: ["/api/booking-requests", "/api/health", "/api/track", "/api/enquiries", "/api/reviews", "/api/subscribe", "/api/seo", "/api/routes-config", "/api/content", "/api/settings", "/api/availability", "/api/tickets/:path*", "/api/messages/inbox"],
 };

@@ -1,73 +1,71 @@
 import { NextResponse } from "next/server";
 import { desc, eq, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 import { db } from "@/db/client";
-import { users, teams } from "@/db/schema";
-import { adminUserSchema, adminUserUpdateSchema } from "@/lib/validators";
-import { isAdmin, getAdminSession, requirePermission } from "@/lib/admin";
+import { bookings, users } from "@/db/schema";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
+import { userCreateSchema } from "@/lib/validators";
+import { normalizePhone } from "@/lib/phone";
+import { newId } from "@/lib/id";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
-  requirePermission(session, "users:read");
+  const guard = await requirePermission("users:read");
+  if (guard.error) return guard.error;
 
-  try {
-    const adminUsers = await db.select({
+  const rows = await db
+    .select({
       id: users.id,
       name: users.name,
       email: users.email,
       phone: users.phone,
-      image: users.image,
-      provider: users.provider,
       role: users.role,
-      adminRole: users.adminRole,
-      teamId: users.teamId,
-      isActive: users.isActive,
-      lastLoginAt: users.lastLoginAt,
+      status: users.status,
+      team: users.team,
       mfaEnabled: users.mfaEnabled,
+      provider: users.provider,
       createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      teamName: teams.name,
+      bookingCount: sql`(SELECT COUNT(*)::int FROM ${bookings} WHERE ${bookings.userId} = ${users.id})`,
     })
-      .from(users)
-      .leftJoin(teams, eq(users.teamId, teams.id))
-      .where(eq(users.role, "admin"))
-      .orderBy(desc(users.createdAt));
+    .from(users)
+    .orderBy(desc(users.createdAt));
 
-    return NextResponse.json({ users: adminUsers });
-  } catch (error) {
-    console.error("Admin users query failed:", error);
-    return NextResponse.json({ error: "Failed to load users." }, { status: 503 });
-  }
+  return NextResponse.json({ users: rows });
 }
 
 export async function POST(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
-  requirePermission(session, "users:create");
+  const guard = await requirePermission("users:write");
+  if (guard.error) return guard.error;
 
-  const parsed = adminUserSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid user data." }, { status: 400 });
+  const parsed = userCreateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid user." }, { status: 400 });
 
-  const { password, ...userData } = parsed.data;
+  const { name, email, phone, role, password, team } = parsed.data;
+  const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+  if (existing) return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
 
-  try {
-    const [existing] = await db.select().from(users).where(eq(users.email, userData.email)).limit(1);
-    if (existing) return NextResponse.json({ error: "Email already in use." }, { status: 409 });
-
-    const crypto = await import("crypto");
-    const bcrypt = await import("bcryptjs");
-    const passwordHash = password ? await bcrypt.hash(password, 12) : null;
-
-    const [created] = await db.insert(users).values({
-      id: crypto.randomUUID(),
-      ...userData,
-      role: "admin",
-      passwordHash,
-    }).returning();
-
-    return NextResponse.json({ user: created }, { status: 201 });
-  } catch (error) {
-    console.error("Admin user create failed:", error);
-    return NextResponse.json({ error: "Failed to create user." }, { status: 503 });
+  let normalizedPhone = null;
+  if (phone) {
+    normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
   }
+
+  const plain = password || randomBytes(9).toString("base64url");
+  const [created] = await db.insert(users).values({
+    id: newId(),
+    name,
+    email,
+    phone: normalizedPhone,
+    passwordHash: await bcrypt.hash(plain, 10),
+    provider: "credentials",
+    role,
+    team: team || null,
+  }).returning({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status });
+
+  await logAudit(guard.staff, "user.create", `Created ${role} account for ${name} (${email})`, { targetType: "user", targetId: created.id });
+  // A generated password is shown once, in this response only.
+  return NextResponse.json({ user: created, tempPassword: password ? null : plain }, { status: 201 });
 }

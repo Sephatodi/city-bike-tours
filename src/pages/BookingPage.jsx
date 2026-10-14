@@ -140,10 +140,10 @@ export default function BookingPage() {
             >
               ✓
             </div>
-            <h2 className="font-display font-bold text-4xl mb-4" style={{ color: "#F5EDD9" }}>Booking Received!</h2>
+            <h2 className="font-display font-bold text-4xl mb-4" style={{ color: "#F5EDD9" }}>Booking Request Received!</h2>
             <p className="text-base mb-2" style={{ color: "rgba(245,237,217,0.7)" }}>
-              Your request for <strong style={{ color: "#D4A017" }}>{selectedRoute.name}</strong> has been saved. We'll confirm it for{" "}
-              {riders} rider{riders > 1 ? "s" : ""} via WhatsApp or phone within a few hours.
+              Your request for <strong style={{ color: "#D4A017" }}>{selectedRoute.name}</strong> has been saved.
+              We'll confirm it for {riders} rider{riders > 1 ? "s" : ""} via WhatsApp or phone within a few hours.
             </p>
             <p className="text-xs mb-2" style={{ color: "rgba(245,237,217,0.45)" }}>
               Request reference: {requestId}
@@ -151,7 +151,8 @@ export default function BookingPage() {
             <p className="text-base mb-10" style={{ color: "rgba(245,237,217,0.7)" }}>
               Total of <strong style={{ color: "#C1440E" }}>P{total}</strong> is payable on the day at Main Mall.
             </p>
-            <div className="flex gap-4 justify-center">
+
+            <div className="flex gap-4 justify-center mt-10">
               <button
                 onClick={() => setSubmitted(false)}
                 className="px-6 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"

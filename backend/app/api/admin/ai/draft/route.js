@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { aiDraftSchema } from "@/lib/validators";
-import { isAdmin } from "@/lib/admin";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 // Drafts article text for the admin to review and edit before publishing.
 export async function POST(request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("content:write");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "AI drafting is not configured (set ANTHROPIC_API_KEY)." }, { status: 501 });
   }

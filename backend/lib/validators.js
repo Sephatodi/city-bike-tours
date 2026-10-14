@@ -94,6 +94,7 @@ export const siteContentSchema = z.object({
   }
 });
 
+
 export const siteContentUpdateSchema = z.object({
   title: z.string().trim().min(1).max(255).optional(),
   mediaUrl: z.string().trim().url().max(2000).optional().or(z.literal("")),
@@ -106,74 +107,31 @@ export const aiDraftSchema = z.object({
   prompt: z.string().trim().min(3, "Give the AI a topic or brief.").max(1000),
 });
 
-export const adminUserSchema = z.object({
-  name: z.string().trim().min(1).max(160),
+export const staffRoleSchema = z.enum(["customer", "viewer", "editor", "admin"]);
+
+export const userCreateSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name.").max(160),
   email: z.string().trim().toLowerCase().email("Enter a valid email."),
-  adminRole: z.enum(["super_admin", "editor", "viewer"]),
-  teamId: z.string().optional().nullable(),
-  isActive: z.boolean().default(true),
-  password: z.string().min(8).optional(),
+  phone: z.string().trim().max(30).optional().or(z.literal("")),
+  role: staffRoleSchema,
+  team: z.string().trim().max(60).optional().or(z.literal("")),
+  password: z.string().min(12, "Use at least 12 characters, or leave blank to generate one.").max(100).optional().or(z.literal("")),
 });
 
-export const adminUserUpdateSchema = z.object({
+export const userUpdateSchema = z.object({
   name: z.string().trim().min(1).max(160).optional(),
-  adminRole: z.enum(["super_admin", "editor", "viewer"]).optional(),
-  teamId: z.string().optional().nullable(),
-  isActive: z.boolean().optional(),
-  password: z.string().min(8).optional(),
+  phone: z.string().trim().max(30).optional(),
+  role: staffRoleSchema.optional(),
+  status: z.enum(["active", "suspended"]).optional(),
+  team: z.string().trim().max(60).optional(),
+  resetPassword: z.boolean().optional(),
+  resetMfa: z.boolean().optional(),
+  changePassword: z.string().min(12, "Use at least 12 characters.").max(100).optional(),
 }).refine((v) => Object.keys(v).length > 0, "Nothing to update.");
 
-export const teamSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-  description: z.string().trim().max(500).optional(),
-  permissions: z.record(z.unknown()).default({}),
-});
-
-export const siteSettingsSchema = z.object({
-  key: z.string().trim().min(1).max(100),
-  value: z.unknown(),
-  description: z.string().trim().max(500).optional(),
-  category: z.string().trim().min(1).max(50).default("general"),
-  isPublic: z.boolean().default(false),
-});
-
-export const seoSettingsSchema = z.object({
-  pagePath: z.string().trim().min(1).max(255),
-  metaTitle: z.string().trim().max(60).optional(),
-  metaDescription: z.string().trim().max(160).optional(),
-  metaKeywords: z.string().trim().max(255).optional(),
-  ogTitle: z.string().trim().max(60).optional(),
-  ogDescription: z.string().trim().max(160).optional(),
-  ogImage: z.string().trim().url().optional().or(z.literal("")),
-  twitterCard: z.string().trim().max(50).optional(),
-  canonicalUrl: z.string().trim().url().optional().or(z.literal("")),
-  robotsTxt: z.string().trim().max(5000).optional(),
-  structuredData: z.record(z.unknown()).optional(),
-});
-
-export const integrationSchema = z.object({
-  id: z.string().trim().min(1).max(100),
-  name: z.string().trim().min(1).max(100),
-  type: z.string().trim().min(1).max(50),
-  config: z.record(z.unknown()).default({}),
-  isEnabled: z.boolean().default(false),
-});
-
-export const backupSchema = z.object({
-  type: z.enum(["database", "files", "full"]),
-});
-
-export const securitySettingsSchema = z.object({
-  key: z.string().trim().min(1).max(100),
-  value: z.unknown(),
-  description: z.string().trim().max(500).optional(),
-});
-
-export const softwareUpdateSchema = z.object({
-  component: z.string().trim().min(1).max(100),
-  currentVersion: z.string().trim().min(1).max(50),
-  latestVersion: z.string().trim().max(50).optional(),
-  status: z.enum(["unknown", "available", "updating", "updated", "error"]).default("unknown"),
-  releaseNotes: z.string().trim().max(5000).optional(),
-  downloadUrl: z.string().trim().url().optional().or(z.literal("")),
+export const broadcastSchema = z.object({
+  audience: z.enum(["riders", "subscribers"]).default("riders"),
+  rideDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a ride date.").optional(),
+  message: z.string().trim().min(5, "Write a message of at least 5 characters.").max(600, "Keep the message under 600 characters."),
+  dryRun: z.boolean().optional(),
 });

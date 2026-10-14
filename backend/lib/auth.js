@@ -7,6 +7,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { newId } from "@/lib/id";
+import { ipFromHeaders, isIpBlocked, openSecret, recentFailures, recordAttempt, verifyTotp } from "@/lib/security";
+import { getSettings } from "@/lib/settings";
 
 const providers = [
   CredentialsProvider({
@@ -14,17 +16,34 @@ const providers = [
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
+      code: { label: "Authenticator code", type: "text" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, req) {
       if (!credentials?.email || !credentials?.password) return null;
 
       const email = credentials.email.trim().toLowerCase();
+      const ip = ipFromHeaders(req?.headers);
+      const fail = async (reason) => { await recordAttempt({ email, ip, success: false, reason }); return null; };
+
+      if (await isIpBlocked(ip)) return fail("blocked_ip");
+
+      // Too many recent failures for this email: stop checking passwords for a while.
+      const { maxFailedLogins } = await getSettings();
+      if ((await recentFailures(email)) >= (parseInt(maxFailedLogins, 10) || 5)) return fail("locked_out");
+
       const [user] = await db.select().from(users).where(eq(users.email, email));
-      if (!user || !user.passwordHash) return null;
+      if (!user || !user.passwordHash) return fail("unknown_account");
+      if (user.status === "suspended") return fail("suspended");
 
       const valid = await bcrypt.compare(credentials.password, user.passwordHash);
-      if (!valid) return null;
+      if (!valid) return fail("wrong_password");
 
+      if (user.mfaEnabled) {
+        if (!credentials.code) throw new Error("MFA_REQUIRED");
+        if (!verifyTotp(openSecret(user.mfaSecret), credentials.code)) return fail("wrong_code");
+      }
+
+      await recordAttempt({ email, ip, success: true });
       return { id: user.id, name: user.name, email: user.email, image: user.image, role: user.role };
     },
   }),
@@ -87,6 +106,7 @@ export const authOptions = {
           .update(users)
           .set({ name: user.name ?? existing.name, image: user.image ?? existing.image })
           .where(eq(users.id, existing.id));
+        if (existing.status === "suspended") return false;
         user.id = existing.id;
         user.role = existing.role;
       } else {
@@ -108,6 +128,7 @@ export const authOptions = {
       if (user?.id) {
         token.id = user.id;
         token.role = user.role;
+        token.loginAt = Date.now(); // used for the session-length rule in Settings
       }
       return token;
     },
@@ -115,7 +136,10 @@ export const authOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.loginAt = token.loginAt;
         session.user.isAdmin = token.role === "admin";
+        // viewer / editor / admin may open the dashboard; each request is re-checked against the database.
+        session.user.isStaff = ["viewer", "editor", "admin"].includes(token.role);
       }
       return session;
     },

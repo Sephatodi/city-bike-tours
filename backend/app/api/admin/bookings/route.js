@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
-import { isAdmin } from "@/lib/admin";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/db/client";
 import { bookings, users } from "@/db/schema";
 
 export async function GET() {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("bookings:read");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
 
   const rows = await db
     .select({

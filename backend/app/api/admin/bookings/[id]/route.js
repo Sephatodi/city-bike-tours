@@ -3,9 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookings, users } from "@/db/schema";
 import { bookingStatusSchema } from "@/lib/validators";
-import { isAdmin } from "@/lib/admin";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
-import { notify, notifyWhatsApp } from "@/lib/sms";
+import { buildWaLink, logWaMessage } from "@/lib/wa";
 import { createBookingConfirmation } from "@/lib/confirmation";
 
 const MESSAGES = {
@@ -13,7 +14,9 @@ const MESSAGES = {
 };
 
 export async function PATCH(request, { params }) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("bookings:write");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
 
   const parsed = bookingStatusSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid booking status." }, { status: 400 });
@@ -43,13 +46,31 @@ export async function PATCH(request, { params }) {
       guests: 1,
       link: ticketUrl,
     });
+    const waLink = buildWaLink(current.phone, confirmation.body);
+    if (waLink) {
+      await logWaMessage(db, (await import("@/db/schema")).infobipSmsLogs, {
+        bookingId: updated.id,
+        recipient: current.phone,
+        message: confirmation.body,
+      });
+    }
     notifications = {
-      whatsapp: await notifyWhatsApp(current.phone, confirmation.body, confirmation.whatsappVariables, confirmation.contentSid),
+      whatsapp: !!waLink,
       template: confirmation.templateKey,
+      waLink,
     };
   } else if (current.status !== updated.status && MESSAGES[updated.status]) {
-    await notify(current.phone, `City Bike Tours: your ${updated.rideDate} booking ${MESSAGES[updated.status]} Ref: ${updated.id.slice(0, 8)}`);
+    const msg = `City Bike Tours: your ${updated.rideDate} booking ${MESSAGES[updated.status]} Ref: ${updated.id.slice(0, 8)}`;
+    const waLink = buildWaLink(current.phone, msg);
+    if (waLink) {
+      await logWaMessage(db, (await import("@/db/schema")).infobipSmsLogs, {
+        bookingId: updated.id,
+        recipient: current.phone,
+        message: msg,
+      });
+    }
   }
 
+  await logAudit(staff, `booking.${updated.status}`, `Set ${current.name}'s account booking for ${updated.rideDate} to ${updated.status}`, { targetType: "booking", targetId: updated.id });
   return NextResponse.json({ booking: updated, notifications, ticketUrl });
 }

@@ -1,84 +1,60 @@
 import { NextResponse } from "next/server";
-import { sql, desc } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, gte, isNotNull, like, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookings, bookingRequests, users, siteContent, systemLogs } from "@/db/schema";
-import { getAdminSession, requirePermission } from "@/lib/admin";
+import { bookingRequests, pageViews } from "@/db/schema";
+import { requirePermission } from "@/lib/rbac";
 
-export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
-  requirePermission(session, "analytics:read");
+export const dynamic = "force-dynamic";
 
-  try {
-    const [
-      totalUsers,
-      totalBookings,
-      totalRequests,
-      totalContent,
-      recentUsers,
-      recentBookings,
-      bookingsByMonth,
-      requestsByStatus,
-      bookingsByRoute,
-      trafficSources,
-    ] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(users),
-      db.select({ count: sql<number>`count(*)` }).from(bookings),
-      db.select({ count: sql<number>`count(*)` }).from(bookingRequests),
-      db.select({ count: sql<number>`count(*)` }).from(siteContent),
-      db.select({ id: users.id, name: users.name, email: users.email, createdAt: users.createdAt, adminRole: users.adminRole })
-        .from(users)
-        .orderBy(desc(users.createdAt))
-        .limit(10),
-      db.select({ id: bookings.id, userId: bookings.userId, rideDate: bookings.rideDate, status: bookings.status, createdAt: bookings.createdAt })
-        .from(bookings)
-        .orderBy(desc(bookings.createdAt))
-        .limit(10),
-      db.execute(sql`
-        SELECT to_char(date_trunc('month', to_date(ride_date, 'YYYY-MM-DD')), 'YYYY-MM') AS month,
-               COUNT(*)::int AS bookings,
-               SUM(CASE WHEN category = 'weekday' THEN 1 ELSE 0 END)::int AS weekday,
-               SUM(CASE WHEN category = 'saturday' THEN 1 ELSE 0 END)::int AS saturday,
-               SUM(CASE WHEN category = 'holiday' THEN 1 ELSE 0 END)::int AS holiday
-        FROM bookings
-        WHERE to_date(ride_date, 'YYYY-MM-DD') >= date_trunc('month', CURRENT_DATE) - INTERVAL '11 months'
-        GROUP BY 1
-        ORDER BY 1
-      `),
-      db.execute(sql`
-        SELECT status, COUNT(*)::int AS count
-        FROM website_booking_requests
-        GROUP BY status
-      `),
-      db.execute(sql`
-        SELECT COALESCE(route_id, 'lesson') AS route, COUNT(*)::int AS count
-        FROM bookings
-        GROUP BY route_id
-      `),
-      db.execute(sql`
-        SELECT provider, COUNT(*)::int AS count
-        FROM users
-        WHERE provider IS NOT NULL
-        GROUP BY provider
-      `),
-    ]);
+const gaboroneDay = (offset = 0) => {
+  const d = new Date(Date.now() - offset * 86400000);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Gaborone" }).format(d);
+};
 
-    return NextResponse.json({
-      overview: {
-        totalUsers: totalUsers[0]?.count || 0,
-        totalBookings: totalBookings[0]?.count || 0,
-        totalRequests: totalRequests[0]?.count || 0,
-        totalContent: totalContent[0]?.count || 0,
-      },
-      recentUsers,
-      recentBookings,
-      bookingsByMonth: bookingsByMonth.rows,
-      requestsByStatus: requestsByStatus.rows,
-      bookingsByRoute: bookingsByRoute.rows,
-      trafficSources: trafficSources.rows,
-    });
-  } catch (error) {
-    console.error("Admin analytics query failed:", error);
-    return NextResponse.json({ error: "Failed to load analytics." }, { status: 503 });
-  }
+// GET /api/admin/analytics?days=7|30|90
+export async function GET(request) {
+  const guard = await requirePermission("analytics:read");
+  if (guard.error) return guard.error;
+
+  const days = [7, 30, 90].includes(Number(new URL(request.url).searchParams.get("days"))) ? Number(new URL(request.url).searchParams.get("days")) : 30;
+  const since = gaboroneDay(days - 1);
+  const inRange = gte(pageViews.day, since);
+
+  const [daily, pages, referrers, devices, sessions, bookPage, requests] = await Promise.all([
+    db.select({ day: pageViews.day, views: count(), visitors: countDistinct(pageViews.visitor) }).from(pageViews).where(inRange).groupBy(pageViews.day).orderBy(pageViews.day),
+    db.select({ path: pageViews.path, views: count(), visitors: countDistinct(pageViews.visitor) }).from(pageViews).where(inRange).groupBy(pageViews.path).orderBy(desc(count())).limit(8),
+    db.select({ name: pageViews.referrer, views: count() }).from(pageViews).where(and(inRange, isNotNull(pageViews.referrer))).groupBy(pageViews.referrer).orderBy(desc(count())).limit(6),
+    db.select({ name: pageViews.device, views: count() }).from(pageViews).where(inRange).groupBy(pageViews.device),
+    db.select({ day: pageViews.day, visitor: pageViews.visitor, n: count() }).from(pageViews).where(inRange).groupBy(pageViews.day, pageViews.visitor),
+    db.select({ n: countDistinct(sql`${pageViews.day} || ${pageViews.visitor}`) }).from(pageViews).where(and(inRange, like(pageViews.path, "/book%"))),
+    db.select({ status: bookingRequests.status, checkedIn: bookingRequests.checkedInAt }).from(bookingRequests).where(gte(bookingRequests.createdAt, new Date(`${since}T00:00:00+02:00`))),
+  ]);
+
+  // Fill days with no visits so the chart doesn't skip them.
+  const byDay = Object.fromEntries(daily.map((d) => [d.day, d]));
+  const series = Array.from({ length: days }, (_, i) => {
+    const day = gaboroneDay(days - 1 - i);
+    return { day, views: Number(byDay[day]?.views ?? 0), visitors: Number(byDay[day]?.visitors ?? 0) };
+  });
+
+  const totalViews = series.reduce((s, d) => s + d.views, 0);
+  const visits = sessions.length; // one visit per visitor per day
+  const bounced = sessions.filter((s) => Number(s.n) === 1).length;
+  const nums = (rows) => rows.map((r) => ({ ...r, views: Number(r.views), visitors: r.visitors == null ? undefined : Number(r.visitors) }));
+
+  return NextResponse.json({
+    days,
+    totals: { views: totalViews, visitors: visits, bounceRate: visits ? Math.round((bounced / visits) * 100) : 0, viewsPerVisit: visits ? Math.round((totalViews / visits) * 10) / 10 : 0 },
+    series,
+    pages: nums(pages),
+    referrers: nums(referrers),
+    devices: nums(devices),
+    funnel: [
+      { label: "Visited the site", value: visits },
+      { label: "Opened the booking page", value: Number(bookPage[0]?.n ?? 0) },
+      { label: "Sent a booking request", value: requests.length },
+      { label: "Request confirmed", value: requests.filter((r) => r.status === "confirmed").length },
+      { label: "Rode with you (checked in)", value: requests.filter((r) => r.checkedIn).length },
+    ],
+  });
 }

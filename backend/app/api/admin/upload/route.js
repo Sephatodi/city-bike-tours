@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { isAdmin } from "@/lib/admin";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"];
 // Serverless request bodies are capped (~4.5MB on Vercel). For longer videos paste a YouTube/Vimeo link instead.
 const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function POST(request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("content:write");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return NextResponse.json({ error: "File uploads are not configured (set BLOB_READ_WRITE_TOKEN). You can still paste a media URL." }, { status: 501 });
   }

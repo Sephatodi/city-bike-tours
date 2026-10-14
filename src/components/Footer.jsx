@@ -1,12 +1,11 @@
 import { Link } from "react-router";
 import BikeSVG from "./BikeSVG";
 import Icon from "./Icon";
-import { BACKEND_BASE_URL } from "../api/backend";
+import { BACKEND_BASE_URL, ADMIN_BASE_URL } from "../api/backend";
 
 export default function Footer() {
   return (
     <footer style={{ backgroundColor: "#080503" }}>
-      <div className="h-1 tribal-border" />
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-8 mb-10">
           <div className="md:col-span-1">
@@ -65,7 +64,15 @@ export default function Footer() {
         >
           <span>© 2026 City Bike Tours · Gaborone, Botswana</span>
           <span>Built with pride in Botswana 🇧🇼</span>
-          {BACKEND_BASE_URL ? (
+          {ADMIN_BASE_URL ? (
+            <a
+              href={`${ADMIN_BASE_URL}/admin/login`}
+              className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"
+              style={{ borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}
+            >
+              Admin Login
+            </a>
+          ) : BACKEND_BASE_URL ? (
             <a
               href={`${BACKEND_BASE_URL}/admin/login`}
               className="inline-flex items-center justify-center border px-4 py-2 font-semibold transition-colors hover:bg-white/5"

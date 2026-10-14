@@ -3,13 +3,15 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingRequests, companyRoutesConfig, infobipSmsLogs } from "@/db/schema";
 import { bookingRequestUpdateSchema } from "@/lib/validators";
-import { isAdmin } from "@/lib/admin";
-import { notify, sendWhatsAppMessage } from "@/lib/sms";
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
+import { fireWebhook } from "@/lib/webhook";
 import { normalizePhone } from "@/lib/phone";
 import { createRidePassQrUrl, createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { getDailyRiderCount } from "@/lib/capacity";
-import { RIDE_CAPACITY } from "@/lib/data";
+import { getDailyCapacity } from "@/lib/settings";
 import { createBookingConfirmation } from "@/lib/confirmation";
+import { buildWaLink, logWaMessage } from "@/lib/wa";
 
 const MESSAGES = {
   confirmed: "is CONFIRMED. See you at Main Mall!",
@@ -18,7 +20,9 @@ const MESSAGES = {
 };
 
 export async function PATCH(request, { params }) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  const guard = await requirePermission("bookings:write");
+  if (guard.error) return guard.error;
+  const staff = guard.staff;
 
   const parsed = bookingRequestUpdateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid booking request update." }, { status: 400 });
@@ -48,7 +52,8 @@ export async function PATCH(request, { params }) {
 
   if (needsCapacityCheck) {
     const booked = await getDailyRiderCount(nextRideDate, current.id);
-    const remaining = Math.max(0, RIDE_CAPACITY - booked);
+    const capacity = await getDailyCapacity();
+    const remaining = Math.max(0, capacity - booked);
     if (nextRiders > remaining) {
       return NextResponse.json({
         error: `This date has room for only ${remaining} more rider${remaining === 1 ? "" : "s"}.`,
@@ -84,43 +89,51 @@ export async function PATCH(request, { params }) {
       guests: updated.riders,
       link: ticketUrl,
     });
-    const qrTemplateSid = process.env.TWILIO_WHATSAPP_QR_CONTENT_SID;
-    const whatsappVariables = qrTemplateSid
-      ? { ...confirmation.whatsappVariables, "6": qrImageUrl }
-      : confirmation.whatsappVariables;
+    // Build WhatsApp click-to-chat link (free, no Twilio needed)
+    const digits = normalizePhone(updated.phone);
+    const waLink = digits ? `https://wa.me/${digits}?text=${encodeURIComponent(confirmation.body)}` : null;
     const messageLog = await db.insert(infobipSmsLogs).values({
       bookingRequestId: updated.id,
-      provider: "twilio",
+      provider: "wa.me",
       channel: "whatsapp",
       recipient: updated.phone,
       message: confirmation.body,
       status: "QUEUED",
     }).returning({ id: infobipSmsLogs.id });
-    const delivery = await sendWhatsAppMessage(
-      updated.phone,
-      confirmation.body,
-      whatsappVariables,
-      qrTemplateSid,
-      qrTemplateSid ? qrImageUrl : qrImageUrl,
-    );
+    // Mark as SENT since we generated the link (actual sending is manual via click-to-chat)
     await db.update(infobipSmsLogs)
-      .set({ messageId: delivery.messageId, status: delivery.status, statusUpdatedAt: new Date() })
-      .where(and(eq(infobipSmsLogs.id, messageLog[0].id), eq(infobipSmsLogs.status, "QUEUED")));
+      .set({ status: "SENT", statusUpdatedAt: new Date() })
+      .where(eq(infobipSmsLogs.id, messageLog[0].id));
     notifications = {
-      whatsapp: delivery.sent,
-      messageId: delivery.messageId,
-      status: delivery.status,
-      template: qrTemplateSid ? "QR" : confirmation.templateKey,
+      whatsapp: true,
+      messageId: null,
+      status: "SENT",
+      template: "click-to-chat",
+      waLink,
+      qrImageUrl,
     };
   }
 
-  // Send operational status changes through the existing best-effort channel.
+  // Send operational status changes through WhatsApp click-to-chat links.
   if (current.status !== updated.status && MESSAGES[updated.status]) {
     if (updated.status !== "confirmed") {
-      await notify(updated.phone, `City Bike Tours: your request for ${updated.rideDate} ${MESSAGES[updated.status]} Ref: ${current.id.slice(0, 8)}`);
+      const msg = `City Bike Tours: your request for ${updated.rideDate} ${MESSAGES[updated.status]} Ref: ${current.id.slice(0, 8)}`;
+      const waLink = buildWaLink(updated.phone, msg);
+      if (waLink) await logWaMessage(db, infobipSmsLogs, { bookingRequestId: updated.id, recipient: updated.phone, message: msg });
     }
   } else if (dateIso || phone || changes.name || changes.routeId || changes.riders || changes.notes) {
-    await notify(updated.phone, `City Bike Tours: your booking request details were updated for ${updated.rideDate}, ${updated.riders} rider${updated.riders === 1 ? "" : "s"}. Ref: ${current.id.slice(0, 8)}`);
+    const msg = `City Bike Tours: your booking request details were updated for ${updated.rideDate}, ${updated.riders} rider${updated.riders === 1 ? "" : "s"}. Ref: ${current.id.slice(0, 8)}`;
+    const waLink = buildWaLink(updated.phone, msg);
+    if (waLink) await logWaMessage(db, infobipSmsLogs, { bookingRequestId: updated.id, recipient: updated.phone, message: msg });
   }
+  const statusChanged = current.status !== updated.status;
+  if (statusChanged) await fireWebhook(`booking_request.${updated.status}`, { id: updated.id, name: updated.name, rideDate: updated.rideDate, riders: updated.riders });
+  await logAudit(staff, resendConfirmation ? "booking.resend" : statusChanged ? `booking.${updated.status}` : "booking.edit",
+    resendConfirmation
+      ? `Resent the WhatsApp ride pass to ${updated.name}`
+      : statusChanged
+        ? `Set ${updated.name}'s request for ${updated.rideDate} to ${updated.status}`
+        : `Edited ${updated.name}'s request for ${updated.rideDate}`,
+    { targetType: "booking_request", targetId: updated.id });
   return NextResponse.json({ request: updated, notifications, ticketUrl });
 }
