@@ -64,7 +64,6 @@ export default function CheckIn() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      setScanning(true);
     } catch {
       toast("Couldn't open the camera. Allow camera access in your browser, or paste the pass link instead.", "error");
       setScanning(false);
@@ -130,13 +129,12 @@ export default function CheckIn() {
 
   useEffect(() => {
     if (scanning) {
-      startCamera();
       animationFrameRef.current = requestAnimationFrame(tick);
     } else {
       stopCamera();
     }
     return () => stopCamera();
-  }, [scanning, scanMode, startCamera, stopCamera, tick]);
+  }, [scanning, scanMode, stopCamera, tick]);
 
   const handlePhotoScan = async (e) => {
     const file = e.target.files?.[0];
