@@ -3,13 +3,14 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { migrate } from "drizzle-orm/neon-http/migrator";
 import { fileURLToPath } from "node:url";
+import { getDatabaseUrl } from "../lib/database-url.js";
 
 dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = getDatabaseUrl();
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL must be configured before running migrations.");
+  throw new Error("Set NEON_DATABASE_URL on Replit before running migrations.");
 }
 
 const db = drizzle(neon(databaseUrl));

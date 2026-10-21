@@ -5,6 +5,7 @@ import { count, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingRequests, bookings, enquiries, pageViews, siteContent, users } from "@/db/schema";
 import { requirePermission } from "@/lib/rbac";
+import { getDatabaseUrl } from "@/lib/database-url";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function GET() {
     database: { ...ping, queryMs: queryTime.ms, queryOk: queryTime.ok },
     tables,
     services: [
-      { name: "Database (Neon)", ok: has("DATABASE_URL") },
+      { name: "Database (Neon)", ok: Boolean(getDatabaseUrl()) },
       { name: "Sign-in secret", ok: has("NEXTAUTH_SECRET") },
       { name: "WhatsApp click-to-chat (wa.me)", ok: true },
       { name: "File uploads (Vercel Blob)", ok: has("BLOB_READ_WRITE_TOKEN") },

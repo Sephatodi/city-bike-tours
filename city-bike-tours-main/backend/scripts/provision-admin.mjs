@@ -2,10 +2,12 @@ import "dotenv/config";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
+import { getDatabaseUrl } from "../lib/database-url.js";
 
 const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 const name = process.env.ADMIN_NAME?.trim() || "Tour Administrator";
 const password = process.env.ADMIN_PASSWORD;
+const databaseUrl = getDatabaseUrl();
 
 if (!email || !password || password.length < 12) {
   console.error("Set ADMIN_EMAIL and ADMIN_PASSWORD (at least 12 characters) before provisioning.");
@@ -13,8 +15,8 @@ if (!email || !password || password.length < 12) {
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined,
+  connectionString: databaseUrl,
+  ssl: databaseUrl?.includes("sslmode=require") ? { rejectUnauthorized: false } : undefined,
 });
 
 try {

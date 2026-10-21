@@ -2,7 +2,7 @@
 
 ## Set up (once)
 1. `npm install`
-2. Copy `.env.example` to `.env`; set `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`.
+2. Copy `.env.example` to `.env`; set `DATABASE_URL` (or `NEON_DATABASE_URL` on Replit), `NEXTAUTH_SECRET`, `NEXTAUTH_URL`.
 3. `npm run db:migrate` (applies migrations 0011 and 0012: roles/status/team/two-step columns, audit log,
    settings, sign-in log, blocked IPs, page views, enquiries, reviews, subscribers, SEO pages).
 4. `npm run admin:provision`, then `npm run dev` and open `/admin/login`.

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { getDatabaseUrl } from "./lib/database-url.js";
 
 /** @type {import('drizzle-kit').Config} */
 export default {
@@ -6,6 +7,6 @@ export default {
   out: "./db/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: getDatabaseUrl(),
   },
 };
