@@ -24,6 +24,10 @@ export default defineConfig(async ({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      host: "0.0.0.0",
+      port: 5000,
+      strictPort: true,
+      allowedHosts: true,
       proxy: {
         "/api/auth": {
           target: "http://localhost:3000",
