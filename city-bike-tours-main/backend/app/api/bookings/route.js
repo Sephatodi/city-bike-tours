@@ -1,0 +1,101 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { eq, desc } from "drizzle-orm";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/db/client";
+import { bookings, users } from "@/db/schema";
+import { bookingSchema } from "@/lib/validators";
+import { validateBooking } from "@/lib/booking-rules";
+import { computePrice } from "@/lib/pricing";
+import { getDailyCapacity } from "@/lib/settings";
+import { newId } from "@/lib/id";
+import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
+import { buildWaLink, logWaMessage } from "@/lib/wa";
+import { createBookingConfirmation } from "@/lib/confirmation";
+import { getDailyRiderCount } from "@/lib/capacity";
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Sign in to view your bookings." }, { status: 401 });
+  }
+
+  const rows = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.userId, session.user.id))
+    .orderBy(desc(bookings.rideDate));
+
+  return NextResponse.json({ bookings: rows });
+}
+
+export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Sign in to book a ride." }, { status: 401 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const parsed = bookingSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input." }, { status: 400 });
+  }
+  const { category, dateIso, timeSlot, routeId, isKid } = parsed.data;
+
+  // Re-validate everything server-side — the client's selection is a
+  // suggestion, not a source of truth.
+  const validation = validateBooking({ category, dateIso, timeSlot, routeId, isKid });
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.message }, { status: 400 });
+  }
+
+  const booked = await getDailyRiderCount(dateIso);
+  if (booked >= (await getDailyCapacity())) {
+    return NextResponse.json({ error: "That date is fully booked. Pick another date." }, { status: 409 });
+  }
+
+  const price = computePrice({ category, routeId, isKid });
+
+  const [created] = await db
+    .insert(bookings)
+    .values({
+      id: newId(),
+      userId: session.user.id,
+      category,
+      rideDate: dateIso,
+      timeSlot,
+      routeId: routeId ?? null,
+      isKid: Boolean(isKid),
+      price,
+      status: "confirmed",
+    })
+    .returning();
+
+  const ticketUrl = createRidePassUrl(createRidePassToken(created.id, "booking"), request.url);
+  const [bookingUser] = await db.select({ name: users.name, phone: users.phone }).from(users).where(eq(users.id, session.user.id));
+  const confirmation = await createBookingConfirmation({
+    name: bookingUser.name,
+    date: created.rideDate,
+    time: created.timeSlot,
+    guests: 1,
+    link: ticketUrl,
+  });
+  const waLink = buildWaLink(bookingUser.phone, confirmation.body);
+  let notifications = { whatsapp: false, sms: false };
+  if (waLink) {
+    notifications = { whatsapp: true, sms: false };
+    await logWaMessage(db, (await import("@/db/schema")).infobipSmsLogs, {
+      bookingId: created.id,
+      recipient: bookingUser.phone,
+      message: confirmation.body,
+    });
+  }
+
+  return NextResponse.json({ booking: created, notifications, waLink, ticketUrl }, { status: 201 });
+}
