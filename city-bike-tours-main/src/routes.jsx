@@ -7,6 +7,7 @@ import LoginCallbackPage from "./pages/LoginCallbackPage";
 import ConnectPage from "./pages/ConnectPage";
 import BookingPage from "./pages/BookingPage";
 import GalleryPage from "./pages/GalleryPage";
+import HeritageTrailPage from "./pages/HeritageTrailPage";
 import RideTicketPage from "./pages/RideTicketPage";
 import MessageInboxPage from "./pages/MessageInboxPage";
 
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "connect", Component: ConnectPage },
       { path: "book", Component: BookingPage },
       { path: "gallery", Component: GalleryPage },
+      { path: "heritage-trail", Component: HeritageTrailPage },
       { path: "ticket/:token", Component: RideTicketPage },
       { path: "messages", Component: MessageInboxPage },
     ],

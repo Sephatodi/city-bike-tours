@@ -27,7 +27,7 @@ export default function Footer() {
               {[
                 { label: "Home", to: "/" },
                 { label: "Reserve", to: "/schedule" },
-                { label: "Heritage Trail", to: "/book" },
+                { label: "Heritage Trail", to: "/heritage-trail" },
                 { label: "Gallery", to: "/gallery" },
                 { label: "Reviews & Messages", to: "/connect" },
                 { label: "Sign in", to: "/login" },

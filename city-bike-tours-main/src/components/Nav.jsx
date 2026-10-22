@@ -6,7 +6,7 @@ import { useCustomer } from "../auth/CustomerAuth";
 const NAV_LINKS = [
   { label: "Home", to: "/" },
   { label: "Reserve", to: "/schedule" },
-  { label: "Heritage Trail", to: "/book" },
+  { label: "Heritage Trail", to: "/heritage-trail" },
   { label: "Gallery", to: "/gallery" },
   { label: "Connect", to: "/connect" },
 ];
@@ -30,8 +30,7 @@ export default function Nav() {
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         backgroundColor: solid || menuOpen ? "rgba(16,42,28,0.9)" : "transparent",
-        backdropFilter: solid || menuOpen ? "blur(10px)" : "none",
-        backdropFilter: solid ? "blur(12px)" : "none",
+        backdropFilter: solid || menuOpen ? "blur(12px)" : "none",
       }}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -75,7 +74,7 @@ export default function Nav() {
         </div>
 
         <Link
-          to="/book"
+          to="/schedule#price-calculator"
           className="hidden md:inline-block px-5 py-2 text-sm font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90"
           style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
         >

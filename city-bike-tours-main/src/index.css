@@ -1290,3 +1290,189 @@ body { background-color: #123222; }
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(245, 237, 217, 0.14);
 }
+
+/* Home: one continuous glass-led field for the local introduction and the route map. */
+.home-explore-shell {
+  width: min(100% - 2.5rem, 1380px);
+  margin: 0 auto 5rem;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgba(9, 30, 20, 0.34);
+  border-color: rgba(212, 160, 23, 0.34);
+}
+.home-explore-shell > section { background: transparent; }
+.home-explore-shell #map { padding-top: 2rem; }
+.home-explore-shell #map > div { max-width: 100%; }
+
+/* Heritage Trail — an editorial field guide built around the actual city route. */
+.heritage-trail-page {
+  position: relative;
+  min-height: 100vh;
+  padding-top: 5.5rem;
+  color: #F5EDD9;
+}
+.trail-hero {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(4rem, 9vw, 8rem) 2rem 4.5rem;
+  border-bottom: 1px solid rgba(212, 160, 23, 0.25);
+}
+.trail-eyebrow {
+  color: #D4A017;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.trail-hero h1 {
+  margin-top: 1rem;
+  color: #F5EDD9;
+  font: 700 clamp(3.2rem, 8vw, 7rem)/0.94 var(--font-display), serif;
+  letter-spacing: -0.045em;
+}
+.trail-hero h1 span { color: #D4A017; }
+.trail-hero-lede {
+  max-width: 39rem;
+  margin-top: 1.5rem;
+  color: rgba(245, 237, 217, 0.78);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.7;
+}
+.trail-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 2rem;
+}
+.trail-hero-facts span {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(245, 237, 217, 0.16);
+  background: rgba(13, 8, 5, 0.28);
+  color: rgba(245, 237, 217, 0.7);
+  font-size: 0.75rem;
+}
+.trail-hero-facts strong { margin-right: 0.35rem; color: #F5EDD9; }
+.trail-map-section, .trail-sites-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5rem 2rem 1rem;
+}
+.trail-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.75rem;
+}
+.trail-section-heading h2 {
+  margin-top: 0.45rem;
+  color: #F5EDD9;
+  font: 700 clamp(2rem, 4vw, 3.3rem)/1.05 var(--font-display), serif;
+}
+.trail-section-heading > p {
+  max-width: 25rem;
+  color: rgba(245, 237, 217, 0.66);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.trail-map-frame {
+  padding: clamp(0.65rem, 1.5vw, 1.25rem);
+  border: 1px solid rgba(212, 160, 23, 0.25);
+  background: rgba(13, 8, 5, 0.38);
+}
+.trail-map-frame > div > div:first-child { border-radius: 3px !important; }
+.trail-map-frame > div > div:last-child button { min-height: 2.75rem; }
+.trail-sites-section { padding-top: 6rem; }
+.trail-sites-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.trail-site-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(212, 160, 23, 0.2);
+  background: rgba(13, 8, 5, 0.36);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.trail-site-card:hover { transform: translateY(-3px); border-color: rgba(212, 160, 23, 0.55); }
+.trail-site-copy { padding: clamp(1.2rem, 2.5vw, 2rem); }
+.trail-site-index {
+  margin-bottom: 1rem;
+  color: #D4A017;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+.trail-site-title { display: flex; align-items: flex-start; gap: 0.7rem; }
+.trail-site-title h2 { color: #F5EDD9; font: 700 1.35rem/1.15 var(--font-display), serif; }
+.trail-site-title p { margin-top: 0.3rem; color: rgba(245, 237, 217, 0.5); font-size: 0.72rem; }
+.trail-site-short { margin-top: 1.2rem; color: #D4A017; font: italic 400 1.05rem/1.4 var(--font-display), serif; }
+.trail-site-history { margin-top: 0.7rem; color: rgba(245, 237, 217, 0.72); font-size: 0.84rem; line-height: 1.7; }
+.trail-booking-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  max-width: 1248px;
+  margin: 6rem auto 0;
+  padding: clamp(1.6rem, 4vw, 3.2rem);
+  border: 1px solid rgba(212, 160, 23, 0.32);
+  background: linear-gradient(110deg, rgba(193, 68, 14, 0.88), rgba(97, 43, 18, 0.88));
+}
+.trail-booking-cta h2 {
+  margin-top: 0.45rem;
+  color: #F5EDD9;
+  font: 700 clamp(1.8rem, 3.5vw, 2.7rem)/1.08 var(--font-display), serif;
+}
+.trail-booking-cta > div > p:last-child {
+  max-width: 39rem;
+  margin-top: 0.65rem;
+  color: rgba(245, 237, 217, 0.8);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.trail-booking-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 1.2rem;
+  color: #1A261D;
+  background: #D4A017;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.trail-booking-button:hover { background: #E6B83C; transform: translateY(-2px); }
+.trail-food-wrap { max-width: 1280px; margin: 0 auto; padding: 2rem 2rem 0; }
+.price-calculator-anchor { scroll-margin-top: 7rem; }
+
+/* The roaming bicycles share the cursor rider's filled-line artwork and a calmer,
+   wider rhythm. Separate lanes keep the silhouettes from crossing one another. */
+.header-bike {
+  --bike-w: clamp(140px, 13vw, 190px);
+  opacity: 0.18;
+}
+.header-bike-layer {
+  top: calc((100% - var(--bike-w) * 0.77) * var(--layer-index) / (var(--lanes) - 1));
+  height: calc(var(--bike-w) * 0.77);
+}
+.header-bike-rider { height: calc(var(--bike-w) * 0.77); }
+.header-bike-rider svg { display: block; width: 100%; height: auto; }
+@media (max-width: 768px) {
+  .home-explore-shell { width: calc(100% - 1.5rem); margin-bottom: 3rem; }
+  .trail-hero { padding: 4rem 1.25rem 3rem; }
+  .trail-map-section, .trail-sites-section { padding: 3.5rem 1.25rem 0.5rem; }
+  .trail-section-heading { align-items: flex-start; flex-direction: column; gap: 0.8rem; }
+  .trail-sites-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .trail-booking-cta { align-items: flex-start; flex-direction: column; margin: 4rem 1.25rem 0; }
+  .trail-food-wrap { padding: 1.5rem 1.25rem 0; }
+  .header-bike { --bike-w: 140px; opacity: 0.15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trail-site-card, .trail-booking-button { transition: none; }
+  .trail-site-card:hover, .trail-booking-button:hover { transform: none; }
+}

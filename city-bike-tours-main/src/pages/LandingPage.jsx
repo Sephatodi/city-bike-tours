@@ -49,14 +49,14 @@ function Hero() {
 
             <div className="flex gap-4">
               <Link
-                to="/book"
+                to="/schedule#price-calculator"
                 className="px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "#D4A017", color: "#0D0805" }}
               >
                 Book a Ride
               </Link>
               <Link
-                to="/gallery#heritage"
+                to="/heritage-trail"
                 className="px-8 py-3 font-semibold uppercase tracking-widest text-sm rounded-sm border hover:bg-white/5 transition-colors"
                 style={{ borderColor: "rgba(245,237,217,0.4)", color: "#F5EDD9" }}
               >
@@ -122,7 +122,7 @@ function AboutStrip() {
               <Link to="/schedule" className="px-5 py-2 text-sm font-bold uppercase tracking-widest rounded-sm hover:opacity-90 transition-opacity" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>
                 Reserve
               </Link>
-              <Link to="/book" className="px-5 py-2 text-sm font-semibold uppercase tracking-widest rounded-sm border hover:bg-white/5 transition-colors" style={{ borderColor: "rgba(245,237,217,0.3)", color: "#F5EDD9" }}>
+              <Link to="/heritage-trail" className="px-5 py-2 text-sm font-semibold uppercase tracking-widest rounded-sm border hover:bg-white/5 transition-colors" style={{ borderColor: "rgba(245,237,217,0.3)", color: "#F5EDD9" }}>
                 Heritage Trail
               </Link>
             </div>
@@ -192,7 +192,7 @@ function MapSection() {
         </div>
         <div className="mt-8 text-center reveal">
           <Link
-            to="/book"
+            to="/heritage-trail"
             className="inline-block px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
             style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
           >
@@ -212,8 +212,10 @@ export default function LandingPage() {
   return (
     <div className="relative">
       <Hero />
-      <AboutStrip />
-      <MapSection />
+      <div className="home-explore-shell glass">
+        <AboutStrip />
+        <MapSection />
+      </div>
       <Footer />
     </div>
   );

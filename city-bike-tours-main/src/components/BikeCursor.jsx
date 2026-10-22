@@ -31,14 +31,20 @@ export default function BikeCursor() {
     }
 
     function onMove(event) {
-      target.x = event.clientX;
-      target.y = event.clientY;
+      moveTarget(event.clientX, event.clientY);
+    }
+
+    function moveTarget(x, y) {
+      target.x = x;
+      target.y = y;
       if (!started) { current.x = target.x; current.y = target.y; started = true; }
     }
 
-    const readTouches = (event) => {
+    function readTouches(event) {
+      const firstTouch = event.touches[0];
+      if (firstTouch) moveTarget(firstTouch.clientX, firstTouch.clientY);
       setTouches(Array.from(event.touches).map((touch) => ({ id: touch.identifier, x: touch.clientX, y: touch.clientY })));
-    };
+    }
 
     function drawTracks(now) {
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -77,8 +83,13 @@ export default function BikeCursor() {
     function tick(now) {
       const previousX = current.x;
       const previousY = current.y;
-      current.x += (target.x - current.x) * 0.22;
-      current.y += (target.y - current.y) * 0.22;
+      if (reducedMotion) {
+        current.x = target.x;
+        current.y = target.y;
+      } else {
+        current.x += (target.x - current.x) * 0.22;
+        current.y += (target.y - current.y) * 0.22;
+      }
       const dx = current.x - previousX;
       const dy = current.y - previousY;
       const speed = Math.hypot(dx, dy);
@@ -87,7 +98,7 @@ export default function BikeCursor() {
       motion.vx += (dx - motion.vx) * 0.25;
       motion.vy += (dy - motion.vy) * 0.25;
       if (Math.abs(motion.vx) > 0.35) motion.facing = motion.vx >= 0 ? 1 : -1;
-      const tilt = Math.max(-28, Math.min(28, (Math.atan2(motion.vy, Math.max(Math.abs(motion.vx), 0.001)) * 180) / Math.PI));
+      const tilt = reducedMotion ? 0 : Math.max(-28, Math.min(28, (Math.atan2(motion.vy, Math.max(Math.abs(motion.vx), 0.001)) * 180) / Math.PI));
 
       if (cursorRef.current) {
         cursorRef.current.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate(-50%, -55%) scaleX(${motion.facing}) rotate(${speed > 0.4 ? tilt : 0}deg)`;

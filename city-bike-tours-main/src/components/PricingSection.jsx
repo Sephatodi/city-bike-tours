@@ -64,7 +64,7 @@ export default function PricingSection() {
                 </div>
                 <div className="text-xs mb-4 mt-1" style={{ color: r.id === "complete" ? "rgba(245,237,217,0.6)" : "rgba(245,237,217,0.4)" }}>per rider · payable on the day</div>
                 <div className="text-xs mb-6" style={{ color: r.id === "complete" ? "rgba(245,237,217,0.7)" : "rgba(245,237,217,0.45)" }}>
-                  ⏱ {r.duration} &nbsp;·&nbsp; {r.distance} &nbsp;·&nbsp; {r.sites} sites
+                  {r.duration} &nbsp;·&nbsp; {r.distance} &nbsp;·&nbsp; {r.sites} sites
                 </div>
                 <Link
                   to="/book#book-form"
@@ -122,7 +122,7 @@ export default function PricingSection() {
         </div>
 
         {/* Live price calculator */}
-        <div className="mb-16">
+        <div id="price-calculator" className="mb-16 price-calculator-anchor">
           <h2 className="font-display font-bold text-2xl mb-6" style={{ color: "#F5EDD9" }}>Price Calculator</h2>
           <div className="grid md:grid-cols-2 gap-8 p-8 rounded-sm glass" >
             <div>

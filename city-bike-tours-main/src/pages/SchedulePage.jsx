@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import PricingSection from "../components/PricingSection";
 
 function useScrollReveal() {
@@ -20,10 +19,12 @@ export default function SchedulePage() {
   useScrollReveal();
   const { hash } = useLocation();
 
-  // /pricing redirects to #pricing; the router doesn't scroll to anchors on its own.
+  // Router navigation and direct visits do not reliably scroll to anchors.
   useEffect(() => {
     if (!hash) return undefined;
-    const timer = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    const timer = setTimeout(() => {
+      document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
     return () => clearTimeout(timer);
   }, [hash]);
 
@@ -96,15 +97,6 @@ export default function SchedulePage() {
         </div>
 
         <PricingSection />
-
-        <FoodStops />
-
-        {/* CTA */}
-        <div className="schedule-cta reveal">
-          <div><p className="schedule-section-kicker">THE CITY IS WAITING</p><h2>Let’s go find a story.</h2></div>
-          <Link to="/book" className="schedule-primary-button">Book your ride <span aria-hidden="true">↗</span>
-          </Link>
-        </div>
       </main>
 
       <Footer />

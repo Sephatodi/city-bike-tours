@@ -1,9 +1,9 @@
-import BikeSVG from "./BikeSVG";
+import RiderIcon from "./RiderIcon";
 
-const LANES = 5;
+const LANES = 4;
 // One duration per lane (seconds). Two bicycles share a lane, half a trip apart, and lanes are spaced
 // further apart than a bicycle is tall, so no two bicycles ever overlap.
-const DURATIONS = [28, 34, 26, 38, 31];
+const DURATIONS = [42, 50, 38, 46];
 const BIKES_PER_LANE = 2;
 
 // Rows of complete bicycles drifting across the screen. Each row is spread over the height of
@@ -23,7 +23,7 @@ export default function HeaderBike() {
               className="header-bike-rider"
               style={{ animationDelay: `${-(bikeIndex * (DURATIONS[layerIndex] / BIKES_PER_LANE) + layerIndex * 3.1)}s` }}
             >
-              <BikeSVG responsive color="#D4A017" />
+              <RiderIcon size={220} color="#D4A017" />
             </div>
           ))}
         </div>
