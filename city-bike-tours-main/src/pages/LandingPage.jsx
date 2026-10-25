@@ -134,7 +134,7 @@ function AboutStrip() {
                 src="https://images.unsplash.com/photo-1738145133893-a9c9aa180f8f?w=700&h=420&fit=crop&auto=format"
                 alt="Group cycling in Africa"
                 className="w-full object-cover"
-                style={{ height: "240px", opacity: 0.85 }}
+                style={{ height: "clamp(240px, 28vw, 420px)", opacity: 0.85 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
@@ -188,7 +188,7 @@ function MapSection() {
           ))}
         </div>
         <div className="reveal">
-          <HeritageMap height="500px" />
+          <HeritageMap height="clamp(390px, 42vw, 680px)" />
         </div>
         <div className="mt-8 text-center reveal">
           <Link

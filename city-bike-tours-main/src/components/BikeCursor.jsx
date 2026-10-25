@@ -58,7 +58,7 @@ export default function BikeCursor() {
         const nx = -dy / length;
         const ny = dx / length;
         const alpha = Math.max(0, 1 - (now - b.t) / TRACK_LIFE) * 0.8;
-        context.strokeStyle = `rgba(245, 237, 217, ${alpha})`;
+        context.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
         context.lineWidth = 2.8;
         context.lineCap = "round";
         for (const side of [-1, 1]) {

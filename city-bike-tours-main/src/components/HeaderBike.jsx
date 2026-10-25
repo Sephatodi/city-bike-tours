@@ -23,7 +23,7 @@ export default function HeaderBike() {
               className="header-bike-rider"
               style={{ animationDelay: `${-(bikeIndex * (DURATIONS[layerIndex] / BIKES_PER_LANE) + layerIndex * 3.1)}s` }}
             >
-              <RiderIcon size={220} color="#D4A017" />
+              <RiderIcon size={220} color="#38BDF8" />
             </div>
           ))}
         </div>

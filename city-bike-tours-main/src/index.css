@@ -50,7 +50,7 @@ body {
   z-index: 10050;
   line-height: 0;
   will-change: transform;
-  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 .tyre-tracks { position: fixed; inset: 0; z-index: 10049; width: 100vw; height: 100vh; pointer-events: none; }
 .custom-cursor-follower {
@@ -225,13 +225,18 @@ input[type='range']::-webkit-slider-thumb {
 
 /* Section reveal */
 .reveal {
-  opacity: 0;
-  transform: translateY(32px);
+  opacity: 1;
+  transform: none;
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Let the site use the available viewport on wide screens without stretching copy endlessly. */
+.max-w-7xl {
+  max-width: min(92vw, 90rem);
 }
 
 /* Bicycle cursor trail */

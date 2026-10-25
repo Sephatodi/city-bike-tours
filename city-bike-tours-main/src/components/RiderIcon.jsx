@@ -1,6 +1,6 @@
 // A cyclist riding to the right: round head, solid body, fenders and a chain ring.
 // The cursor flips and tilts it so it always faces the way it is moving.
-export default function RiderIcon({ size = 64, color = "#D4A017" }) {
+export default function RiderIcon({ size = 64, color = "#38BDF8" }) {
   return (
     <svg width={size} height={size * 0.77} viewBox="0 0 120 92" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <g stroke={color} strokeLinecap="round" strokeLinejoin="round">
