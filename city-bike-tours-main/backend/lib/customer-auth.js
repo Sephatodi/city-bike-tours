@@ -9,8 +9,8 @@ import { users } from "@/db/schema";
 const TOKEN_DAYS = 30;
 
 const secret = () => {
-  const value = process.env.CUSTOMER_TOKEN_SECRET || process.env.NEXTAUTH_SECRET;
-  if (!value) throw new Error("NEXTAUTH_SECRET (or CUSTOMER_TOKEN_SECRET) must be set.");
+  const value = process.env.CUSTOMER_TOKEN_SECRET || process.env.NEXTAUTH_SECRET || process.env.SESSION_SECRET;
+  if (!value) throw new Error("SESSION_SECRET (or NEXTAUTH_SECRET / CUSTOMER_TOKEN_SECRET) must be set.");
   return value;
 };
 const b64 = (value) => Buffer.from(value).toString("base64url");

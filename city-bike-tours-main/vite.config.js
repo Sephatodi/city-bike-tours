@@ -23,6 +23,9 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     plugins: [react()],
+    define: {
+      "import.meta.env.VITE_NEON_AUTH_URL": JSON.stringify(env.VITE_NEON_AUTH_URL || env.AUTH_URL || ""),
+    },
     server: {
       host: "0.0.0.0",
       port: 5000,

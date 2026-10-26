@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  managedAuthId: text("managed_auth_id").unique(),
   phone: text("phone"),
   // Null for OAuth-only accounts (Google/Apple/Facebook) that never set a password.
   passwordHash: text("password_hash"),

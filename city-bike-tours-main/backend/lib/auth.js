@@ -85,7 +85,7 @@ if (process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET) {
 export const authOptions = {
   providers,
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || process.env.SESSION_SECRET,
   pages: {
     signIn: "/register",
   },
