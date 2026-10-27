@@ -3,9 +3,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { configuredFrontendOrigins } from "@/lib/origins";
 
-// Customers on the separate Vite website can't share the backend's cookie session,
-// so they hold a signed bearer token instead. Staff keep using the NextAuth cookie.
 const TOKEN_DAYS = 30;
 
 const secret = () => {
@@ -44,7 +43,6 @@ export const publicUser = (user) => ({
   provider: user.provider,
 });
 
-/** Returns { user } for a valid, active account, or { error } to return from the route. */
 export async function requireCustomer(request) {
   const header = request.headers.get("authorization") || "";
   const payload = readToken(header.startsWith("Bearer ") ? header.slice(7) : "");
@@ -56,13 +54,11 @@ export async function requireCustomer(request) {
   return { user };
 }
 
-/** Like requireCustomer but returns { user: null } for visitors instead of an error. */
 export async function optionalCustomer(request) {
   const result = await requireCustomer(request);
   return { user: result.user || null };
 }
 
 export function frontendOrigins() {
-  return (process.env.FRONTEND_ORIGIN || process.env.PUBLIC_FRONTEND_URL || "")
-    .split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
+  return configuredFrontendOrigins();
 }
