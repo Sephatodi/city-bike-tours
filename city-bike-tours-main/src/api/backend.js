@@ -1,5 +1,13 @@
-export const BACKEND_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
-export const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_BASE_URL?.replace(/\/+$/, "") ?? "";
+// Use the explicit Vercel environment variable when supplied. Without it, route
+// production sign-in requests to the deployed Render API instead of the Vercel
+// frontend (which does not host these /api/customer endpoints).
+const configuredBackend = import.meta.env.VITE_API_BASE_URL?.trim();
+const defaultBackend = import.meta.env.DEV
+  ? "http://localhost:3000"
+  : "https://city-bike-tours.onrender.com";
+
+export const BACKEND_BASE_URL = (configuredBackend || defaultBackend).replace(/\\/+$/, "");
+export const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_BASE_URL?.replace(/\\/+$/, "") ?? "";
 
 export function backendUrl(path) {
   return `${BACKEND_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
