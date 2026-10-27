@@ -8,15 +8,18 @@ import { getDatabaseUrl } from "../lib/database-url.js";
 dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
 const databaseUrl = getDatabaseUrl();
-
 if (!databaseUrl) {
   throw new Error("Set NEON_DATABASE_URL or DATABASE_URL before running migrations.");
 }
 
-const db = drizzle(neon(databaseUrl));
+const sql = neon(databaseUrl);
+const db = drizzle(sql);
 const migrationsFolder = fileURLToPath(new URL("../db/migrations", import.meta.url));
 
 try {
+  // Safe compatibility migration for existing production databases. Additive and repeatable.
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS managed_auth_id text`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_managed_auth_id_unique ON users (managed_auth_id) WHERE managed_auth_id IS NOT NULL`;
   await migrate(db, { migrationsFolder });
   console.log("Database migrations applied successfully.");
 } catch (error) {
