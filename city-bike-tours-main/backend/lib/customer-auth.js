@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
-import { configuredFrontendOrigins } from "@/lib/origins";
+import { configuredFrontendOrigins, isAllowedFrontendOrigin } from "@/lib/origins";
 
 const TOKEN_DAYS = 30;
 
@@ -61,4 +61,8 @@ export async function optionalCustomer(request) {
 
 export function frontendOrigins() {
   return configuredFrontendOrigins();
+}
+
+export function isAllowedCustomerReturnOrigin(origin) {
+  return isAllowedFrontendOrigin(origin);
 }
