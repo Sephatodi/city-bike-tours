@@ -10,7 +10,7 @@ dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 const databaseUrl = getDatabaseUrl();
 
 if (!databaseUrl) {
-  throw new Error("Set NEON_DATABASE_URL on Replit before running migrations.");
+  throw new Error("Set NEON_DATABASE_URL or DATABASE_URL before running migrations.");
 }
 
 const db = drizzle(neon(databaseUrl));
