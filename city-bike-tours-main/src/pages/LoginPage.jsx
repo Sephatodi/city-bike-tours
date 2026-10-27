@@ -52,9 +52,16 @@ export default function LoginPage() {
   useEffect(() => {
     const controller = new AbortController();
     fetch(backendUrl("/api/customer/providers"), { signal: controller.signal, cache: "no-store" })
-      .then((r) => r.json())
-      .then(setProviders)
-      .catch(() => { if (!controller.signal.aborted) setProviders({}); });
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load sign-in methods.");
+        return response.json();
+      })
+      .then((result) => {
+        if (!controller.signal.aborted) setProviders(result && typeof result === "object" ? result : {});
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setProviders({});
+      });
     return () => controller.abort();
   }, []);
 
@@ -100,8 +107,15 @@ export default function LoginPage() {
   };
 
   function goSocial(id) {
+    if (!enabled(id) || busy) return;
     rememberNext(next);
-    window.location.href = `${backendOrigin()}/customer-social?provider=${id}&return=${encodeURIComponent(window.location.origin)}`;
+    // Start the configured NextAuth provider and return through the backend
+    // token-exchange endpoint so the customer session is also established on the website.
+    const callback = new URL("/api/customer/social/complete", backendOrigin());
+    callback.searchParams.set("return", window.location.origin);
+    const signInUrl = new URL(`/api/auth/signin/${encodeURIComponent(id)}`, backendOrigin());
+    signInUrl.searchParams.set("callbackUrl", callback.toString());
+    window.location.assign(signInUrl.toString());
   }
 
   const phoneMethod = method === "sms" || method === "whatsapp";
@@ -123,14 +137,14 @@ export default function LoginPage() {
 
           <div className="auth-socials">
             {SOCIALS.map(({ id, label }) => (
-              <button key={id} type="button" className="auth-social" disabled={!enabled(id)} onClick={() => goSocial(id)} title={enabled(id) ? undefined : `${label} sign-in isn't set up yet`}>
+              <button key={id} type="button" className="auth-social" disabled={!providers || !enabled(id) || busy} onClick={() => goSocial(id)} title={enabled(id) ? undefined : `${label} sign-in isn't set up yet`}>
                 <SocialIcon id={id} /> Continue with {label}{providers && !enabled(id) && <small>Not set up yet</small>}
               </button>
             ))}
-            <button type="button" className={`auth-social ${method === "whatsapp" ? "selected" : ""}`} disabled={providers && !providers.whatsapp} onClick={() => { setMethod("whatsapp"); setCodeSent(false); setError(""); }}>
+            <button type="button" className={`auth-social ${method === "whatsapp" ? "selected" : ""}`} disabled={!providers || !providers.whatsapp || busy} onClick={() => { setMethod("whatsapp"); setCodeSent(false); setError(""); }}>
               <WhatsAppIcon /> Continue with WhatsApp{providers && !providers.whatsapp && <small>Not set up yet</small>}
             </button>
-            <button type="button" className={`auth-social ${method === "sms" ? "selected" : ""}`} disabled={providers && !providers.sms} onClick={() => { setMethod("sms"); setCodeSent(false); setError(""); }}>
+            <button type="button" className={`auth-social ${method === "sms" ? "selected" : ""}`} disabled={!providers || !providers.sms || busy} onClick={() => { setMethod("sms"); setCodeSent(false); setError(""); }}>
               <span aria-hidden="true">📱</span> Continue with phone number{providers && !providers.sms && <small>Not set up yet</small>}
             </button>
           </div>
