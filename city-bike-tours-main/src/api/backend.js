@@ -6,8 +6,12 @@ const defaultBackend = import.meta.env.DEV
   ? "http://localhost:3000"
   : "https://city-bike-tours.onrender.com";
 
-export const BACKEND_BASE_URL = (configuredBackend || defaultBackend).replace(/\\/+$/, "");
-export const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_BASE_URL?.replace(/\\/+$/, "") ?? "";
+const trimTrailingSlashes = (value) => value.replace(/\/+$/, "");
+
+export const BACKEND_BASE_URL = trimTrailingSlashes(configuredBackend || defaultBackend);
+export const ADMIN_BASE_URL = import.meta.env.VITE_ADMIN_BASE_URL
+  ? trimTrailingSlashes(import.meta.env.VITE_ADMIN_BASE_URL)
+  : "";
 
 export function backendUrl(path) {
   return `${BACKEND_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
