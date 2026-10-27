@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
-import { frontendOrigins, issueCustomerToken } from "@/lib/customer-auth";
+import { frontendOrigins, isAllowedCustomerReturnOrigin, issueCustomerToken } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request) {
   const origins = frontendOrigins();
   const requested = (new URL(request.url).searchParams.get("return") || "").replace(/\/$/, "");
-  const origin = origins.includes(requested) ? requested : origins[0];
+  const origin = isAllowedCustomerReturnOrigin(requested) ? requested : origins[0];
   if (!origin) return NextResponse.json({ error: "FRONTEND_ORIGIN is not configured." }, { status: 500 });
 
   const fail = (code) => NextResponse.redirect(`${origin}/login/callback#error=${code}`);
