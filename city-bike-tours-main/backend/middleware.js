@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server";
-
-// Keep this in sync with the Vite frontend's deployed origin. Additional preview
-// origins can be comma-separated in FRONTEND_ORIGIN.
-function allowedOrigins() {
-  const configured = process.env.FRONTEND_ORIGIN || "https://city-bike-tours.vercel.app";
-  return configured.split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
-}
+import { isAllowedFrontendOrigin } from "@/lib/origins";
 
 function corsHeaders(origin) {
   return {
@@ -20,23 +14,22 @@ function corsHeaders(origin) {
 
 export function middleware(request) {
   const origin = request.headers.get("origin");
-  const allowed = Boolean(origin && allowedOrigins().includes(origin.replace(/\/$/, "")));
+  const allowed = Boolean(origin && isAllowedFrontendOrigin(origin));
 
-  // Preflight requests must be answered before route handlers run.
   if (request.method === "OPTIONS") {
-    if (!allowed) return new NextResponse(null, { status: 403 });
+    if (!allowed) return new NextResponse(null, { status: 403, headers: { Vary: "Origin" } });
     return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
   }
 
   const response = NextResponse.next();
-  // Add CORS headers to successful responses and API error responses alike.
   if (allowed) {
     Object.entries(corsHeaders(origin)).forEach(([name, value]) => response.headers.set(name, value));
+  } else {
+    response.headers.set("Vary", "Origin");
   }
   return response;
 }
 
-// Customer and community endpoints are public-facing; admin APIs remain session-protected.
 export const config = {
   matcher: [
     "/api/booking-requests",
@@ -55,5 +48,6 @@ export const config = {
     "/api/customer/:path*",
     "/api/community/:path*",
     "/api/download",
+    "/api/neon-auth/:path*",
   ],
 };
