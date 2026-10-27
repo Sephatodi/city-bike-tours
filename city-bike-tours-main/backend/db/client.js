@@ -9,6 +9,6 @@ export const db = databaseUrl
   ? drizzle(neon(databaseUrl), { schema })
   : new Proxy({}, {
       get() {
-        throw new Error("NEON_DATABASE_URL must be configured before database queries can run on Replit.");
+        throw new Error("Set NEON_DATABASE_URL or DATABASE_URL before running database queries.");
       },
     });
