@@ -19,26 +19,23 @@ function configuredOriginPatterns() {
   return (process.env.CORS_ORIGIN_PATTERNS || "")
     .split(",")
     .map((pattern) => pattern.trim())
-    .filter((pattern) => pattern.startsWith("https://") && !pattern.includes("/") || false);
+    .filter((pattern) => {
+      if (!pattern.startsWith("https://")) return false;
+      const host = pattern.slice("https://".length);
+      return Boolean(host) && /^[a-z0-9.*-]+$/i.test(host)
+        && !host.includes("..") && !host.startsWith(".") && !host.endsWith(".");
+    });
 }
 
 function globToRegex(pattern) {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[a-z0-9-]+");
-  return new RegExp(`^${escaped}$`, "i");
+  const host = pattern.slice("https://".length);
+  const escaped = host.split("*").map((part) => part.replace(/[.+?^\${}()|[\]\\]/g, "\\$&")).join("[a-z0-9-]+");
+  return new RegExp("^https://" + escaped + "$", "i");
 }
 
 export function isAllowedFrontendOrigin(value) {
   const origin = normalizeOrigin(value || "");
   if (!origin) return false;
   if (configuredFrontendOrigins().includes(origin)) return true;
-
-  return configuredOriginPatterns().some((pattern) => {
-    // Patterns must be HTTPS origins only: no paths, query strings, fragments or ports.
-    if (!/^https:\/\/[^/?#:*]+(?:-[*][^/?#:]*)?$/.test(pattern) && !/^https:\/\/[^/?#]*\*[^/?#]*$/.test(pattern)) return false;
-    try {
-      return globToRegex(pattern).test(origin);
-    } catch {
-      return false;
-    }
-  });
+  return configuredOriginPatterns().some((pattern) => globToRegex(pattern).test(origin));
 }
