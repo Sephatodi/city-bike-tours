@@ -36,7 +36,7 @@ export default function LoginPage() {
   const { isSignedIn, ready, signIn } = useCustomer();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get("next") && params.get("next").startsWith("/") && !params.get("next").startsWith("//") ? params.get("next") : "/connect";
+  const next = params.get("next") && params.get("next").startsWith("/") && !params.get("next").startsWith("//") ? params.get("next") : "/dashboard";
 
   const [providers, setProviders] = useState(null);
   const [providerLoadError, setProviderLoadError] = useState(false);
