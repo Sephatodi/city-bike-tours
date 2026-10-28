@@ -9,7 +9,7 @@ import { logAudit } from "@/lib/audit";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  path: z.string().trim().max(200).regex(/^\/[a-zA-Z0-9\-_/]*$/, "A page address starts with / and has no spaces, like /routes."),
+  path: z.string().trim().max(200).regex(/^\/[a-zA-Z0-9\-_/]*$/, "A page address starts with / and has no spaces, like /schedule."),
   title: z.string().trim().max(70).optional().or(z.literal("")),
   description: z.string().trim().max(170).optional().or(z.literal("")),
   keywords: z.string().trim().max(250).optional().or(z.literal("")),
