@@ -110,13 +110,13 @@ export default function LoginPage() {
   function goSocial(id) {
     if (!enabled(id) || busy) return;
     rememberNext(next);
-    // Start the configured NextAuth provider and return through the backend
-    // token-exchange endpoint so the customer session is also established on the website.
-    const callback = new URL("/api/customer/social/complete", backendOrigin());
-    callback.searchParams.set("return", window.location.origin);
-    const signInUrl = new URL(`/api/auth/signin/${encodeURIComponent(id)}`, backendOrigin());
-    signInUrl.searchParams.set("callbackUrl", callback.toString());
-    window.location.assign(signInUrl.toString());
+    // Start OAuth through the dedicated customer-social page. It invokes
+    // NextAuth's client signIn flow and then returns through the customer
+    // token-exchange endpoint, avoiding the direct /api/auth/signin/:provider URL.
+    const socialUrl = new URL("/customer-social", backendOrigin());
+    socialUrl.searchParams.set("provider", id);
+    socialUrl.searchParams.set("return", window.location.origin);
+    window.location.assign(socialUrl.toString());
   }
 
   const phoneMethod = method === "sms" || method === "whatsapp";
