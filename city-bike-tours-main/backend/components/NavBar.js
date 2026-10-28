@@ -17,7 +17,7 @@ export default function NavBar() {
       <div className="wrap">
         <nav className="topnav">
           <Link href="/" className="brand">
-            Kgale<span className="dot">•</span>Cycles
+            City Bike Tours
           </Link>
           <div className="navlinks">
             {LINKS.map((link) => (
