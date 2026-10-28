@@ -67,7 +67,7 @@ export function useCustomer() {
 // Where to send people after they sign in.
 export const NEXT_KEY = "cbt-after-login";
 export function rememberNext(path) { try { window.sessionStorage.setItem(NEXT_KEY, path); } catch { /* ignore */ } }
-export function takeNext(fallback = "/connect") {
+export function takeNext(fallback = "/dashboard") {
   try {
     const value = window.sessionStorage.getItem(NEXT_KEY);
     window.sessionStorage.removeItem(NEXT_KEY);
