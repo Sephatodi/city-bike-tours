@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HOLIDAY_TABLE, MEETUP } from "@/lib/data";
 
-export const metadata = { title: "Holiday Rides — Kgale Cycles" };
+export const metadata = { title: "Holiday Rides — City Bike Tours" };
 
 export default function HolidayRidesPage() {
   return (
