@@ -39,6 +39,7 @@ export default function LoginPage() {
   const next = params.get("next") && params.get("next").startsWith("/") && !params.get("next").startsWith("//") ? params.get("next") : "/connect";
 
   const [providers, setProviders] = useState(null);
+  const [providerLoadError, setProviderLoadError] = useState(false);
   const [mode, setMode] = useState(params.get("mode") === "signin" ? "signin" : "create");
   const [method, setMethod] = useState("email"); // email | sms | whatsapp
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -60,7 +61,7 @@ export default function LoginPage() {
         if (!controller.signal.aborted) setProviders(result && typeof result === "object" ? result : {});
       })
       .catch(() => {
-        if (!controller.signal.aborted) setProviders({});
+        if (!controller.signal.aborted) { setProviders({}); setProviderLoadError(true); }
       });
     return () => controller.abort();
   }, []);
@@ -109,12 +110,11 @@ export default function LoginPage() {
   function goSocial(id) {
     if (!enabled(id) || busy) return;
     rememberNext(next);
-    // Start the configured NextAuth provider and return through the backend
-    // token-exchange endpoint so the customer session is also established on the website.
-    const callback = new URL("/api/customer/social/complete", backendOrigin());
-    callback.searchParams.set("return", window.location.origin);
-    const signInUrl = new URL(`/api/auth/signin/${encodeURIComponent(id)}`, backendOrigin());
-    signInUrl.searchParams.set("callbackUrl", callback.toString());
+    // Use the backend provider router so each social provider can follow its configured auth flow.
+    const signInUrl = new URL("/customer-social", backendOrigin());
+    signInUrl.searchParams.set("provider", id);
+    signInUrl.searchParams.set("return", window.location.origin);
+    signInUrl.searchParams.set("next", next);
     window.location.assign(signInUrl.toString());
   }
 
@@ -148,6 +148,7 @@ export default function LoginPage() {
               <span aria-hidden="true">📱</span> Continue with phone number{providers && !providers.sms && <small>Not set up yet</small>}
             </button>
           </div>
+          {providerLoadError && <p className="auth-error" role="status">We could not load sign-in providers. Check the backend connection and CORS settings, then reload this page.</p>}
 
           <div className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></div>
 
