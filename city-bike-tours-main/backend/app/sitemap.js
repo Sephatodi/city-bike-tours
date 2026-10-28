@@ -9,7 +9,7 @@ const PAGES = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/conne
 
 export default async function sitemap() {
   const settings = await getSettings();
-  const base = (settings.siteUrl || process.env.PUBLIC_FRONTEND_URL || "").replace(/\/$/, "");
+  const base = (process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_ORIGIN?.split(",")[0]?.trim() || settings.siteUrl || "").replace(/\/$/, "");
   if (!base || settings.noindexSite === "true") return [];
   const hidden = new Set((await db.select({ path: seoPages.path }).from(seoPages).where(eq(seoPages.noindex, true))).map((p) => p.path));
   return PAGES.filter((p) => !hidden.has(p)).map((p) => ({ url: `${base}${p === "/" ? "" : p}`, lastModified: new Date() }));
