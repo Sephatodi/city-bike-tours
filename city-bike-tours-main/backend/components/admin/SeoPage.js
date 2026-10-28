@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge, Icon, Modal, PageTop, Skeleton, api, useDash, useRun } from "./ui";
 
-const KNOWN = ["/", "/routes", "/book", "/holiday-rides", "/safety"];
+const KNOWN = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/connect"];
 
 function Preview({ title, description, base, path }) {
   return (
@@ -28,7 +28,7 @@ function PageEditor({ row, base, onClose, onSaved }) {
     <Modal title="Search settings for a page" lead="What Google and others show for this page." width="600px" onClose={onClose}
       footer={<><button className="btn" type="button" onClick={onClose}>Cancel</button><button className="btn btn-primary" form="seo-form" disabled={busy}>Save</button></>}>
       <form id="seo-form" onSubmit={save} className="adm-form-grid">
-        <label className="field wide">Page address<input className="input" required value={form.path} onChange={set("path")} disabled={!!row.path} placeholder="/routes" /></label>
+        <label className="field wide">Page address<input className="input" required value={form.path} onChange={set("path")} disabled={!!row.path} placeholder="/schedule" /></label>
         <label className="field wide">Title<input className="input" maxLength={70} value={form.title} onChange={set("title")} /><span className="hint num">{form.title.length} / 70</span></label>
         <label className="field wide">Description<textarea className="textarea" rows={2} maxLength={170} value={form.description} onChange={set("description")} /><span className="hint num">{form.description.length} / 170</span></label>
         <label className="field wide">Keywords<input className="input" maxLength={250} value={form.keywords} onChange={set("keywords")} placeholder="bike tour, Gaborone, heritage" /></label>
@@ -91,7 +91,7 @@ export default function SeoPage() {
               <label className="field wide">Default title<input className="input" maxLength={70} value={form.seoTitle} onChange={set("seoTitle")} /></label>
               <label className="field wide">Default description<textarea className="textarea" rows={2} maxLength={170} value={form.seoDescription} onChange={set("seoDescription")} /></label>
               <label className="field wide">Keywords<input className="input" maxLength={250} value={form.seoKeywords} onChange={set("seoKeywords")} /></label>
-              <label className="field wide">Extra pages to keep out of Google (one per line)<textarea className="textarea" rows={2} maxLength={500} value={form.robotsExtra} onChange={set("robotsExtra")} placeholder="/register" /></label>
+              <label className="field wide">Extra pages to keep out of Google (one per line)<textarea className="textarea" rows={2} maxLength={500} value={form.robotsExtra} onChange={set("robotsExtra")} placeholder="/login" /></label>
               <div className="adm-switch wide" style={{ gridColumn: "1 / -1" }}>
                 <div><b>Hide the whole website from search engines</b><small>Use only while you're still building. Visitors can still open the site.</small></div>
                 <button type="button" className="adm-toggle" role="switch" aria-checked={form.noindexSite === "true"} aria-label="Hide the website from search engines" onClick={() => setForm((f) => ({ ...f, noindexSite: f.noindexSite === "true" ? "false" : "true" }))} />
