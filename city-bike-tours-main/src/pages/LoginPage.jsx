@@ -82,7 +82,7 @@ export default function LoginPage() {
     try { await task(); } catch (err) { setError(err.message || "Something went wrong."); } finally { setBusy(false); }
   }
 
-  const finish = (result) => { signIn(result.token, result.user); navigate(next === "/connect" ? takeNext(next) : next, { replace: true }); };
+  const finish = (result) => { signIn(result.token, result.user); navigate(next === "/connect" ? takeNext("/dashboard") : next, { replace: true }); };
 
   const submitEmail = (event) => {
     event.preventDefault();
