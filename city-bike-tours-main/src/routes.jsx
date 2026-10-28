@@ -10,6 +10,7 @@ import GalleryPage from "./pages/GalleryPage";
 import HeritageTrailPage from "./pages/HeritageTrailPage";
 import RideTicketPage from "./pages/RideTicketPage";
 import MessageInboxPage from "./pages/MessageInboxPage";
+import DashboardPage from "./pages/DashboardPage";
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: "pricing", element: <Navigate to="/schedule#pricing" replace /> },
       { path: "login", Component: LoginPage },
       { path: "login/callback", Component: LoginCallbackPage },
+      { path: "dashboard", Component: DashboardPage },
       { path: "connect", Component: ConnectPage },
       { path: "book", Component: BookingPage },
       { path: "gallery", Component: GalleryPage },
