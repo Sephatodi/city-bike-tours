@@ -25,6 +25,15 @@
 - Add the exact backend callback URI to each provider's developer console.
 - Configure optional CORS preview patterns narrowly; avoid broad wildcard origins.
 
+## Troubleshooting notes
+
+- The browser origin must exactly match `FRONTEND_ORIGIN`, including the hostname. Vercel preview URLs are different origins from the production domain.
+- If using `CORS_ORIGIN_PATTERNS`, do not include a trailing slash. Keep patterns restricted to the project's trusted preview hostnames.
+- If `/api/customer/providers` fails because of CORS or a backend error, the login page cannot determine which providers are enabled. Check the browser Network panel and Render logs.
+- The current customer social entry point uses NextAuth. Setting up a provider in Neon Auth alone does not automatically configure the existing NextAuth buttons.
+- Google, Facebook, and Apple credentials must each include both a client ID and a client secret in Render. Register callback URIs against the backend origin, not the Vercel frontend.
+- Never commit real secrets. Rotate any credentials accidentally shared in logs, screenshots, messages, or repository history.
+
 ## Post-deployment smoke tests
 
 1. Open `/api/customer/providers` and confirm it returns JSON with expected provider availability.
