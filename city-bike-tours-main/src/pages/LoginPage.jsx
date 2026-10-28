@@ -66,7 +66,7 @@ export default function LoginPage() {
     return () => controller.abort();
   }, []);
 
-  if (ready && isSignedIn) return <Navigate to={next} replace />;
+  if (ready && isSignedIn) return <Navigate to="/dashboard" replace />;
 
   const update = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
     try { await task(); } catch (err) { setError(err.message || "Something went wrong."); } finally { setBusy(false); }
   }
 
-  const finish = (result) => { signIn(result.token, result.user); navigate(next === "/connect" ? takeNext("/dashboard") : next, { replace: true }); };
+  const finish = (result) => { signIn(result.token, result.user); try { window.sessionStorage.removeItem("cbt-after-login"); } catch { /* ignore */ } navigate("/dashboard", { replace: true }); };
 
   const submitEmail = (event) => {
     event.preventDefault();
