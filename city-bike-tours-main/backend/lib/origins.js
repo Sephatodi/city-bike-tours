@@ -1,7 +1,10 @@
 const normalizeOrigin = (value) => {
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.origin !== value.replace(/\/$/, "")) return null;
+    const normalized = value.replace(/\/$/, "");
+    const secure = url.protocol === "https:";
+    const localDevelopment = url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if ((!secure && !localDevelopment) || url.origin !== normalized) return null;
     return url.origin;
   } catch {
     return null;
