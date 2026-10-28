@@ -2,7 +2,7 @@ import Link from "next/link";
 import RouteCard from "@/components/RouteCard";
 import { ROUTES, MEETUP } from "@/lib/data";
 
-export const metadata = { title: "Routes — Kgale Cycles" };
+export const metadata = { title: "Routes — City Bike Tours" };
 
 export default function RoutesPage() {
   return (
