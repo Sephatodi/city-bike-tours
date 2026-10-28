@@ -88,6 +88,7 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET || process.env.SESSION_SECRET,
   pages: {
     signIn: "/register",
+    error: "/register",
   },
   callbacks: {
     // For OAuth sign-ins, upsert into our own `users` table by email so
