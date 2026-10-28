@@ -1,12 +1,12 @@
-import { Suspense } from "react";
-import RegisterForm from "@/components/RegisterForm";
+import { redirect } from "next/navigation";
+import { frontendUrl } from "@/lib/frontend-url";
 
-export const metadata = { title: "Sign up — City Bike Tours" };
+export const dynamic = "force-dynamic";
 
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={null}>
-      <RegisterForm />
-    </Suspense>
-  );
+export default function RegisterRedirect() {
+  const destination = frontendUrl("/login");
+  if (!destination) {
+    return <main style={{ padding: 32, fontFamily: "sans-serif" }}>City Bike Tours login is unavailable because the frontend URL is not configured. Set PUBLIC_FRONTEND_URL or FRONTEND_ORIGIN in the backend environment.</main>;
+  }
+  redirect(destination);
 }
