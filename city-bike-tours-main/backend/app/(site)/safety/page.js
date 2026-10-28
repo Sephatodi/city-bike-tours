@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MEETUP } from "@/lib/data";
 
-export const metadata = { title: "Safety — Kgale Cycles" };
+export const metadata = { title: "Safety — City Bike Tours" };
 
 const TIPS = [
   {
