@@ -16,6 +16,7 @@ export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const { isSignedIn, user, signOut } = useCustomer();
+  const navLinks = isSignedIn ? [...NAV_LINKS, { label: "Dashboard", to: "/dashboard" }] : NAV_LINKS;
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -48,7 +49,7 @@ export default function Nav() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6">
-          {NAV_LINKS.map(({ label, to }) => {
+          {navLinks.map(({ label, to }) => {
             const active = location.pathname === to;
             return (
               <Link
@@ -100,7 +101,7 @@ export default function Nav() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden px-6 pb-6 flex flex-col gap-4" style={{ backgroundColor: "rgba(26,42,32,0.9)" }}>
-          {NAV_LINKS.map(({ label, to }) => (
+          {navLinks.map(({ label, to }) => (
             <Link
               key={to}
               to={to}
