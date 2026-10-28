@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import RegisterForm from "@/components/RegisterForm";
 
-export const metadata = { title: "Sign up — Kgale Cycles" };
+export const metadata = { title: "Sign up — City Bike Tours" };
 
 export default function RegisterPage() {
   return (
