@@ -39,6 +39,7 @@ export default function LoginPage() {
   const next = params.get("next") && params.get("next").startsWith("/") && !params.get("next").startsWith("//") ? params.get("next") : "/connect";
 
   const [providers, setProviders] = useState(null);
+  const [providerLoadError, setProviderLoadError] = useState(false);
   const [mode, setMode] = useState(params.get("mode") === "signin" ? "signin" : "create");
   const [method, setMethod] = useState("email"); // email | sms | whatsapp
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -60,7 +61,7 @@ export default function LoginPage() {
         if (!controller.signal.aborted) setProviders(result && typeof result === "object" ? result : {});
       })
       .catch(() => {
-        if (!controller.signal.aborted) setProviders({});
+        if (!controller.signal.aborted) { setProviders({}); setProviderLoadError(true); }
       });
     return () => controller.abort();
   }, []);
@@ -148,6 +149,7 @@ export default function LoginPage() {
               <span aria-hidden="true">📱</span> Continue with phone number{providers && !providers.sms && <small>Not set up yet</small>}
             </button>
           </div>
+          {providerLoadError && <p className="auth-error" role="status">We could not load sign-in providers. Check the backend connection and CORS settings, then reload this page.</p>}
 
           <div className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></div>
 
