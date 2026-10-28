@@ -215,7 +215,7 @@ export default function RegisterForm() {
         </button>
       </div>
 
-      <p className="auth-fineprint">By continuing you agree to Kgale Cycles&rsquo; terms and privacy policy.</p>
+      <p className="auth-fineprint">By continuing you agree to City Bike Tours&rsquo; terms and privacy policy.</p>
     </div>
   );
 }
