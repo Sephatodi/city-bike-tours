@@ -12,14 +12,16 @@ const normalizeOrigin = (value) => {
 };
 
 export function configuredFrontendOrigins() {
-  return (process.env.FRONTEND_ORIGIN || process.env.PUBLIC_FRONTEND_URL || "")
+  const configured = (process.env.FRONTEND_ORIGIN || process.env.PUBLIC_FRONTEND_URL || "")
     .split(",")
     .map((value) => normalizeOrigin(value.trim()))
     .filter(Boolean);
+  // Keep the canonical production frontend trusted even if Render still has a stale preview URL.
+  return [...new Set(["https://city-bike-tours.vercel.app", ...configured])];
 }
 
 function configuredOriginPatterns() {
-  return (process.env.CORS_ORIGIN_PATTERNS || "")
+  const configured = (process.env.CORS_ORIGIN_PATTERNS || "")
     .split(",")
     .map((pattern) => pattern.trim())
     .filter((pattern) => {
@@ -28,6 +30,8 @@ function configuredOriginPatterns() {
       return Boolean(host) && /^[a-z0-9.*-]+$/i.test(host)
         && !host.includes("..") && !host.startsWith(".") && !host.endsWith(".");
     });
+  // Narrowly scoped Vercel preview hostname pattern for this project/team.
+  return [...new Set([...configured, "https://city-bike-tours-*-aobakwe-xolanis-projects.vercel.app"])];
 }
 
 function globToRegex(pattern) {
