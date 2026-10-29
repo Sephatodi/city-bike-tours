@@ -57,10 +57,28 @@ export async function POST(request) {
   const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" }[type];
   let url;
   try {
-    ({ url } = await put(`city-tours-community/${id}.${extension}`, Buffer.from(bytes), { access: "public", contentType: type }));
+    // Pass the configured token explicitly because this API runs on Render,
+    // not inside the Vercel project that owns the Blob store.
+    ({ url } = await put(`city-tours-community/${id}.${extension}`, Buffer.from(bytes), {
+      access: "public",
+      contentType: type,
+      addRandomSuffix: false,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    }));
   } catch (error) {
-    console.error("Community upload failed:", error);
-    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 502 });
+    // Keep credentials out of logs/responses, but preserve the provider's
+    // safe diagnostic message so storage configuration errors can be fixed.
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("Community upload failed:", {
+      name: error?.name || "UnknownError",
+      message: detail,
+      status: error?.status || error?.statusCode || null,
+      code: error?.code || null,
+      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    });
+    return NextResponse.json({
+      error: "Photo storage rejected the upload. Please check the backend BLOB_READ_WRITE_TOKEN configuration and try again.",
+    }, { status: 502 });
   }
   const [photo] = await db.insert(communityPhotos).values({ id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, imageUrl: url }).returning(columns);
   await fireWebhook("community_photo.created", { id, name: auth.user.name, title });
