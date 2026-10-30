@@ -40,8 +40,11 @@ function Messages() {
   useEffect(() => {
     if (!isSignedIn) return undefined;
     void load();
-    const timer = setInterval(load, 20000); // pick up replies from the team
-    return () => clearInterval(timer);
+    const timer = setInterval(load, 20000);
+    const focus = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", focus);
+    document.addEventListener("visibilitychange", focus);
+    return () => { clearInterval(timer); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", focus); };
   }, [isSignedIn, load]);
 
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [messages?.length]);

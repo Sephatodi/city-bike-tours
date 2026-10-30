@@ -17,7 +17,7 @@ const ROUTE_VISUALS = {
 export default function BookingPage() {
   const { routes } = useLiveData();
   const { isSignedIn, ready, user, token, signOut } = useCustomer();
-  const { hash } = useLocation();
+  const { hash, search } = useLocation();
   const primaryRoutes = routes.filter((item) => item.id === "complete" || item.id === "loop");
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
@@ -34,7 +34,16 @@ export default function BookingPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
 
-  // Links like /book#book-form (from the pricing cards) should land on the form.
+  // Preserve the selected ride and rider count from the live price calculator.
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const selected = params.get("route");
+    const count = Number(params.get("riders"));
+    if (selected === "complete" || selected === "loop") setRoute(selected);
+    if (Number.isInteger(count) && count > 0) setRiders(Math.min(count, selected === "loop" ? 20 : 10));
+  }, [search]);
+
+  // Links like /book#book-form should land on the form.
   useEffect(() => {
     if (!hash) return undefined;
     const timer = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);

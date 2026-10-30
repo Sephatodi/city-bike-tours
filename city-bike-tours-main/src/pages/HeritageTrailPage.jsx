@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import SiteFolders from "../components/SiteFolders";
+import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
 import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
@@ -41,7 +42,7 @@ export default function HeritageTrailPage() {
           </div>
           <p>Each landmark marks a different chapter in the making of modern Botswana.</p>
         </div>
-        <SiteFolders />
+        <SiteFolders content={content} />
       </section>
 
       <section className="trail-booking-cta" aria-labelledby="trail-booking-heading">
