@@ -14,6 +14,9 @@ const schema = z.object({
   rating: z.number().int().min(1, "Choose a star rating.").max(5),
   comment: z.string().trim().min(5, "Please write a little more.").max(600, "Keep it under 600 characters."),
   rideDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  tour: z.string().trim().max(100).optional(),
+  riderOrigin: z.string().trim().max(80).optional(),
+  stops: z.array(z.string().trim().min(1).max(60)).max(6).optional(),
 });
 
 // The customer's own reviews, including ones still waiting for approval and any reply from the team.

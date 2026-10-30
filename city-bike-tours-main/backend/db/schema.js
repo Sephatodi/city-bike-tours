@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb, primaryKey } from "drizzle-orm/pg-core";
 
 export const bookingCategoryEnum = pgEnum("booking_category", ["weekday", "saturday", "holiday", "lesson"]);
 export const timeSlotEnum = pgEnum("time_slot", ["morning", "evening"]);
@@ -160,6 +160,10 @@ export const reviews = pgTable("reviews", {
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   rideDate: text("ride_date"),
+  tour: text("tour"),
+  riderOrigin: text("rider_origin"),
+  photoUrl: text("photo_url"),
+  stops: jsonb("stops").notNull().default([]),
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   userId: text("user_id"), // set when a signed-in customer wrote the review
   adminReply: text("admin_reply"),
@@ -223,3 +227,10 @@ export const communityPhotos = pgTable("community_photos", {
   downloadable: boolean("downloadable").notNull().default(false), // staff allow riders to download it
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One vote per signed-in rider per approved review.
+export const reviewVotes = pgTable("review_votes", {
+  reviewId: text("review_id").notNull().references(() => reviews.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({ pk: primaryKey({ columns: [table.reviewId, table.userId] }) }));
