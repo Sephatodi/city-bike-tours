@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ROLE_LABELS } from "@/lib/permissions";
+import PasswordInput from "./PasswordInput";
 import { Badge, Empty, Icon, Modal, PageTop, Skeleton, api, initials, niceDate, useCopy, useDash, useRun } from "./ui";
 
 const ROLE_BLURB = {
@@ -46,7 +47,7 @@ function AddUser({ onClose, onDone }) {
           </select>
         </label>
         <label className="field wide">Team (optional)<input className="input" maxLength={60} value={form.team} onChange={set("team")} placeholder="Guides, Front desk…" /></label>
-        <label className="field wide">Password<input className="input" type="text" minLength={12} value={form.password} onChange={set("password")} autoComplete="off" /><span className="hint">Leave blank to generate a temporary one.</span></label>
+        <label className="field wide">Password<PasswordInput className="input" minLength={12} value={form.password} onChange={set("password")} autoComplete="new-password" /><span className="hint">Leave blank to generate a temporary one.</span></label>
       </form>
     </Modal>
   );
@@ -73,8 +74,8 @@ function EditPassword({ user, onClose, onDone }) {
       footer={<><button className="btn" type="button" onClick={onClose}>Cancel</button><button className="btn btn-primary" form="edit-pass-form" disabled={busy}>Save password</button></>}>
       <form id="edit-pass-form" onSubmit={save} style={{ display: "grid", gap: 14, maxWidth: 420 }}>
         {error && <div className="adm-alert bad" role="alert">{error}</div>}
-        <label className="field">New password<input className="input" type="password" required value={form.password} onChange={set("password")} autoComplete="new-password" minLength={12} /><span className="hint">At least 12 characters</span></label>
-        <label className="field">Confirm password<input className="input" type="password" required value={form.confirm} onChange={set("confirm")} autoComplete="new-password" /></label>
+        <label className="field">New password<PasswordInput required value={form.password} onChange={set("password")} autoComplete="new-password" minLength={12} /><span className="hint">At least 12 characters</span></label>
+        <label className="field">Confirm password<PasswordInput required value={form.confirm} onChange={set("confirm")} autoComplete="new-password" /></label>
       </form>
     </Modal>
   );
