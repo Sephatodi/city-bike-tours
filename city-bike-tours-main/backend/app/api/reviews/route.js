@@ -19,7 +19,7 @@ const schema = z.object({
 
 // Approved reviews only. Anything new waits in Dashboard > Reviews until staff approve it.
 export async function GET() {
-  const rows = await db.select({ id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, rideDate: reviews.rideDate, adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt })
+  const rows = await db.select({ id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, rideDate: reviews.rideDate, createdAt: reviews.createdAt, adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt })
     .from(reviews).where(eq(reviews.status, "approved")).orderBy(desc(reviews.createdAt)).limit(30);
   return NextResponse.json({ reviews: rows });
 }

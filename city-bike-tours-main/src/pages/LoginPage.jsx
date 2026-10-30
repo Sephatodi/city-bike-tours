@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { BACKEND_BASE_URL, backendUrl } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
+import PasswordInput from "../components/PasswordInput";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
@@ -178,7 +179,7 @@ export default function LoginPage() {
               {mode === "create" && <label>Full name<input type="text" required autoComplete="name" value={form.name} onChange={update("name")} placeholder="Your name" /></label>}
               <label>Email<input type="email" required autoComplete="email" value={form.email} onChange={update("email")} placeholder="you@example.com" /></label>
               {mode === "create" && <label>Phone / WhatsApp <span className="auth-optional">optional</span><input type="tel" autoComplete="tel" value={form.phone} onChange={update("phone")} placeholder="+267 7X XXX XXX" /></label>}
-              <label>Password<input type="password" required minLength={mode === "create" ? 8 : undefined} autoComplete={mode === "create" ? "new-password" : "current-password"} value={form.password} onChange={update("password")} placeholder={mode === "create" ? "At least 8 characters" : "Your password"} /></label>
+              <label>Password<PasswordInput required minLength={mode === "create" ? 8 : undefined} autoComplete={mode === "create" ? "new-password" : "current-password"} value={form.password} onChange={update("password")} placeholder={mode === "create" ? "At least 8 characters" : "Your password"} /></label>
               {error && <p role="alert" className="auth-error">{error}</p>}
               <button type="submit" className="auth-primary" disabled={busy}>{busy ? "Please wait…" : mode === "create" ? "Create my account" : "Sign in"}</button>
             </form>

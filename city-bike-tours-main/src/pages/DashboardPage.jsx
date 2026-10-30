@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router";
 import Footer from "../components/Footer";
 import { useCustomer } from "../auth/CustomerAuth";
 import { backendUrl } from "../api/backend";
+import Stamp from "../components/Stamp";
 
 const actions = [
   { href: "/schedule#price-calculator", eyebrow: "Plan your ride", title: "Book a ride", body: "Choose a City Bike Tours experience and plan your next trip." },
@@ -82,9 +83,9 @@ export default function DashboardPage() {
                     <strong>{"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}{"☆".repeat(5 - Math.max(0, Math.min(5, Number(review.rating) || 0)))}</strong>
                     <span className="connect-kicker">{review.status || "Pending review"}</span>
                   </div>
-                  <p className="connect-lead" style={{ margin: "10px 0" }}>{review.comment}</p>
+                  <p className="connect-lead" style={{ margin: "10px 0" }}>{review.comment}</p>{review.createdAt && <Stamp value={review.createdAt} className="review-stamp" />}
                   {review.rideDate && <p className="connect-lead">Ride date: {review.rideDate}</p>}
-                  {review.adminReply && <div style={{ marginTop: 12, padding: 14, borderLeft: "3px solid #D4A017", background: "rgba(212,160,23,.08)" }}><strong>Reply from our team</strong><p className="connect-lead" style={{ marginBottom: 0 }}>{review.adminReply}</p></div>}
+                  {review.adminReply && <div style={{ marginTop: 12, padding: 14, borderLeft: "3px solid #D4A017", background: "rgba(212,160,23,.08)" }}><strong>Reply from our team</strong><p className="connect-lead" style={{ marginBottom: 0 }}>{review.adminReply}</p>{review.adminReplyAt && <Stamp value={review.adminReplyAt} className="review-stamp" />}</div>}
                 </article>
               ))}
             </div>

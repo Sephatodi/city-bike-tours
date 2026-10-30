@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import { backendUrl } from "../api/backend";
+import Stamp from "../components/Stamp";
+import { dayKey, dayLabel } from "../lib/time";
 import { useCustomer } from "../auth/CustomerAuth";
 
 const Stars = ({ n }) => (
@@ -10,8 +12,8 @@ const Stars = ({ n }) => (
   </span>
 );
 
-const when = (value) => new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Gaborone" });
-const day = (value) => new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Gaborone" });
+const initials = (name="Rider") => name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+const avatarColor = (name="") => { let h=0; for(const ch of name) h=(h*31+ch.charCodeAt(0))|0; return ["#8B4A32","#426B55","#9A7130","#59658A","#8B5D7B"][Math.abs(h)%5]; };
 
 function SignInPrompt({ what }) {
   return (
@@ -38,8 +40,11 @@ function Messages() {
   useEffect(() => {
     if (!isSignedIn) return undefined;
     void load();
-    const timer = setInterval(load, 20000); // pick up replies from the team
-    return () => clearInterval(timer);
+    const timer = setInterval(load, 20000);
+    const focus = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", focus);
+    document.addEventListener("visibilitychange", focus);
+    return () => { clearInterval(timer); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", focus); };
   }, [isSignedIn, load]);
 
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [messages?.length]);
@@ -65,16 +70,19 @@ function Messages() {
           <div ref={listRef} className="chat-list" aria-live="polite">
             {!messages ? <p className="connect-muted">Loading your conversation…</p> : messages.length === 0 ? (
               <p className="connect-muted">No messages yet. Say hello, {user?.name?.split(" ")[0] || "rider"}!</p>
-            ) : messages.map((m) => (
-              <div key={m.id} className={`chat-bubble ${m.sender === "admin" ? "from-team" : "from-me"}`}>
-                <div className="chat-meta">{m.sender === "admin" ? "City Bike Tours" : "You"} · {when(m.createdAt)}</div>
+            ) : messages.map((m, index) => (
+              <div key={m.id}>
+                {(index === 0 || dayKey(m.createdAt) !== dayKey(messages[index - 1].createdAt)) && <div className="chat-day-divider"><span>{dayLabel(m.createdAt)}</span></div>}
+                <div className={`chat-bubble ${m.sender === "admin" ? "from-team" : "from-me"}`}>
+                <div className="chat-meta">{m.sender === "admin" ? "City Bike Tours" : "You"} · <Stamp value={m.createdAt} /></div>
                 <div className="chat-body">{m.body}</div>
+              </div>
               </div>
             ))}
           </div>
           <form onSubmit={send} className="chat-form">
             <label className="sr-only" htmlFor="chat-input">Your message</label>
-            <textarea id="chat-input" rows={3} maxLength={1500} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write your message…" />
+            <textarea id="chat-input" rows={3} maxLength={1500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(text.trim()&&!busy)e.currentTarget.form?.requestSubmit();}}} placeholder="Write your message… (Enter to send · Shift+Enter for a new line)" />
             {error && <p role="alert" className="auth-error">{error}</p>}
             <button type="submit" className="auth-primary" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
           </form>
@@ -140,7 +148,7 @@ function MyReviews({ reviews }) {
         <article key={r.id} className="review-card glass-soft">
           <div className="review-head"><Stars n={r.rating} /><span className={`review-status ${r.status}`}>{STATUS_TEXT[r.status] || r.status}</span></div>
           <p>{r.comment}</p>
-          {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p></div>}
+          {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p>{r.adminReplyAt && <Stamp value={r.adminReplyAt} className="review-stamp" />}</div>}
         </article>
       ))}
     </div>
@@ -153,10 +161,12 @@ function PublicReviews({ refreshKey }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(backendUrl("/api/reviews"), { signal: controller.signal, cache: "no-store" })
-      .then(async (r) => { const body = await r.json().catch(() => null); if (!r.ok || !Array.isArray(body?.reviews)) throw new Error(); setReviews(body.reviews); })
-      .catch(() => { if (!controller.signal.aborted) setFailed(true); });
-    return () => controller.abort();
+    const run = () => fetch(backendUrl("/api/reviews"), { signal: controller.signal, cache: "no-store" }).then(async (r) => { const body = await r.json().catch(() => null); if (!r.ok || !Array.isArray(body?.reviews)) throw new Error(); setReviews(body.reviews); setFailed(false); }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    void run();
+    const timer = setInterval(run, 60000);
+    const focus = () => void run();
+    window.addEventListener("focus", focus);
+    return () => { controller.abort(); clearInterval(timer); window.removeEventListener("focus", focus); };
   }, [refreshKey]);
 
   return (
@@ -168,10 +178,10 @@ function PublicReviews({ refreshKey }) {
       ) : (
         <div className="review-grid">
           {reviews.map((r) => (
-            <article key={r.id} className="review-card glass">
-              <div className="review-head"><Stars n={r.rating} /><span className="connect-muted">{r.rideDate ? day(`${r.rideDate}T00:00:00Z`) : ""}</span></div>
+            <article key={r.id} className="review-card testimonial-card"><div className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}} aria-hidden="true">{initials(r.name)}</div>
+              <div className="review-head"><Stars n={r.rating} /><span className="connect-muted">{r.rideDate || (r.createdAt ? <Stamp value={r.createdAt}/> : "")}</span></div>
               <p>{r.comment}</p>
-              <div className="review-by">— {r.name}</div>
+              <div className="review-by">— {r.name}</div>{r.createdAt && <Stamp value={r.createdAt} className="review-stamp" />}
               {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p></div>}
             </article>
           ))}

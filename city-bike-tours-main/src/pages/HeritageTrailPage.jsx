@@ -1,30 +1,9 @@
 import { Link } from "react-router";
-import Carousel from "../components/Carousel";
+import SiteFolders from "../components/SiteFolders";
+import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
 import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
-import Icon from "../components/Icon";
-import { SITES } from "../data";
-
-function HeritageSite({ site, index }) {
-  return (
-    <article className="trail-site-card">
-      <Carousel imgs={site.imgs} accent={site.color} title={site.name} subtitle={site.street} />
-      <div className="trail-site-copy">
-        <div className="trail-site-index">STOP {String(index + 1).padStart(2, "0")}</div>
-        <div className="trail-site-title">
-          <Icon name={site.icon} size={22} style={{ color: "#D4A017" }} />
-          <div>
-            <h2>{site.name}</h2>
-            <p>{site.street} · Gaborone</p>
-          </div>
-        </div>
-        <p className="trail-site-short">{site.short}</p>
-        <p className="trail-site-history">{site.history}</p>
-      </div>
-    </article>
-  );
-}
 
 export default function HeritageTrailPage() {
   return (
@@ -63,9 +42,7 @@ export default function HeritageTrailPage() {
           </div>
           <p>Each landmark marks a different chapter in the making of modern Botswana.</p>
         </div>
-        <div className="trail-sites-grid">
-          {SITES.map((site, index) => <HeritageSite key={site.id} site={site} index={index} />)}
-        </div>
+        <SiteFolders content={content} />
       </section>
 
       <section className="trail-booking-cta" aria-labelledby="trail-booking-heading">

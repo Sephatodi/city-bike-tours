@@ -1,61 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router";
-import Carousel from "../components/Carousel";
 import RoundaboutCarousel from "../components/RoundaboutCarousel";
+import SiteFolders from "../components/SiteFolders";
+import Lightbox from "../components/Lightbox";
+import Stamp from "../components/Stamp";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
-import { SITES } from "../data";
 import { rememberNext, useCustomer } from "../auth/CustomerAuth";
 import { useLiveData } from "../hooks/LiveDataContext";
 import { downloadPhoto } from "../utils/download";
 import { prepareImage } from "../utils/images";
-
-// Fixed-position overlays must live on <body>: the page wrapper has a CSS filter,
-// which would otherwise make "fixed" relative to the page instead of the screen.
-function Lightbox({ items, index, onChange, onClose, onDownload }) {
-  const item = items[index];
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowRight") onChange((index + 1) % items.length);
-      if (event.key === "ArrowLeft") onChange((index - 1 + items.length) % items.length);
-    };
-    window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
-  }, [index, items.length, onChange, onClose]);
-
-  if (!item) return null;
-  return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={item.title} className="lightbox" onClick={onClose}>
-      <figure onClick={(event) => event.stopPropagation()}>
-        <img src={item.src} alt={item.title} />
-        <figcaption>
-          <div>
-            <strong>{item.title}</strong>
-            {item.credit && <span> · {item.credit}</span>}
-            {item.story && <p>{item.story}</p>}
-          </div>
-          {item.downloadable && (
-            <button type="button" className="gallery-download-btn" onClick={() => onDownload(item)}>
-              <Icon name="download" size={16} /> Download
-            </button>
-          )}
-        </figcaption>
-      </figure>
-      {items.length > 1 && (
-        <>
-          <button type="button" className="lightbox-nav prev" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); onChange((index - 1 + items.length) % items.length); }}>‹</button>
-          <button type="button" className="lightbox-nav next" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); onChange((index + 1) % items.length); }}>›</button>
-        </>
-      )}
-      <button type="button" aria-label="Close photo" className="lightbox-close" onClick={onClose}>×</button>
-    </div>,
-    document.body,
-  );
-}
 
 // Downloads need an account, and only photos the team has switched downloads on for.
 function useDownloads() {
@@ -77,40 +31,15 @@ function useDownloads() {
 
 // ─── HERITAGE TRAIL (moved from the home page) ───────────────────────────────
 
-function HeritageSiteCard({ site }) {
-  return (
-    <div className="site-card">
-      <Carousel imgs={site.imgs} accent={site.color} title={site.name} subtitle={site.street} />
-      <div className="p-6 rounded-b-sm glass" style={{ borderLeft: `4px solid ${site.color === "#1A3A2A" ? "#D4A017" : site.color}` }}>
-        <div className="flex items-start gap-3 mb-3">
-          <Icon name={site.icon} size={24} style={{ color: "#D4A017" }} />
-          <div>
-            <h3 className="font-display font-bold text-xl leading-tight" style={{ color: "#F5EDD9" }}>{site.name}</h3>
-            <p className="text-xs italic mt-0.5" style={{ color: "#D4A017" }}>{site.short}</p>
-          </div>
-        </div>
-        <p className="text-sm leading-relaxed" style={{ color: "rgba(245,237,217,0.8)" }}>{site.history}</p>
-      </div>
-    </div>
-  );
-}
-
 function HeritageSection() {
   return (
     <section id="heritage" className="gallery-section" aria-labelledby="heritage-heading">
       <div className="text-center mb-14">
         <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— The Nation's Story</p>
-        <h2 id="heritage-heading" className="font-display font-bold mb-4" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#F5EDD9" }}>
-          Six Sites. One Nation's Story.
-        </h2>
-        <p className="max-w-2xl mx-auto text-base" style={{ color: "rgba(245,237,217,0.78)" }}>
-          Each stop carries the weight of a decisive moment in Botswana's history.
-          Arrive by bicycle and the scale becomes human — a monument that looks imposing from a car becomes personal at cycling pace.
-        </p>
+        <h2 id="heritage-heading" className="font-display font-bold mb-4" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#F5EDD9" }}>Six Sites. One Nation's Story.</h2>
+        <p className="max-w-2xl mx-auto text-base" style={{ color: "rgba(245,237,217,0.78)" }}>Open a heritage folder to explore its photographs, history and location.</p>
       </div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {SITES.map((site) => <HeritageSiteCard key={site.id} site={site} />)}
-      </div>
+      <SiteFolders />
     </section>
   );
 }
@@ -122,15 +51,9 @@ function OfficialGallery() {
   const { download, notice } = useDownloads();
   const [openAt, setOpenAt] = useState(null);
 
-  // Pictures posted from the dashboard first, then the built-in photos of the six sites.
-  const items = useMemo(() => [
-    ...content.filter((item) => item.contentType === "picture" && item.mediaUrl).map((item) => ({
-      key: `content-${item.id}`, kind: "content", id: item.id, src: item.mediaUrl, title: item.title, story: item.bodyText, downloadable: Boolean(item.downloadable),
-    })),
-    ...SITES.flatMap((site) => site.imgs.map((src, index) => ({
-      key: `${site.id}-${index}`, src, title: `${site.name} — photo ${index + 1}`, story: site.short, downloadable: false,
-    }))),
-  ], [content]);
+  const items = useMemo(() => content.filter((item) => item.contentType === "picture" && item.mediaUrl).map((item) => ({
+    key: `content-${item.id}`, kind: "content", id: item.id, src: item.mediaUrl, title: item.title, story: item.bodyText, createdAt: item.createdAt, downloadable: Boolean(item.downloadable),
+  })), [content]);
 
   return (
     <section id="photos" className="gallery-section" aria-labelledby="official-heading">
@@ -146,7 +69,7 @@ function OfficialGallery() {
         paused={openAt !== null}
         onOpen={setOpenAt}
         onDownload={download}
-        renderCaption={(item) => (<><strong>{item.title}</strong>{item.story && <span>{item.story}</span>}</>)}
+        renderCaption={(item) => (<><strong>{item.title}</strong>{item.story && <span>{item.story}</span>}{item.createdAt && <Stamp value={item.createdAt} />}</>)}
       />
       {notice && <p role="alert" className="auth-error" style={{ maxWidth: "36rem", margin: "1rem auto 0" }}>{notice}</p>}
       {openAt !== null && <Lightbox items={items} index={openAt} onChange={setOpenAt} onClose={() => setOpenAt(null)} onDownload={download} />}
@@ -239,7 +162,7 @@ function RiderStories() {
   }
 
   const items = useMemo(() => (photos || []).map((p) => ({
-    key: p.id, kind: "community", id: p.id, src: p.imageUrl, title: p.title, story: p.story, credit: p.authorName,
+    key: p.id, kind: "community", id: p.id, src: p.imageUrl, title: p.title, story: p.story, credit: p.authorName, createdAt: p.createdAt,
     downloadable: Boolean(p.downloadable) && p.status === "approved", status: p.status, mine: p.mine,
   })), [photos]);
 
