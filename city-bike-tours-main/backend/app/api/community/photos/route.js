@@ -15,7 +15,7 @@ const MAX_BYTES = 4 * 1024 * 1024; // serverless request bodies are capped aroun
 
 const columns = {
   id: communityPhotos.id, authorName: communityPhotos.authorName, title: communityPhotos.title, story: communityPhotos.story,
-  imageUrl: communityPhotos.imageUrl, status: communityPhotos.status, downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
+  imageUrl: communityPhotos.imageUrl, siteId: communityPhotos.siteId, status: communityPhotos.status, downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
 };
 
 // Approved rider photos for everyone, plus the signed-in rider's own pending uploads so they can see them.
@@ -45,6 +45,7 @@ export async function POST(request) {
   const file = form?.get("file");
   const title = String(form?.get("title") || "").trim().slice(0, 120);
   const story = String(form?.get("story") || "").trim().slice(0, 1500);
+  const siteId = String(form?.get("siteId") || "").trim().slice(0, 80) || null;
   if (!file || typeof file === "string") return NextResponse.json({ error: "Choose a photo to upload." }, { status: 400 });
   if (!title) return NextResponse.json({ error: "Give your photo a short title." }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "That photo is too large (max 4MB)." }, { status: 400 });
@@ -80,7 +81,7 @@ export async function POST(request) {
       error: "Photo storage rejected the upload. Please check the backend BLOB_READ_WRITE_TOKEN configuration and try again.",
     }, { status: 502 });
   }
-  const [photo] = await db.insert(communityPhotos).values({ id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, imageUrl: url }).returning(columns);
+  const [photo] = await db.insert(communityPhotos).values({ id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, siteId, imageUrl: url }).returning(columns);
   await fireWebhook("community_photo.created", { id, name: auth.user.name, title });
   const { userId, ...rest } = photo;
   return NextResponse.json({ photo: { ...rest, mine: true }, message: "Thank you! Your photo will appear once our team has looked at it." }, { status: 201 });
