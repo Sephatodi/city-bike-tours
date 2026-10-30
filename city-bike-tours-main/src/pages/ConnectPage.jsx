@@ -5,6 +5,7 @@ import { backendUrl } from "../api/backend";
 import Stamp from "../components/Stamp";
 import { dayKey, dayLabel } from "../lib/time";
 import { useCustomer } from "../auth/CustomerAuth";
+import "../rr-theme.css";
 
 const Stars = ({ n }) => (
   <span aria-label={`${n} out of 5 stars`} style={{ color: "#D4A017", letterSpacing: 2 }}>
@@ -204,7 +205,7 @@ export default function ConnectPage() {
 
   return (
     <>
-      <main className="connect-page">
+      <main className="rr rr-bg rr-page connect-page">
         <header className="connect-hero">
           <p className="connect-kicker">— Reviews &amp; messages</p>
           <h1 className="font-display">Connect with City Bike Tours</h1>
