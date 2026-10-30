@@ -106,6 +106,27 @@
       "when": 1792400000000,
       "tag": "0014_downloadable_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792401000000,
+      "tag": "0015_managed_auth_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793400000000,
+      "tag": "0016_review_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793400001000,
+      "tag": "0017_community_photo_site",
+      "breakpoints": true
     }
   ]
 }

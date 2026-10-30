@@ -218,6 +218,7 @@ export const communityPhotos = pgTable("community_photos", {
   title: text("title").notNull(),
   story: text("story"),
   imageUrl: text("image_url").notNull(),
+  siteId: text("site_id"),
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   downloadable: boolean("downloadable").notNull().default(false), // staff allow riders to download it
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
