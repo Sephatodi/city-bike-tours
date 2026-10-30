@@ -6,6 +6,7 @@ import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
 
 export default function HeritageTrailPage() {
+  const { content = [] } = useLiveData();
   return (
     <main className="heritage-trail-page">
       <header className="trail-hero">
