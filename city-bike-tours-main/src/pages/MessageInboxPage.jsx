@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { backendUrl } from "../api/backend";
 import Footer from "../components/Footer";
+import Stamp from "../components/Stamp";
 
 export default function MessageInboxPage() {
   const [messages, setMessages] = useState([]);
@@ -71,7 +72,7 @@ export default function MessageInboxPage() {
                 <li key={i} className="message-inbox-item">
                   <div className="message-inbox-header">
                     <span className="message-inbox-type">{msg.type === "broadcast" ? "Ride update" : msg.type === "whatsapp" ? "Ride pass" : msg.type}</span>
-                    <span className="message-inbox-date">{new Date(msg.sentAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="message-inbox-date"><Stamp value={msg.sentAt} /></span>
                   </div>
                   <div className="message-inbox-body">{msg.message}</div>
                   {msg.link && (
