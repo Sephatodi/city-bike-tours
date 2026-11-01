@@ -4,7 +4,7 @@ import { Suspense, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
-const PROVIDERS = ["google", "facebook", "apple"];
+const PROVIDERS = ["facebook", "apple"];
 
 function Start() {
   const params = useSearchParams();
@@ -16,7 +16,7 @@ function Start() {
     signIn(provider, { callbackUrl: `/api/customer/social/complete?return=${encodeURIComponent(back)}` });
   }, [provider, back]);
 
-  return <p style={{ padding: "6rem 1.5rem", textAlign: "center" }}>{PROVIDERS.includes(provider) ? "Taking you to sign in…" : "Unknown sign-in method."}</p>;
+  return <p style={{ padding: "6rem 1.5rem", textAlign: "center" }}>{PROVIDERS.includes(provider) ? "Taking you to sign in…" : provider === "google" ? "Google sign-in is handled by Neon Auth. Return to the website and choose Google." : "Unknown sign-in method."}</p>;
 }
 
 export default function CustomerSocialPage() {
