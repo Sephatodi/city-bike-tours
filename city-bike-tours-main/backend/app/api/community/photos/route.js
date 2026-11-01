@@ -25,7 +25,7 @@ export async function GET(request) {
     ? or(eq(communityPhotos.status, "approved"), and(eq(communityPhotos.userId, user.id), eq(communityPhotos.status, "pending")))
     : eq(communityPhotos.status, "approved");
   try {
-    const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt)).limit(60);
+    const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt));
     return NextResponse.json({
       photos: rows.map(({ userId, ...photo }) => ({ ...photo, mine: Boolean(user && userId === user.id) })),
     });

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { SITES } from "../data";
 import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
 import { backendUrl } from "../api/backend";
 import { useCustomer } from "../auth/CustomerAuth";
+import SiteFolders from "../components/SiteFolders";
 import "../rr-theme.css";
 import "../gallery-reviews.css";
 
@@ -13,12 +14,8 @@ const siteLabel = (site, index) => `STOP ${String(index + 1).padStart(2, "0")} �
 export default function GalleryPage() {
   const { hash } = useLocation();
   const { content = [] } = useLiveData();
-  const { api, isSignedIn } = useCustomer();
-  const [active, setActive] = useState(0);
+  const { api, isSignedIn, token } = useCustomer();
   const [riderPhotos, setRiderPhotos] = useState([]);
-  const [paused, setPaused] = useState(false);
-  const [inView, setInView] = useState(true);
-  const carouselRef = useRef(null);
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(24);
   const [lightbox, setLightbox] = useState(-1);
@@ -28,9 +25,6 @@ export default function GalleryPage() {
   const [uploadSite, setUploadSite] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
-  const previewTimer = useRef(null);
-  const pointerStart = useRef(null);
-  const site = SITES[active] || SITES[0];
 
   const publishedPictures = useMemo(() => content.filter((item) => item.isPublished !== false && item.mediaUrl && item.contentType === "picture"), [content]);
   useEffect(() => { const controller = new AbortController(); fetch(backendUrl("/api/community/photos"), { signal: controller.signal, cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => { if (!controller.signal.aborted && Array.isArray(data?.photos)) setRiderPhotos(data.photos.filter((photo) => photo.status === "approved")); }).catch(() => {}); return () => controller.abort(); }, []);
@@ -38,10 +32,10 @@ export default function GalleryPage() {
     ...SITES.flatMap((item, siteIndex) => item.imgs.map((src, photoIndex) => ({
       key: `${item.id}-${photoIndex}`, src, title: item.name, siteId: item.id, siteIndex,
     }))),
-    ...riderPhotos.map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName })),
+    ...riderPhotos.map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName, downloadable: photo.downloadable === true, downloadKind: "community", downloadId: photo.id })),
     ...publishedPictures.map((item) => ({
       key: `published-${item.id}`, src: item.mediaUrl, title: item.title,
-      siteId: item.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === item.siteId),
+      siteId: item.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === item.siteId), downloadable: item.downloadable === true, downloadKind: "content", downloadId: item.id,
     })),
   ], [publishedPictures, riderPhotos]);
   const filteredPhotos = useMemo(() => filter === "all" ? photos : photos.filter((photo) => photo.siteId === filter), [photos, filter]);
@@ -64,19 +58,6 @@ export default function GalleryPage() {
     finally { setUploadBusy(false); }
   };
 
-  const move = useCallback((step) => setActive((current) => (current + step + SITES.length) % SITES.length), []);
-  useEffect(() => {
-    if (paused || !inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.hidden) return undefined;
-    const timer = window.setInterval(() => move(1), 5600);
-    return () => window.clearInterval(timer);
-  }, [paused, inView, move]);
-  useEffect(() => {
-    const node = carouselRef.current;
-    if (!node || !("IntersectionObserver" in window)) return undefined;
-    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.15 });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
   useEffect(() => {
     if (!hash) return undefined;
     const timer = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" }), 200);
@@ -90,19 +71,22 @@ export default function GalleryPage() {
         if (event.key === "ArrowLeft") setLightbox((v) => (v - 1 + filteredPhotos.length) % filteredPhotos.length);
         return;
       }
-      if (event.key === "ArrowRight") move(1);
-      if (event.key === "ArrowLeft") move(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [move, lightbox, filteredPhotos.length]);
-  useEffect(() => () => window.clearTimeout(previewTimer.current), []);
+  }, [lightbox, filteredPhotos.length]);
 
-  const choosePreview = (index) => {
-    window.clearTimeout(previewTimer.current);
-    previewTimer.current = window.setTimeout(() => setActive(index), 180);
-  };
   const openPhoto = (index) => setLightbox(index);
+  const downloadPhoto = async (photo) => {
+    if (!isSignedIn || !photo.downloadable || !photo.downloadKind || !photo.downloadId) return;
+    try {
+      const response = await fetch(backendUrl(`/api/download?kind=${photo.downloadKind}&id=${encodeURIComponent(photo.downloadId)}`), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (!response.ok) throw new Error("This photo is not currently available to download.");
+      const blob = await response.blob(); const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${(photo.title || "city-bike-tours-photo").replace(/[^a-z0-9-_]+/gi, "-")}.jpg`;
+      document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url);
+    } catch (error) { setUploadMessage(error.message || "Could not download this photo."); }
+  };
 
   return (
     <>
@@ -111,57 +95,27 @@ export default function GalleryPage() {
           <header className="rr-hero rr-gallery-hero">
             <p className="rr-kicker">City Bike Tours · Gaborone heritage</p>
             <h1>See the city.<br /><em>Feel its stories.</em></h1>
-            <p className="rr-muted">Explore Gaborone's heritage landmarks through a moving carousel, a collection of site cards and photographs from the journey.</p>
+            <p className="rr-muted">Explore Gaborone's heritage landmarks through the Sites along the journey carousel, then browse the complete collection of heritage, team and approved rider photographs.</p>
           </header>
-
-          <section ref={carouselRef} className="rr-roundabout-wrap" aria-label="Heritage sites carousel"
-            onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
-            onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
-            <div className="rr-roundabout" onPointerDown={(event) => { pointerStart.current = event.clientX; }}
-              onPointerUp={(event) => { if (pointerStart.current === null) return; const delta = event.clientX - pointerStart.current; pointerStart.current = null; if (Math.abs(delta) > 45) move(delta < 0 ? 1 : -1); }}>
-              {SITES.map((item, index) => {
-                let offset = (index - active + SITES.length) % SITES.length;
-                if (offset > SITES.length / 2) offset -= SITES.length;
-                const visible = Math.abs(offset) <= 1;
-                return <article key={item.id} className={`rr-roundabout-slide ${offset === 0 ? "is-active" : ""}`}
-                  aria-hidden={!visible} style={{ "--slide-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none", transform: `translateX(${offset * 72}%) translateZ(${-Math.abs(offset) * 150}px) rotateY(${offset * -24}deg) scale(${1 - Math.abs(offset) * .12})` }}>
-                  <Link to={`/gallery/${item.id}`} tabIndex={offset === 0 ? 0 : -1} className="rr-roundabout-photo" aria-label={`Open photo collection for ${item.name}`}>
-                    <img src={item.imgs[0]} alt={item.name} fetchPriority={offset === 0 ? "high" : "auto"} />
-                    <span className="rr-roundabout-overlay"><small>STOP {String(index + 1).padStart(2, "0")} · {item.street}</small><strong>{item.name}</strong></span>
-                  </Link>
-                </article>;
-              })}
-              <button type="button" className="rr-roundabout-arrow prev" onClick={() => move(-1)} aria-label="Previous site">←</button>
-              <button type="button" className="rr-roundabout-arrow next" onClick={() => move(1)} aria-label="Next site">→</button>
-            </div>
-            <div className="rr-roundabout-footer">
-              <div className="rr-roundabout-dots" aria-label="Choose a heritage stop">
-                {SITES.map((item, index) => <button key={item.id} type="button" className={index === active ? "active" : ""} aria-label={`Show ${item.name}`} aria-current={index === active ? "true" : undefined} onClick={() => setActive(index)} />)}
-              </div>
-              <span className="rr-roundabout-count">{String(active + 1).padStart(2, "0")} / {String(SITES.length).padStart(2, "0")}</span>
-            </div>
-            <div className="rr-roundabout-caption" aria-live="polite"><span>{site.street}</span><strong>{site.name}</strong><p>{site.short}</p></div>
-          </section>
 
           <section className="rr-gallery-collection" aria-labelledby="gallery-collection-title">
             <div className="rr-gallery-section-heading"><div><p className="rr-kicker">The heritage collection</p><h2 id="gallery-collection-title">Sites along the journey</h2></div><span className="rr-chip">06 locations</span></div>
-            <div className="rr-gallery-grid">{SITES.map((item, index) => <Link key={item.id} to={`/gallery/${item.id}`} className={`rr-plate rr-gallery-card ${index === active ? "is-featured" : ""}`} aria-current={index === active ? "true" : undefined}
-              onMouseEnter={() => choosePreview(index)} onFocus={() => choosePreview(index)} onMouseLeave={() => window.clearTimeout(previewTimer.current)} onBlur={() => window.clearTimeout(previewTimer.current)}>
-              <div className="rr-gallery-card-image"><img src={item.imgs[0]} alt={item.name} loading="lazy" decoding="async" /></div>
-              <div className="rr-gallery-card-copy"><p className="rr-kicker">{siteLabel(item, index)}</p><h3>{item.name}</h3><p className="rr-muted">{item.short}</p><span className="rr-gallery-card-link">Explore site ↗</span></div>
-            </Link>)}</div>
+            <SiteFolders content={content} />
           </section>
 
           <section className="rr-photo-wall" aria-labelledby="photo-wall-heading">
-            <div className="rr-gallery-section-heading"><div><p className="rr-kicker">The complete collection</p><h2 id="photo-wall-heading">All photos</h2><p className="rr-muted">Browse photographs from the heritage sites and published website gallery.</p></div><span className="rr-chip">{filteredPhotos.length} photos</span></div>
+            <div className="rr-gallery-section-heading"><div><p className="rr-kicker">The complete collection</p><h2 id="photo-wall-heading">All photos</h2><p className="rr-muted">Browse heritage-site photographs, published team images and approved photographs shared by riders.</p></div><span className="rr-chip">{filteredPhotos.length} photos</span></div>
             <div className="rr-photo-filters"><button type="button" className={filter === "all" ? "active" : ""} onClick={() => { setFilter("all"); setLimit(24); }}>All · {photos.length}</button>{SITES.map((item) => <button type="button" key={item.id} className={filter === item.id ? "active" : ""} onClick={() => { setFilter(item.id); setLimit(24); }}>{item.name} · {photos.filter((photo) => photo.siteId === item.id).length}</button>)}</div>
-            <div className="rr-photo-grid">{filteredPhotos.slice(0, limit).map((photo, index) => <button type="button" key={photo.key} onClick={() => openPhoto(index)} aria-label={`View ${photo.title} photograph`}><img src={photo.src} alt={photo.title} loading="lazy" decoding="async" /><span>{photo.title}</span></button>)}</div>
+            <div className="rr-photo-grid">{filteredPhotos.slice(0, limit).map((photo, index) => <article className="rr-photo-tile" key={photo.key}>
+              <button type="button" className="rr-photo-open" onClick={() => openPhoto(index)} aria-label={`View ${photo.title} photograph`}><img src={photo.src} alt={photo.title} loading="lazy" decoding="async" /><span>{photo.title}{photo.authorName ? ` · ${photo.authorName}` : ""}</span></button>
+              {isSignedIn && photo.downloadable && photo.downloadKind && <button type="button" className="rr-photo-download" onClick={() => downloadPhoto(photo)}>Download photo ↓</button>}
+            </article>)}</div>
             {limit < filteredPhotos.length && <button type="button" className="rr-btn-ghost rr-load-more" onClick={() => setLimit((value) => Math.min(value + 24, filteredPhotos.length))}>Load more photos</button>}
           </section>
 
-          {stories.length > 0 && <section className="rr-rider-stories" aria-labelledby="rider-stories-heading"><div className="rr-gallery-section-heading"><div><p className="rr-kicker">Shared by the community</p><h2 id="rider-stories-heading">Rider stories</h2></div><Link to="/connect" className="rr-btn-ghost">Share your ride ↗</Link></div>
-            <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.imageUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
-            <p className="rr-muted rr-story-note">Only rider photographs approved by the City Bike Tours team are shown here.</p>
+          {stories.length > 0 && <section className="rr-rider-stories" aria-labelledby="rider-stories-heading">
+            <div className="rr-gallery-section-heading"><div><p className="rr-kicker">Shared by the community</p><h2 id="rider-stories-heading">Rider photographs</h2><p className="rr-muted">Approved rider uploads appear here in a simple photo grid and in the complete collection above.</p></div></div>
+            <div className="rr-rider-photo-grid">{stories.map((story) => <article className="rr-plate rr-rider-photo-card" key={story.id}><img src={story.imageUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
           </section>}
           <section className="rr-photo-upload rr-plate-elevated" aria-labelledby="share-photo-heading">
             <div><p className="rr-kicker">Your turn to share</p><h2 id="share-photo-heading">Add a photograph from your ride</h2><p className="rr-muted">Uploads are reviewed by the team before they appear in the public gallery.</p></div>
