@@ -4,6 +4,7 @@ import { SITES } from "../data";
 import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
 import { backendUrl } from "../api/backend";
+import { useCustomer } from "../auth/CustomerAuth";
 import "../rr-theme.css";
 import "../gallery-reviews.css";
 
@@ -12,6 +13,7 @@ const siteLabel = (site, index) => `STOP ${String(index + 1).padStart(2, "0")} �
 export default function GalleryPage() {
   const { hash } = useLocation();
   const { content = [] } = useLiveData();
+  const { api, isSignedIn } = useCustomer();
   const [active, setActive] = useState(0);
   const [riderPhotos, setRiderPhotos] = useState([]);
   const [paused, setPaused] = useState(false);
@@ -20,6 +22,12 @@ export default function GalleryPage() {
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(24);
   const [lightbox, setLightbox] = useState(-1);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadStory, setUploadStory] = useState("");
+  const [uploadSite, setUploadSite] = useState("");
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
   const previewTimer = useRef(null);
   const pointerStart = useRef(null);
   const site = SITES[active] || SITES[0];
@@ -38,6 +46,23 @@ export default function GalleryPage() {
   ], [publishedPictures, riderPhotos]);
   const filteredPhotos = useMemo(() => filter === "all" ? photos : photos.filter((photo) => photo.siteId === filter), [photos, filter]);
   const stories = riderPhotos.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  const submitPhoto = async (event) => {
+    event.preventDefault();
+    if (!uploadFile || !uploadTitle.trim()) return;
+    setUploadBusy(true); setUploadMessage("");
+    const form = new FormData();
+    form.set("file", uploadFile); form.set("title", uploadTitle.trim());
+    form.set("story", uploadStory.trim()); form.set("siteId", uploadSite);
+    try {
+      const result = await api("/api/community/photos", { method: "POST", form });
+      if (result.photo) setRiderPhotos((current) => [result.photo, ...current]);
+      setUploadFile(null); setUploadTitle(""); setUploadStory(""); setUploadSite("");
+      setUploadMessage(result.message || "Your photo was submitted for review.");
+      event.currentTarget.reset();
+    } catch (error) { setUploadMessage(error.message || "Your photo could not be uploaded."); }
+    finally { setUploadBusy(false); }
+  };
 
   const move = useCallback((step) => setActive((current) => (current + step + SITES.length) % SITES.length), []);
   useEffect(() => {
@@ -136,8 +161,19 @@ export default function GalleryPage() {
 
           {stories.length > 0 && <section className="rr-rider-stories" aria-labelledby="rider-stories-heading"><div className="rr-gallery-section-heading"><div><p className="rr-kicker">Shared by the community</p><h2 id="rider-stories-heading">Rider stories</h2></div><Link to="/connect" className="rr-btn-ghost">Share your ride ↗</Link></div>
             <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.mediaUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName || "City Bike Tours rider"}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
-            <p className="rr-muted rr-story-note">Only rider photographs approved by the City Bike Tours team are shown here. <Link to="/connect">Share your ride ↗</Link></p>
+            <p className="rr-muted rr-story-note">Only rider photographs approved by the City Bike Tours team are shown here.</p>
           </section>}
+          <section className="rr-photo-upload rr-plate-elevated" aria-labelledby="share-photo-heading">
+            <div><p className="rr-kicker">Your turn to share</p><h2 id="share-photo-heading">Add a photograph from your ride</h2><p className="rr-muted">Uploads are reviewed by the team before they appear in the public gallery.</p></div>
+            {isSignedIn ? <form className="rr-upload-form" onSubmit={submitPhoto}>
+              <label>Photo title<input required maxLength={120} value={uploadTitle} onChange={(event) => setUploadTitle(event.target.value)} /></label>
+              <label>Photo<input required type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setUploadFile(event.target.files?.[0] || null)} /></label>
+              <label>Heritage stop<select value={uploadSite} onChange={(event) => setUploadSite(event.target.value)}><option value="">Community ride</option>{SITES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label>Your story <span>(optional)</span><textarea rows={3} maxLength={1500} value={uploadStory} onChange={(event) => setUploadStory(event.target.value)} /></label>
+              {uploadMessage && <p role="status" className="rr-upload-message">{uploadMessage}</p>}
+              <button type="submit" className="rr-btn-primary" disabled={uploadBusy || !uploadFile || !uploadTitle.trim()}>{uploadBusy ? "Uploading…" : "Submit photo for review"}</button>
+            </form> : <p className="rr-muted">Please <Link to="/login?next=/gallery">sign in</Link> to share a ride photograph.</p>}
+          </section>
         </div>
       </main>
       {lightbox >= 0 && filteredPhotos[lightbox] && <div className="rr-lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick={() => setLightbox(-1)}>
