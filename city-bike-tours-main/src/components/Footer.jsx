@@ -31,6 +31,9 @@ export default function Footer() {
                 { label: "Gallery", to: "/gallery" },
                 { label: "Reviews & Messages", to: "/connect" },
                 { label: "Sign in", to: "/login" },
+                { label: "Privacy notice", to: "/privacy" },
+                { label: "Terms of use", to: "/terms" },
+                { label: "Data deletion", to: "/data-deletion" },
               ].map(({ label, to }) => (
                 <Link key={to} to={to} className="text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(245,237,217,0.6)" }}>
                   {label}
