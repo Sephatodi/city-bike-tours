@@ -33,7 +33,7 @@ export default function SiteFolders({ content = [] }) {
           return (
             <Link key={site.id} className={`site-folder ${offset === 0 ? "is-active" : ""}`}
               to={`/gallery/${site.id}`} aria-hidden={!visible} tabIndex={visible ? 0 : -1}
-              style={{ "--folder-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none" }}>
+              style={{ "--folder-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none", zIndex: 3 - Math.abs(offset), transform: `translateX(${offset * 72}%) translateZ(${-Math.abs(offset) * 130}px) rotateY(${offset * -17}deg) scale(${1 - Math.abs(offset) * .13})` }}>
               <img className="site-folder-image" src={site.imgs[0]} alt="" loading="lazy" />
               <span className="site-folder-shade" />
               <span className="site-folder-number">STOP {String(index + 1).padStart(2, "0")}</span>
