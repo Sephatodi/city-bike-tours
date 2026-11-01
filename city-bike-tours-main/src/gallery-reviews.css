@@ -163,3 +163,16 @@
 
 .rr-connect-page .review-stop-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
 .rr-connect-page .review-stop-chips span{padding:.28rem .55rem;border:1px solid rgba(212,160,23,.4);border-radius:99px;color:#8B3008;font:700 .64rem var(--font-body),sans-serif}
+
+.rr-photo-upload{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:2rem;margin:2rem 0 3rem;padding:clamp(1.2rem,3vw,2rem)}
+.rr-photo-upload h2{margin-top:.4rem;color:#F5EDD9;font:700 clamp(1.6rem,3vw,2.3rem) var(--font-display),serif}
+.rr-photo-upload p{margin-top:.6rem;line-height:1.65}
+.rr-upload-form{display:grid;gap:.8rem}
+.rr-upload-form label{display:grid;gap:.35rem;color:#F5EDD9;font-size:.78rem;font-weight:700}
+.rr-upload-form label span{display:inline;color:rgba(245,237,217,.65);font-weight:400}
+.rr-upload-form input,.rr-upload-form textarea,.rr-upload-form select{width:100%;min-height:42px;padding:.65rem .75rem;border:1px solid rgba(212,160,23,.35);border-radius:4px;background:rgba(13,8,5,.45);color:#F5EDD9;font: .85rem var(--font-body),sans-serif}
+.rr-upload-form input[type=file]{padding:.5rem}
+.rr-upload-form button{justify-self:start}
+.rr-upload-message{color:#D4A017;font-size:.8rem}
+.rr-photo-upload a{color:#D4A017;text-decoration:underline}
+@media(max-width:700px){.rr-photo-upload{grid-template-columns:1fr}}
