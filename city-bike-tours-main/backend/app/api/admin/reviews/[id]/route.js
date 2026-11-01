@@ -11,7 +11,11 @@ export async function PATCH(request, { params }) {
   if (guard.error) return guard.error;
   const parsed = z.object({ status: z.enum(["pending", "approved", "rejected"]).optional(), featured: z.boolean().optional() }).refine((value) => value.status !== undefined || value.featured !== undefined).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Choose approve, reject or pending." }, { status: 400 });
-  const [updated] = await db.update(reviews).set(parsed.data).where(eq(reviews.id, params.id)).returning();
+  const [current] = await db.select({ status: reviews.status }).from(reviews).where(eq(reviews.id, params.id)).limit(1);
+  if (!current) return NextResponse.json({ error: "Review not found." }, { status: 404 });
+  if (parsed.data.featured === true && current.status !== "approved") return NextResponse.json({ error: "Only approved reviews can be featured." }, { status: 400 });
+  const update = { ...parsed.data, ...(parsed.data.status && parsed.data.status !== "approved" ? { featured: false } : {}) };
+  const [updated] = await db.update(reviews).set(update).where(eq(reviews.id, params.id)).returning();
   if (!updated) return NextResponse.json({ error: "Review not found." }, { status: 404 });
   await logAudit(guard.staff, "inbox.review", `${updated.featured ? "Featured" : updated.status === "approved" ? "Approved" : updated.status === "rejected" ? "Rejected" : "Updated"} ${updated.name}'s review`, { targetType: "review", targetId: updated.id });
   return NextResponse.json({ review: updated });
