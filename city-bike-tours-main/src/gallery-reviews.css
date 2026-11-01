@@ -128,3 +128,32 @@
 @media(max-width:850px){.rr-roundabout-slide{width:70%;margin-left:-35%;}.rr-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rr-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.rr-story-strip{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.rr-roundabout{height:300px}.rr-roundabout-slide{width:82%;margin-left:-41%}.rr-roundabout-arrow{width:38px;height:38px}.rr-roundabout-arrow.prev{left:.35rem}.rr-roundabout-arrow.next{right:.35rem}.rr-gallery-grid,.rr-story-strip{grid-template-columns:1fr}.rr-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rr-roundabout-caption strong{font-size:1.35rem}}
 @media(prefers-reduced-motion:reduce){.rr-roundabout-slide,.rr-photo-grid img{transition:none!important}}
+
+
+/* Testimonial layouts inspired by the reference cards, in the original site palette. */
+.rr-connect-page .featured-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem;margin:1rem 0 1.4rem}
+.rr-connect-page .featured-quote-card{grid-column:span 2;position:relative;overflow:hidden;padding:clamp(1.4rem,3vw,2.4rem);border:1px solid rgba(212,160,23,.7);border-radius:10px;background:linear-gradient(125deg,#D4A017,#e5bd55);color:#0D0805;box-shadow:0 18px 42px rgba(0,0,0,.2)}
+.rr-connect-page .featured-quote-card .quote-mark{display:block;height:3.4rem;color:#0D0805;font:900 5.5rem/.9 Georgia,serif}
+.rr-connect-page .featured-quote-card h3{margin-top:.7rem;color:#0D0805;font:700 1.45rem var(--font-display),serif}
+.rr-connect-page .featured-quote-card>p{margin-top:.7rem;color:#0D0805;font:500 1.12rem/1.65 var(--font-display),Georgia,serif}
+.rr-connect-page .featured-review-author{display:flex;align-items:center;gap:.8rem;margin-top:1.2rem}
+.rr-connect-page .featured-review-author img,.rr-connect-page .featured-review-author .testimonial-avatar{width:3rem;height:3rem;flex:0 0 3rem;border-radius:50%;object-fit:cover}
+.rr-connect-page .featured-review-author strong,.rr-connect-page .featured-review-author small{display:block;color:#0D0805}
+.rr-connect-page .featured-review-author small{margin-top:.15rem;font-size:.75rem;opacity:.75}
+.rr-connect-page .featured-quote-card .review-caption{color:#0D0805;font:700 .65rem var(--font-body),sans-serif;letter-spacing:.13em;text-transform:uppercase}
+.rr-connect-page .standard-review-card{padding:1.25rem;border:1px solid rgba(212,160,23,.28);border-radius:10px;background:#F5EDD9;color:#0D0805;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.rr-connect-page .standard-review-card .standard-review-author{display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem}
+.rr-connect-page .standard-review-author strong,.rr-connect-page .standard-review-author small{display:block;color:#0D0805}
+.rr-connect-page .standard-review-author small{margin-top:.15rem;color:#665b4b;font-size:.72rem}
+.rr-connect-page .review-avatar-photo{width:2.8rem;height:2.8rem;border-radius:50%;object-fit:cover}
+.rr-connect-page .standard-review-card .review-head{justify-content:flex-start;margin:.4rem 0}
+.rr-connect-page .standard-review-card .review-headline{margin-top:.35rem;color:#0D0805;font:700 1.25rem var(--font-display),Georgia,serif}
+.rr-connect-page .standard-review-card>p{color:#241c14;font:500 1rem/1.65 var(--font-display),Georgia,serif}
+.rr-connect-page .standard-review-card .review-by{margin-top:.8rem}
+.rr-connect-page .standard-review-card .review-caption{color:#8B3008;font:700 .62rem var(--font-body),sans-serif;letter-spacing:.13em;text-transform:uppercase}
+.rr-connect-page .review-card-actions{display:flex;align-items:center;gap:.6rem;margin-top:.7rem}
+.rr-connect-page .standard-review-card .review-helpful,.rr-connect-page .review-share{margin-top:0;padding:.5rem .75rem;border:1px solid rgba(139,48,8,.3);border-radius:99px;color:#8B3008;background:transparent;font-size:.68rem;font-weight:800}
+.rr-connect-page .review-share{cursor:pointer}
+.rr-connect-page .review-avatar-consent{display:flex!important;align-items:center;gap:.55rem!important}
+.rr-connect-page .review-avatar-consent input{width:auto!important;accent-color:#D4A017}
+@media(max-width:700px){.rr-connect-page .featured-review-grid{grid-template-columns:1fr}.rr-connect-page .featured-quote-card{grid-column:auto}.rr-connect-page .review-grid{grid-template-columns:1fr}}
