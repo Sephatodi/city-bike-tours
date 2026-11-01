@@ -49,3 +49,12 @@ Before enabling check-in, apply migrations from the `backend` directory with `np
 ### Review presentation migration
 
 The review presentation update adds migration `0019_review_presentation` (headline, featured flag and explicit profile-avatar consent). Apply it with `cd backend && npm run db:migrate` before deploying the updated review API. The Drizzle journal now contains migration entries `0000` through `0019` (20 entries total).
+
+## Cycling-street heritage trail
+
+The `/heritage-trail` map can use a generated street-following cycling route and an animated bicycle. The home and booking maps keep their existing straight-line route and never show the moving bicycle.
+
+- Install **Node.js 22.9.0 or newer** (the script uses Node's `--env-file-if-exists` flag and built-in `fetch`).
+- Copy the route variable names from `.env.example` into a local `.env` file and supply either `MAPBOX_TOKEN` (or `VITE_MAPBOX_TOKEN`) or `ORS_API_KEY`. `TRAIL_PROVIDER` may be `mapbox` or `ors`; when omitted, the script selects Mapbox if its token exists, otherwise OpenRouteService.
+- Run `npm run trail:build` from `city-bike-tours-main/`. This writes public coordinates only to `src/data/trail-route.json`; never put a secret in that file or commit `.env`.
+- See [Trail routing setup](./docs/TRAIL-ROUTING-SETUP.md) for provider setup, via-point tuning, validation and troubleshooting.
