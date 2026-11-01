@@ -42,17 +42,17 @@ function TrailAnimation({route,playing,speed,follow,visible,markerRefs,setActive
      const dt=Math.min(80,now-previous);previous=now;
      if(now>=pauseUntil){
        const before=elapsed.current;
-       elapsed.current+=dt*(total/50000)*speed;
+       elapsed.current+=dt*(total/38000)*speed;
        if(elapsed.current>=total){elapsed.current=0;lastStop.current=-1;lastDistance=0;}
        const reached=stopList.findIndex((stop,index)=>index>lastStop.current&&before<stop.atMeters&&elapsed.current>=stop.atMeters);
-       if(reached>=0){const stop=stopList[reached];elapsed.current=stop.atMeters;lastStop.current=reached;pauseUntil=now+2000;const site=SITES.find(s=>s.id===stop.id);setActiveStop(stop.id);setArriving(site?`Arriving at ${site.name}`:"Arriving at Main Mall");markerRefs.current[stop.id]?.openTooltip();window.setTimeout(()=>markerRefs.current[stop.id]?.closeTooltip(),2000);}
+       if(reached>=0){const stop=stopList[reached];elapsed.current=stop.atMeters;lastStop.current=reached;pauseUntil=now+2000;const site=SITES.find(s=>s.id===stop.id);setActiveStop(stop.id);setArriving(site?`Arriving at ${site.name}`:"Arriving at Main Mall");const stopMarker=markerRefs.current[stop.id];if(stopMarker){stopMarker.setIcon(makeIcon("#F5B800",site?.icon||"mapPin"));stopMarker.openTooltip();window.setTimeout(()=>{stopMarker.closeTooltip();if(site)stopMarker.setIcon(makeIcon(site.color,site.icon));},2000);}}
        let lo=0,hi=cumulative.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(cumulative[mid]<elapsed.current)lo=mid+1;else hi=mid;}
        const next=Math.max(1,lo),prev=next-1,t=(elapsed.current-cumulative[prev])/(cumulative[next]-cumulative[prev]||1),a=route.coordinates[prev],b=route.coordinates[next];
        const pos=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],dx=b[1]-a[1];
        if(Math.abs(dx)>.000015){const flip=dx<0;if(flip!==direction.current){direction.current=flip;bike.current?.setIcon(bicycleIcon(flip));}}
        bike.current?.setLatLng(pos);
        const traveled=route.coordinates.slice(0,prev+1);traveled.push(pos);ridden.current?.setLatLngs(traveled);
-       if(follow)map.panTo(pos,{animate:false});
+       if(follow)map.panTo(pos,{animate:true,duration:.15});
        lastDistance=elapsed.current;
      }
      raf=requestAnimationFrame(frame);
