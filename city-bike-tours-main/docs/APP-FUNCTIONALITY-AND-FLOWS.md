@@ -243,3 +243,7 @@ The gallery now presents the six heritage sites in a looping carousel with exact
 ### Reviews and messages — `/connect`
 
 Approved reviews can be shown as admin-featured quote cards (up to three) or standard cream review cards. Featured reviews are selected in Admin → Inbox & reviews; no quote cards appear unless an approved review is explicitly featured. Reviewers can optionally add an 80-character headline and opt in to showing their profile picture. Avatar photos are returned only when consent is true and a user image exists; otherwise the frontend uses initials. Existing score summary, filters, sorting, helpful voting, replies, photo URL, customer messages and review composer remain available.
+
+### Heritage trail — `/heritage-trail`
+
+The heritage trail map can display a Mapbox Cycling or OpenRouteService `cycling-regular` route generated from Main Mall through the six sites and back. A gold bicycle marker animates along the route, pauses at each heritage stop, and draws a ridden-progress line. Visitors can play/pause, restart, change speed and optionally follow the bicycle. The generated route is loaded only on this page. LandingPage and BookingPage continue using the original straight-line HeritageMap without an animated bicycle. If the generated route file is absent or invalid, the page quietly falls back to the original line and does not show a bicycle.
