@@ -16,7 +16,6 @@ export default function GalleryPage() {
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(24);
   const [lightbox, setLightbox] = useState(-1);
-  const [preview, setPreview] = useState(null);
   const previewTimer = useRef(null);
   const pointerStart = useRef(null);
   const site = SITES[active] || SITES[0];
@@ -87,7 +86,7 @@ export default function GalleryPage() {
                 if (offset > SITES.length / 2) offset -= SITES.length;
                 const visible = Math.abs(offset) <= 1;
                 return <article key={item.id} className={`rr-roundabout-slide ${offset === 0 ? "is-active" : ""}`}
-                  aria-hidden={!visible} style={{ "--slide-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none" }}>
+                  aria-hidden={!visible} style={{ "--slide-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none", transform: `translateX(${offset * 72}%) translateZ(${-Math.abs(offset) * 150}px) rotateY(${offset * -24}deg) scale(${1 - Math.abs(offset) * .12})` }}>
                   <Link to={`/gallery/${item.id}`} tabIndex={offset === 0 ? 0 : -1} className="rr-roundabout-photo" aria-label={`Open photo collection for ${item.name}`}>
                     <img src={item.imgs[0]} alt={item.name} fetchPriority={offset === 0 ? "high" : "auto"} />
                     <span className="rr-roundabout-overlay"><small>STOP {String(index + 1).padStart(2, "0")} · {item.street}</small><strong>{item.name}</strong></span>
