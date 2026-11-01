@@ -44,25 +44,26 @@ async function main() {
   const stops = [{id:"mainmall",coords:MAIN_MALL}, ...ordered.map(s=>({id:s.id,coords:s.coords})), {id:"mainmall",coords:MAIN_MALL}];
   const points = [];
   stops.forEach((stop,i)=>{ points.push([stop.coords[1],stop.coords[0]]); if(i<stops.length-1) for(const v of TRAIL_VIA[stop.id]||[]) points.push([v[1],v[0]]); });
+  const safeError = (value) => String(value || "routing request failed").replaceAll(token, "[redacted]");
   let res, geometry, summary, attribution;
   if(provider==="mapbox") {
     const path=points.map(([x,y])=>`${x},${y}`).join(";");
     const url=new URL(`https://api.mapbox.com/directions/v5/mapbox/cycling/${path}`);
     url.search=new URLSearchParams({geometries:"geojson",overview:"full",steps:"false",access_token:token}).toString();
     res=await fetch(url); const body=await res.json().catch(()=>({}));
-    if(!res.ok){console.error(`Mapbox HTTP ${res.status}: ${body.message||body.error||"routing request failed"}`);process.exitCode=1;return;}
+    if(!res.ok){console.error(`Mapbox HTTP ${res.status}: ${safeError(body.message||body.error?.message||body.code||body.error)}`);process.exitCode=1;return;}
     const route=body.routes?.[0]; geometry=route?.geometry?.coordinates; summary={distance:route?.distance,duration:route?.duration}; attribution="© Mapbox © OpenStreetMap";
   } else {
     res=await fetch("https://api.openrouteservice.org/v2/directions/cycling-regular/geojson",{method:"POST",headers:{Authorization:token,"Content-Type":"application/json"},body:JSON.stringify({coordinates:points})});
     const body=await res.json().catch(()=>({}));
-    if(!res.ok){const error=body.error?.message||body.message||body.error||"routing request failed";console.error(`OpenRouteService HTTP ${res.status}: ${typeof error==="string"?error:JSON.stringify(error)}`);process.exitCode=1;return;}
+    if(!res.ok){const error=body.error?.message||body.message||body.error||"routing request failed";console.error(`OpenRouteService HTTP ${res.status}: ${safeError(typeof error==="string"?error:JSON.stringify(error))}`);process.exitCode=1;return;}
     const feature=body.features?.[0]; geometry=feature?.geometry?.coordinates; summary=feature?.properties?.summary; attribution=body.metadata?.attribution||"openrouteservice.org";
   }
   if(!Array.isArray(geometry)||geometry.length<2||!Number.isFinite(summary?.distance)||!Number.isFinite(summary?.duration)){console.error("Routing provider returned no usable GeoJSON geometry or summary.");process.exitCode=1;return;}
   const full=geometry.map(([lng,lat])=>[lat,lng]);
   const nearest=(point,from,to)=>{let best=from,dist=Infinity;for(let i=from;i<=to;i++){const d=metres(point,full[i]);if(d<dist){dist=d;best=i;}}return best;};
   const fullStops=[{id:"mainmall",index:0}];let previous=0;
-  ordered.forEach((site,i)=>{const index=nearest(site.coords,previous,full.length-(ordered.length-i));fullStops.push({id:site.id,index});previous=index;});
+  ordered.forEach((site,i)=>{const index=nearest(site.coords,previous+1,full.length-(ordered.length-i));fullStops.push({id:site.id,index});previous=index;});
   fullStops.push({id:"mainmall",index:full.length-1});
   const indexes=simplify(full,fullStops.map(s=>s.index)), coords=indexes.map(i=>full[i]), cumulative=[0];
   for(let i=1;i<coords.length;i++)cumulative.push(cumulative[i-1]+metres(coords[i-1],coords[i]));
