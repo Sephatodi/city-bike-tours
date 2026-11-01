@@ -39,7 +39,7 @@ export default function HeritageTrailPage() {
         <div className="trail-section-heading trail-sites-heading">
           <div>
             <p className="trail-eyebrow">THE NATION’S STORY</p>
-            <h2 id="trail-sites-heading">Six stops. Six perspectives.</h2>
+            <h2 id="trail-sites-heading">Six stops. Six experiences.</h2>
           </div>
           <p>Each landmark marks a different chapter in the making of modern Botswana.</p>
         </div>
