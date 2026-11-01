@@ -28,7 +28,7 @@ export async function GET() {
   const approved = await db.select({ rating: reviews.rating }).from(reviews).where(eq(reviews.status, "approved"));
   const bookingPhones = await db.select({ phone: bookingRequests.phone }).from(bookingRequests).where(isNotNull(bookingRequests.checkedInAt));
   const accountPhones = await db.select({ phone: users.phone }).from(bookings).innerJoin(users, eq(bookings.userId, users.id)).where(isNotNull(bookings.checkedInAt));
-  const normalizePhone = (value) => String(value || "").replace(/\\D/g, "");
+  const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
   const verifiedPhones = new Set([...bookingPhones, ...accountPhones].map((row) => normalizePhone(row.phone)).filter(Boolean));
   const distribution = Object.fromEntries([1,2,3,4,5].map(n => [n, approved.filter(r => r.rating === n).length]));
   const total = approved.length;
