@@ -45,7 +45,7 @@ function TrailAnimation({route,playing,speed,follow,visible,markerRefs,setActive
        elapsed.current+=dt*(total/50000)*speed;
        if(elapsed.current>=total){elapsed.current=0;lastStop.current=-1;lastDistance=0;}
        const reached=stopList.findIndex((stop,index)=>index>lastStop.current&&before<stop.atMeters&&elapsed.current>=stop.atMeters);
-       if(reached>=0){const stop=stopList[reached];elapsed.current=stop.atMeters;lastStop.current=reached;pauseUntil=now+2000;const site=SITES.find(s=>s.id===stop.id);setActiveStop(stop.id);setArriving(site?`Arriving at ${site.name}`:"Arriving at Main Mall");markerRefs.current[stop.id]?.openTooltip();}
+       if(reached>=0){const stop=stopList[reached];elapsed.current=stop.atMeters;lastStop.current=reached;pauseUntil=now+2000;const site=SITES.find(s=>s.id===stop.id);setActiveStop(stop.id);setArriving(site?`Arriving at ${site.name}`:"Arriving at Main Mall");markerRefs.current[stop.id]?.openTooltip();window.setTimeout(()=>markerRefs.current[stop.id]?.closeTooltip(),2000);}
        let lo=0,hi=cumulative.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(cumulative[mid]<elapsed.current)lo=mid+1;else hi=mid;}
        const next=Math.max(1,lo),prev=next-1,t=(elapsed.current-cumulative[prev])/(cumulative[next]-cumulative[prev]||1),a=route.coordinates[prev],b=route.coordinates[next];
        const pos=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],dx=b[1]-a[1];
@@ -67,11 +67,12 @@ export default function HeritageMap({height="480px",routeId="complete",trail=fal
  const routeCoordinates=[MAIN_MALL,...LOOP_ORDER.map(id=>sitesById[id].coords),MAIN_MALL];
  const routeStyle=ROUTE_STYLES[routeId]||ROUTE_STYLES.complete;
  const bounds=useMemo(()=>L.latLngBounds([MAIN_MALL,...SITES.map(site=>site.coords)]),[]);
- const markerRefs=useRef({}),animationRef=useRef(null),wrapperRef=useRef(null),wasPlaying=useRef(false);
+ const markerRefs=useRef({}),animationRef=useRef(null),wrapperRef=useRef(null),wasPlaying=useRef(false),playingRef=useRef(false);
  const [mapRequest,setMapRequest]=useState(null),[route,setRoute]=useState(null),[playing,setPlaying]=useState(false),[speed,setSpeed]=useState(1),[follow,setFollow]=useState(false),[visible,setVisible]=useState(!trail),[reducedMotion,setReducedMotion]=useState(false),[activeStop,setActiveStop]=useState("mainmall"),[arriving,setArriving]=useState("");
  useEffect(()=>{if(!trail)return;let alive=true;const loader=loadTrailRoute["../data/trail-route.json"];if(!loader){console.info("Street trail route is not generated yet; using the standard straight-line map.");return()=>{alive=false;};}loader().then(module=>{const data=module.default||module;if(alive&&Array.isArray(data.coordinates)&&data.coordinates.length>=50&&Array.isArray(data.stops)&&data.distanceMeters>0)setRoute(data);else if(alive)console.info("Street trail route is invalid; using the standard straight-line map.");}).catch(()=>{if(alive)console.info("Street trail route is unavailable; using the standard straight-line map.");});return()=>{alive=false;};},[trail]);
  useEffect(()=>{if(!trail)return;const media=window.matchMedia("(prefers-reduced-motion: reduce)");setReducedMotion(media.matches);const change=()=>{setReducedMotion(media.matches);if(media.matches)setPlaying(false);};media.addEventListener?.("change",change);return()=>media.removeEventListener?.("change",change);},[trail]);
- useEffect(()=>{if(!trail||!wrapperRef.current)return;const observer=new IntersectionObserver(([entry])=>{setVisible(entry.isIntersecting);if(!entry.isIntersecting){wasPlaying.current=playing;setPlaying(false);}else if(wasPlaying.current){setPlaying(true);wasPlaying.current=false;}},{threshold:.12});observer.observe(wrapperRef.current);return()=>observer.disconnect();},[trail,playing]);
+ useEffect(()=>{playingRef.current=playing;},[playing]);
+ useEffect(()=>{if(!trail||!wrapperRef.current)return;const observer=new IntersectionObserver(([entry])=>{setVisible(entry.isIntersecting);if(!entry.isIntersecting){wasPlaying.current=playingRef.current;setPlaying(false);}else if(wasPlaying.current){setPlaying(true);wasPlaying.current=false;}},{threshold:.12});observer.observe(wrapperRef.current);return()=>observer.disconnect();},[trail]);
  useEffect(()=>{const change=()=>{if(document.hidden){wasPlaying.current=playing;setPlaying(false);}else if(wasPlaying.current){setPlaying(true);wasPlaying.current=false;}};document.addEventListener("visibilitychange",change);return()=>document.removeEventListener("visibilitychange",change);},[playing]);
  const pauseFollow=()=>setFollow(false);
  const reset=()=>{animationRef.current?.reset?.();setActiveStop("mainmall");setArriving("");setPlaying(true);setFollow(false);setMapRequest({reset:true,nonce:Date.now()});};
