@@ -11,6 +11,7 @@
     "admin:provision": "node scripts/provision-admin.mjs"
   },
   "dependencies": {
+    "@neondatabase/auth": "0.7.0-beta",
     "@neondatabase/serverless": "^0.10.4",
     "@vercel/blob": "^2.8.0",
     "awesome-phonenumber": "^7.8.0",
@@ -26,8 +27,5 @@
     "react-dom": "^18.3.0",
     "zod": "^3.23.8"
   },
-  "devDependencies": {
-    "dotenv": "^16.4.5",
-    "drizzle-kit": "^0.24.2"
-  }
+  "devDependencies": { "dotenv": "^16.4.5", "drizzle-kit": "^0.24.2" }
 }
