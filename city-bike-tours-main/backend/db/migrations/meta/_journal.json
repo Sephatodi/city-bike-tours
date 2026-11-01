@@ -127,6 +127,13 @@
       "when": 1793400001000,
       "tag": "0017_community_photo_site",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793400002000,
+      "tag": "0018_review_vote_indexes",
+      "breakpoints": true
     }
   ]
 }
