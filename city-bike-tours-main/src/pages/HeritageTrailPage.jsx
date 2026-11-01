@@ -28,10 +28,10 @@ export default function HeritageTrailPage() {
             <p className="trail-eyebrow">THE ROUTE</p>
             <h2 id="trail-map-heading">A city-sized story.</h2>
           </div>
-          <p>Explore the six stops on the map. Select a marker or a site name to bring that place into focus.</p>
+          <p>Follow the cycling-street route around all six heritage stops. The bicycle pauses at each landmark; select a marker or site name to bring that place into focus.</p>
         </div>
         <div className="trail-map-frame">
-          <HeritageMap height="min(64vh, 600px)" />
+          <HeritageMap height="min(64vh, 600px)" trail />
         </div>
       </section>
 
