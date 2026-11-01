@@ -93,7 +93,7 @@
 .rr-muted{color:rgba(245,237,217,.78)}
 .rr-roundabout-wrap{position:relative;margin:0 auto 2rem;max-width:74rem}
 .rr-roundabout{position:relative;height:clamp(300px,43vw,470px);perspective:1400px;touch-action:pan-y;overflow:hidden}
-.rr-roundabout-slide{position:absolute;top:5%;left:50%;width:min(58%,680px);height:88%;margin-left:min(-29%,-340px);transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;transform:translateX(calc(var(--slide-offset)*72%)) translateZ(calc(abs(var(--slide-offset))*-150px)) rotateY(calc(var(--slide-offset)*-24deg)) scale(calc(1 - abs(var(--slide-offset))*.12));transform-style:preserve-3d}
+.rr-roundabout-slide{position:absolute;top:5%;left:50%;width:min(58%,680px);height:88%;margin-left:min(-29%,-340px);transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;transform-style:preserve-3d}
 .rr-roundabout-slide[aria-hidden="true"]{visibility:hidden}
 .rr-roundabout-slide.is-active{z-index:5}
 .rr-roundabout-photo{position:relative;display:block;width:100%;height:100%;overflow:hidden;border:2px solid rgba(212,160,23,.42);border-radius:9px;box-shadow:0 24px 55px rgba(0,0,0,.4)}
