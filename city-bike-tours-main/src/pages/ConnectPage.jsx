@@ -99,6 +99,8 @@ function ReviewForm({ onSent }) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [showAvatar, setShowAvatar] = useState(false);
   const [rideDate, setRideDate] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [busy, setBusy] = useState(false);
@@ -110,8 +112,8 @@ function ReviewForm({ onSent }) {
     if (!rating) { setError("Choose a star rating."); return; }
     setBusy(true); setError(""); setThanks("");
     try {
-      const result = await api("/api/customer/reviews", { method: "POST", body: { rating, comment, rideDate: rideDate || undefined, photoUrl: photoUrl.trim() || undefined } });
-      setThanks(result.message); setRating(0); setComment(""); setRideDate(""); setPhotoUrl("");
+      const result = await api("/api/customer/reviews", { method: "POST", body: { rating, comment, headline: headline.trim() || undefined, showAvatar, rideDate: rideDate || undefined, photoUrl: photoUrl.trim() || undefined } });
+      setThanks(result.message); setRating(0); setComment(""); setHeadline(""); setShowAvatar(false); setRideDate(""); setPhotoUrl("");
       onSent();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
@@ -130,7 +132,7 @@ function ReviewForm({ onSent }) {
       <label>Your review
         <textarea rows={4} required minLength={5} maxLength={600} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tell other riders about your experience…" />
       </label>
-      <label>Photo URL <span className="auth-optional">optional</span>
+      <label className="review-avatar-consent"><input type="checkbox" checked={showAvatar} onChange={(e) => setShowAvatar(e.target.checked)} /> Show my profile picture with my review <span className="auth-optional">(off by default)</span></label>\n      <label>Photo URL <span className="auth-optional">optional</span>
         <input type="url" maxLength={2000} value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
       </label>
       <label>Ride date <span className="auth-optional">optional</span>
@@ -217,12 +219,21 @@ function PublicReviews({ refreshKey }) {
       {failed ? <p className="connect-muted">Reviews couldn't be loaded right now.</p> : !reviews ? <p className="connect-muted">Loading reviews…</p> : visibleReviews.length === 0 ? (
         <p className="connect-muted">No reviews match this filter.</p>
       ) : (
+        {visibleReviews.filter((r) => r.featured).slice(0, 3).length > 0 && <div className="featured-review-grid">
+          {visibleReviews.filter((r) => r.featured).slice(0, 3).map((r) => <article key={r.id} className="review-card featured-quote-card">
+            <span className="quote-mark" aria-hidden="true">“</span><Stars n={r.rating} />
+            {r.headline && <h3>{r.headline}</h3>}<p>{r.comment}</p>
+            {r.photoUrl && <img className="review-photo" src={r.photoUrl} alt="Photo shared with this review" loading="lazy" />}
+            <div className="featured-review-author">{r.avatarUrl ? <img src={r.avatarUrl} alt="" /> : <span className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}}>{initials(r.name)}</span>}<div><strong>{r.name}</strong><small>{[r.riderOrigin, r.tour].filter(Boolean).join(" · ") || "City Bike Tours rider"}</small></div></div>
+            <p className="review-caption">{[r.tour, r.riderOrigin].filter(Boolean).join(" · ")}</p>
+          </article>)}
+        </div>}
         <div className="review-grid">
-          {visibleReviews.map((r) => (
+          {visibleReviews.filter((r) => !r.featured).map((r) => (
             <article key={r.id} className="review-card testimonial-card">
-              <div className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}} aria-hidden="true">{initials(r.name)}</div>
+              {r.avatarUrl ? <img className="review-avatar-photo" src={r.avatarUrl} alt="" /> : <div className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}} aria-hidden="true">{initials(r.name)}</div>}
               <div className="review-head"><Stars n={r.rating} /><span className="connect-muted">{r.rideDate || (r.createdAt ? <Stamp value={r.createdAt}/> : "")}</span></div>
-              <p>{r.comment}</p>
+              {r.headline && <h3 className="review-headline">{r.headline}</h3>}<p>{r.comment}</p>
               {r.photoUrl && <img className="review-photo" src={r.photoUrl} alt={`Photo shared by ${r.name} with their review`} loading="lazy" />}
               <div className="review-by">— {r.name} {r.verifiedRider && <span className="verified-rider">✓ Verified rider</span>}</div>
               {r.createdAt && <Stamp value={r.createdAt} className="review-stamp" />}
