@@ -189,6 +189,7 @@ export default function Inbox() {
                       <button className="btn btn-sm" disabled={busy} onClick={() => setReplyTo(x.id)}>{x.adminReply ? "Edit reply" : "Reply"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows on your website.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
+                      {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { featured: !x.featured }, x.featured ? "Review removed from featured quotes." : "Review featured on the website.")}>{x.featured ? "Unfeature quote" : "Feature this review"}</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}
                       <button className="btn btn-sm btn-danger btn-icon" disabled={busy} aria-label={`Delete review by ${x.name}`} onClick={() => window.confirm("Delete this review for good?") && act(`/api/admin/reviews/${x.id}`, "DELETE", undefined, "Deleted.")}><Icon name="trash" size={13} /></button>
                     </div></td>}
