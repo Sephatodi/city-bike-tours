@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { SITES } from "../data";
 import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
+import { backendUrl } from "../api/backend";
 import "../rr-theme.css";
 import "../gallery-reviews.css";
 
@@ -12,6 +13,7 @@ export default function GalleryPage() {
   const { hash } = useLocation();
   const { content = [] } = useLiveData();
   const [active, setActive] = useState(0);
+  const [riderPhotos, setRiderPhotos] = useState([]);
   const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(24);
@@ -21,17 +23,19 @@ export default function GalleryPage() {
   const site = SITES[active] || SITES[0];
 
   const publishedPictures = useMemo(() => content.filter((item) => item.isPublished !== false && item.mediaUrl && item.contentType === "picture"), [content]);
+  useEffect(() => { const controller = new AbortController(); fetch(backendUrl("/api/community/photos"), { signal: controller.signal, cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => { if (!controller.signal.aborted && Array.isArray(data?.photos)) setRiderPhotos(data.photos.filter((photo) => photo.status === "approved")); }).catch(() => {}); return () => controller.abort(); }, []);
   const photos = useMemo(() => [
     ...SITES.flatMap((item, siteIndex) => item.imgs.map((src, photoIndex) => ({
       key: `${item.id}-${photoIndex}`, src, title: item.name, siteId: item.id, siteIndex,
     }))),
+    ...riderPhotos.map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName })),
     ...publishedPictures.map((item) => ({
       key: `published-${item.id}`, src: item.mediaUrl, title: item.title,
       siteId: item.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === item.siteId),
     })),
-  ], [publishedPictures]);
+  ], [publishedPictures, riderPhotos]);
   const filteredPhotos = useMemo(() => filter === "all" ? photos : photos.filter((photo) => photo.siteId === filter), [photos, filter]);
-  const stories = publishedPictures.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const stories = riderPhotos.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
   const move = useCallback((step) => setActive((current) => (current + step + SITES.length) % SITES.length), []);
   useEffect(() => {
@@ -122,8 +126,8 @@ export default function GalleryPage() {
           </section>
 
           {stories.length > 0 && <section className="rr-rider-stories" aria-labelledby="rider-stories-heading"><div className="rr-gallery-section-heading"><div><p className="rr-kicker">Shared by the community</p><h2 id="rider-stories-heading">Rider stories</h2></div><Link to="/connect" className="rr-btn-ghost">Share your ride ↗</Link></div>
-            <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.mediaUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">City Bike Tours community</p><h3>{story.title}</h3>{story.bodyText && <p className="rr-muted">{story.bodyText}</p>}</div></article>)}</div>
-            <p className="rr-muted rr-story-note">Only photographs published by the City Bike Tours team are shown here.</p>
+            <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.mediaUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName || "City Bike Tours rider"}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
+            <p className="rr-muted rr-story-note">Only rider photographs approved by the City Bike Tours team are shown here. <Link to="/connect">Share your ride ↗</Link></p>
           </section>}
         </div>
       </main>
