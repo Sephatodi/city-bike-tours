@@ -234,3 +234,12 @@ Prices shown on the site are informational estimates. The public request flow do
 - The new backend admin dashboard does not yet surface the repository’s camera check-in UI or registered-booking management UI.
 - The backend’s legacy Next.js customer pages and account-booking flow are separate from the Vite website’s public request flow.
 - Live routes/content require a reachable backend and database; the website starts with local static route data as a fallback and shows a notice if the live fetch fails.
+
+
+### Gallery — `/gallery`
+
+The gallery now presents the six heritage sites in a looping carousel with exactly three visible positions (previous, active, next), keyboard and swipe navigation, autoplay pause on hover/focus, and a synced six-card grid. The card for the active carousel site is highlighted and each card links to its site detail page. Below the grid, the photo wall filters static site images and published picture content by site, progressively loads more tiles, and opens a keyboard-accessible lightbox. The rider-stories strip displays published picture content only; it does not invent rider posts.
+
+### Reviews and messages — `/connect`
+
+Approved reviews can be shown as admin-featured quote cards (up to three) or standard cream review cards. Featured reviews are selected in Admin → Inbox & reviews; no quote cards appear unless an approved review is explicitly featured. Reviewers can optionally add an 80-character headline and opt in to showing their profile picture. Avatar photos are returned only when consent is true and a user image exists; otherwise the frontend uses initials. Existing score summary, filters, sorting, helpful voting, replies, photo URL, customer messages and review composer remain available.
