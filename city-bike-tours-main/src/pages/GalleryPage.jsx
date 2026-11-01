@@ -160,7 +160,7 @@ export default function GalleryPage() {
           </section>
 
           {stories.length > 0 && <section className="rr-rider-stories" aria-labelledby="rider-stories-heading"><div className="rr-gallery-section-heading"><div><p className="rr-kicker">Shared by the community</p><h2 id="rider-stories-heading">Rider stories</h2></div><Link to="/connect" className="rr-btn-ghost">Share your ride ↗</Link></div>
-            <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.mediaUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName || "City Bike Tours rider"}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
+            <div className="rr-story-strip">{stories.slice(0, 3).map((story) => <article className="rr-plate" key={story.id}><img src={story.imageUrl} alt={story.title} loading="lazy" /><div><p className="rr-kicker">{story.authorName}</p><h3>{story.title}</h3>{story.story && <p className="rr-muted">{story.story}</p>}</div></article>)}</div>
             <p className="rr-muted rr-story-note">Only rider photographs approved by the City Bike Tours team are shown here.</p>
           </section>}
           <section className="rr-photo-upload rr-plate-elevated" aria-labelledby="share-photo-heading">
