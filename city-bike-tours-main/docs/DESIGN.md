@@ -33,3 +33,12 @@ Neon Postgres is the source of truth. Drizzle schema definitions live in `backen
 ## Deployment configuration
 
 The website uses `VITE_API_BASE_URL` to reach the backend. The backend uses `FRONTEND_ORIGIN` and `CORS_ORIGIN_PATTERNS` to control browser origins. Neon Auth requires `AUTH_URL` and `NEON_AUTH_COOKIE_SECRET`. Secrets belong only in deployment environment settings, never in the repository.
+
+
+## Gallery and review presentation
+
+The shared website palette and typography remain authoritative: forest green, gold `#D4A017`, cream `#F5EDD9`, rust `#C1440E`, Fraunces display type and Outfit body type. Gallery/review panels are translucent surfaces over the global `SiteBackdrop`; do not apply an opaque page background. The animated `.header-bike` riders and custom bicycle cursor must remain visible on `/gallery`, `/gallery/:siteId`, and `/connect`.
+
+The gallery uses a three-visible-slide looping heritage carousel (previous, active, next), synced to the six linked site cards below it. The all-photos wall filters the static site photographs and published picture content by site, uses lazy-loaded 4:3 tiles and a progressive Load more control, and opens a keyboard-operable lightbox. Site detail pages retain their story, photo collection, videos and nearby food-stop section.
+
+The reviews page uses two data-backed presentations: up to three admin-featured quote cards, and standard cream review cards. Featured quotes are never fabricated; admins must explicitly feature an approved review. A profile photo is displayed only when the reviewer explicitly opted in and the account image exists; otherwise a deterministic initials avatar is shown. The customer composer supports an optional 80-character headline and an opt-in avatar checkbox (off by default).

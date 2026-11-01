@@ -20,7 +20,7 @@ const schema = z.object({
 // Only approved reviews are public. Summary values are calculated from the full approved set.
 export async function GET() {
   const rows = await db.select({
-    id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, userId: reviews.userId, authorPhone: users.phone,
+    id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, headline: reviews.headline, featured: reviews.featured, showAvatar: reviews.showAvatar, avatarUrl: users.image, userId: reviews.userId, authorPhone: users.phone,
     rideDate: reviews.rideDate, tour: reviews.tour, riderOrigin: reviews.riderOrigin,
     photoUrl: reviews.photoUrl, stops: reviews.stops, createdAt: reviews.createdAt,
     adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt,
@@ -35,7 +35,7 @@ export async function GET() {
   const average = total ? approved.reduce((sum, r) => sum + r.rating, 0) / total : 0;
   const helpful = await db.select({ reviewId: reviewVotes.reviewId, total: count() }).from(reviewVotes).groupBy(reviewVotes.reviewId);
   const counts = new Map(helpful.map(x => [x.reviewId, Number(x.total)]));
-  return NextResponse.json({ reviews: rows.map(({ authorPhone, userId, ...r }) => ({ ...r, verifiedRider: Boolean(normalizePhone(authorPhone) && verifiedPhones.has(normalizePhone(authorPhone))), helpfulCount: counts.get(r.id) || 0 })), summary: {
+  return NextResponse.json({ reviews: rows.map(({ authorPhone, userId, showAvatar, avatarUrl, ...r }) => ({ ...r, avatarUrl: showAvatar ? avatarUrl || null : null, verifiedRider: Boolean(normalizePhone(authorPhone) && verifiedPhones.has(normalizePhone(authorPhone))), helpfulCount: counts.get(r.id) || 0 })), summary: {
     count: total, average: Number(average.toFixed(2)), distribution,
     fourPlusPercent: total ? Math.round(((distribution[4] + distribution[5]) / total) * 100) : 0,
   }});

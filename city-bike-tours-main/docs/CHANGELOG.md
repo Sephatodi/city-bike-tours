@@ -9,3 +9,7 @@
 - Extended public reviews with verified-rider status based on matching customer phone numbers to checked-in bookings.
 - Added review score summary, rating filters, sorting, helpful votes and optional photo URL metadata.
 - Registered an idempotent index migration for review helpful votes.
+
+- Reworked `/gallery` into a three-slide looping heritage carousel synced with the six site cards, plus a filtered photo wall and community picture strip.
+- Restored the original forest-green/gold/cream palette, Fraunces/Outfit typography and transparent page surfaces so SiteBackdrop bicycles and the bicycle cursor remain visible.
+- Added review headlines, opt-in profile avatars and admin-controlled featured quote cards; registered migration `0019_review_presentation`.

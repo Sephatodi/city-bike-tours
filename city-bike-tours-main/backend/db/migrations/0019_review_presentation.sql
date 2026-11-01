@@ -1,0 +1,3 @@
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS headline text;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS featured boolean NOT NULL DEFAULT false;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS show_avatar boolean NOT NULL DEFAULT false;

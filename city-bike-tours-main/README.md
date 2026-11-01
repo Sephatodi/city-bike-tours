@@ -44,3 +44,8 @@ Before enabling check-in, apply migrations from the `backend` directory with `np
 - Downloads are off by default. Staff turn them on per photo: **Website → Content** (tick "Let signed-in riders download this picture") for the team's pictures, and **Inbox & reviews → Rider photos → Allow download** for rider photos. `GET /api/download` checks the rider is signed in and the photo is allowed. The built-in site photos have no download button.
 - Run `cd backend && npm run db:migrate` again: migration `0014_downloadable_photos` adds the download switch.
 - Food stops on the Reserve page are listed in `src/data.js` (`FOOD_STOPS`); edit them to match the stops you use.
+
+
+### Review presentation migration
+
+The review presentation update adds migration `0019_review_presentation` (headline, featured flag and explicit profile-avatar consent). Apply it with `cd backend && npm run db:migrate` before deploying the updated review API. The Drizzle journal now contains migration entries `0000` through `0019` (20 entries total).

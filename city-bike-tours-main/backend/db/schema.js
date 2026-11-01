@@ -168,6 +168,9 @@ export const reviews = pgTable("reviews", {
   tour: text("tour"),
   riderOrigin: text("rider_origin"),
   photoUrl: text("photo_url"),
+  headline: text("headline"),
+  featured: boolean("featured").notNull().default(false),
+  showAvatar: boolean("show_avatar").notNull().default(false),
   stops: jsonb("stops").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
