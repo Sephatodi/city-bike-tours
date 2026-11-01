@@ -49,6 +49,7 @@ export default function GalleryPage() {
 
   const submitPhoto = async (event) => {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (!uploadFile || !uploadTitle.trim()) return;
     setUploadBusy(true); setUploadMessage("");
     const form = new FormData();
@@ -56,10 +57,9 @@ export default function GalleryPage() {
     form.set("story", uploadStory.trim()); form.set("siteId", uploadSite);
     try {
       const result = await api("/api/community/photos", { method: "POST", form });
-      if (result.photo) setRiderPhotos((current) => [result.photo, ...current]);
       setUploadFile(null); setUploadTitle(""); setUploadStory(""); setUploadSite("");
       setUploadMessage(result.message || "Your photo was submitted for review.");
-      event.currentTarget.reset();
+      formElement.reset();
     } catch (error) { setUploadMessage(error.message || "Your photo could not be uploaded."); }
     finally { setUploadBusy(false); }
   };
