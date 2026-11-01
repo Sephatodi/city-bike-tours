@@ -15,6 +15,8 @@ export default function GalleryPage() {
   const [active, setActive] = useState(0);
   const [riderPhotos, setRiderPhotos] = useState([]);
   const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(true);
+  const carouselRef = useRef(null);
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(24);
   const [lightbox, setLightbox] = useState(-1);
@@ -39,10 +41,10 @@ export default function GalleryPage() {
 
   const move = useCallback((step) => setActive((current) => (current + step + SITES.length) % SITES.length), []);
   useEffect(() => {
-    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.hidden) return undefined;
+    if (paused || !inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.hidden) return undefined;
     const timer = window.setInterval(() => move(1), 5600);
     return () => window.clearInterval(timer);
-  }, [paused, move]);
+  }, [paused, inView, move]);
   useEffect(() => {
     if (!hash) return undefined;
     const timer = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" }), 200);
@@ -80,7 +82,7 @@ export default function GalleryPage() {
             <p className="rr-muted">Explore Gaborone's heritage landmarks through a moving carousel, a collection of site cards and photographs from the journey.</p>
           </header>
 
-          <section className="rr-roundabout-wrap" aria-label="Heritage sites carousel"
+          <section ref={carouselRef} className="rr-roundabout-wrap" aria-label="Heritage sites carousel"
             onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
             onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
             <div className="rr-roundabout" onPointerDown={(event) => { pointerStart.current = event.clientX; }}
