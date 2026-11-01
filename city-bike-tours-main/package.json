@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "trail:build": "node --env-file-if-exists=.env scripts/build-trail.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
