@@ -231,7 +231,7 @@ function PublicReviews({ refreshKey }) {
             {r.photoUrl && <img className="review-photo" src={r.photoUrl} alt="Photo shared with this review" loading="lazy" />}
             <div className="featured-review-author">{r.avatarUrl ? <img src={r.avatarUrl} alt="" /> : <span className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}}>{initials(r.name)}</span>}<div><strong>{r.name}</strong><small>{[r.riderOrigin, r.tour].filter(Boolean).join(" · ")}</small></div></div>
             <p className="review-caption">{[r.tour, r.riderOrigin].filter(Boolean).join(" · ")}</p>
-            <div className="review-card-actions"><div className="review-card-actions"><button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div>
+            <div className="review-card-actions"><button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div>
           </article>)}
         </div>}
         <div className="review-grid">
@@ -245,7 +245,7 @@ function PublicReviews({ refreshKey }) {
               {Array.isArray(r.stops) && r.stops.length > 0 && <div className="review-stop-chips">{r.stops.map((stop) => <span key={stop}>{stop}</span>)}</div>}
               {r.createdAt && <Stamp value={r.createdAt} className="review-stamp" />}
               {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p></div>}
-              <button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button>
+              <div className="review-card-actions"><button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div>
             </article>
           ))}
         </div>
