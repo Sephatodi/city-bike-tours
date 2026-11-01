@@ -159,6 +159,7 @@ function MyReviews({ reviews }) {
       {reviews.map((r) => (
         <article key={r.id} className="review-card glass-soft">
           <div className="review-head"><Stars n={r.rating} /><span className={`review-status ${r.status}`}>{STATUS_TEXT[r.status] || r.status}</span></div>
+          {r.headline && <h3 className="review-headline">{r.headline}</h3>}
           <p>{r.comment}</p>
           {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p>{r.adminReplyAt && <Stamp value={r.adminReplyAt} className="review-stamp" />}</div>}
         </article>
