@@ -160,3 +160,6 @@
 
 .rr-connect-page .review-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr))}
 .rr-connect-page .standard-review-card .review-headline{margin:.4rem 0;color:#0D0805;font:700 1.2rem var(--font-display),Georgia,serif}
+
+.rr-connect-page .review-stop-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
+.rr-connect-page .review-stop-chips span{padding:.28rem .55rem;border:1px solid rgba(212,160,23,.4);border-radius:99px;color:#8B3008;font:700 .64rem var(--font-body),sans-serif}
