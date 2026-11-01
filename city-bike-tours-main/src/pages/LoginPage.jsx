@@ -4,6 +4,7 @@ import { BACKEND_BASE_URL, backendUrl } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
 import PasswordInput from "../components/PasswordInput";
+import { startNeonGoogleSignIn } from "../auth/neonAuth";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
@@ -108,12 +109,23 @@ export default function LoginPage() {
     run(async () => finish(await post("/api/customer/otp/verify", { phone, code, name: form.name || undefined })));
   };
 
-  function goSocial(id) {
+  async function goSocial(id) {
     if (!enabled(id) || busy) return;
     rememberNext(next);
-    // Start OAuth through the dedicated customer-social page. It invokes
-    // NextAuth's client signIn flow and then returns through the customer
-    // token-exchange endpoint, avoiding the direct /api/auth/signin/:provider URL.
+    if (id === "google") {
+      setBusy(true);
+      setError("");
+      try {
+        const callback = new URL("/api/customer/neon/complete", backendOrigin());
+        callback.searchParams.set("return", window.location.origin);
+        await startNeonGoogleSignIn(callback.toString());
+      } catch (err) {
+        setError(err?.message || "Google sign-in could not be started. Please try again.");
+        setBusy(false);
+      }
+      return;
+    }
+    // Facebook and Apple continue through the dedicated NextAuth customer-social page.
     const socialUrl = new URL("/customer-social", backendOrigin());
     socialUrl.searchParams.set("provider", id);
     socialUrl.searchParams.set("return", window.location.origin);

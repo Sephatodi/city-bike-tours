@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb, primaryKey } from "drizzle-orm/pg-core";
 
 export const bookingCategoryEnum = pgEnum("booking_category", ["weekday", "saturday", "holiday", "lesson"]);
 export const timeSlotEnum = pgEnum("time_slot", ["morning", "evening"]);
@@ -165,8 +165,18 @@ export const reviews = pgTable("reviews", {
   adminReply: text("admin_reply"),
   adminReplyBy: text("admin_reply_by"),
   adminReplyAt: timestamp("admin_reply_at", { withTimezone: true }),
+  tour: text("tour"),
+  riderOrigin: text("rider_origin"),
+  photoUrl: text("photo_url"),
+  stops: jsonb("stops").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const reviewVotes = pgTable("review_votes", {
+  reviewId: text("review_id").notNull().references(() => reviews.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({ pk: primaryKey({ columns: [table.reviewId, table.userId] }) }));
 
 export const subscribers = pgTable("subscribers", {
   id: text("id").primaryKey(),
