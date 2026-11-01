@@ -129,6 +129,9 @@ function ReviewForm({ onSent }) {
           ))}
         </div>
       </div>
+      <label>Review title <span className="auth-optional">optional · up to 80 characters</span>
+        <input type="text" maxLength={80} value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="A short headline for your review" />
+      </label>
       <label>Your review
         <textarea rows={4} required minLength={5} maxLength={600} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tell other riders about your experience…" />
       </label>
@@ -219,6 +222,7 @@ function PublicReviews({ refreshKey }) {
       {failed ? <p className="connect-muted">Reviews couldn't be loaded right now.</p> : !reviews ? <p className="connect-muted">Loading reviews…</p> : visibleReviews.length === 0 ? (
         <p className="connect-muted">No reviews match this filter.</p>
       ) : (
+        <>
         {visibleReviews.filter((r) => r.featured).slice(0, 3).length > 0 && <div className="featured-review-grid">
           {visibleReviews.filter((r) => r.featured).slice(0, 3).map((r) => <article key={r.id} className="review-card featured-quote-card">
             <span className="quote-mark" aria-hidden="true">“</span><Stars n={r.rating} />
@@ -242,6 +246,7 @@ function PublicReviews({ refreshKey }) {
             </article>
           ))}
         </div>
+        </>
       )}
       {voteError && <p role="alert" className="auth-error">{voteError}</p>}
       {!isSignedIn && <p className="connect-muted">Sign in to mark reviews as helpful.</p>}
