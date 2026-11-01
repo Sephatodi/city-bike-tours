@@ -135,7 +135,8 @@ function ReviewForm({ onSent }) {
       <label>Your review
         <textarea rows={4} required minLength={5} maxLength={600} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tell other riders about your experience…" />
       </label>
-      <label className="review-avatar-consent"><input type="checkbox" checked={showAvatar} onChange={(e) => setShowAvatar(e.target.checked)} /> Show my profile picture with my review <span className="auth-optional">(off by default)</span></label>\n      <label>Photo URL <span className="auth-optional">optional</span>
+      <label className="review-avatar-consent"><input type="checkbox" checked={showAvatar} onChange={(e) => setShowAvatar(e.target.checked)} /> Show my profile picture with my review <span className="auth-optional">(off by default)</span></label>
+      <label>Photo URL <span className="auth-optional">optional</span>
         <input type="url" maxLength={2000} value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
       </label>
       <label>Ride date <span className="auth-optional">optional</span>
