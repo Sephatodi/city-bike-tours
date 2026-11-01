@@ -32,7 +32,7 @@ export default function GalleryPage() {
     ...SITES.flatMap((item, siteIndex) => item.imgs.map((src, photoIndex) => ({
       key: `${item.id}-${photoIndex}`, src, title: item.name, siteId: item.id, siteIndex,
     }))),
-    ...riderPhotos.map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName })),
+    ...riderPhotos.map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName, downloadable: photo.downloadable === true, downloadKind: "community", downloadId: photo.id })),
     ...publishedPictures.map((item) => ({
       key: `published-${item.id}`, src: item.mediaUrl, title: item.title,
       siteId: item.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === item.siteId), downloadable: item.downloadable === true, downloadKind: "content", downloadId: item.id,
@@ -95,7 +95,7 @@ export default function GalleryPage() {
           <header className="rr-hero rr-gallery-hero">
             <p className="rr-kicker">City Bike Tours · Gaborone heritage</p>
             <h1>See the city.<br /><em>Feel its stories.</em></h1>
-            <p className="rr-muted">Explore Gaborone's heritage landmarks through a moving carousel, a collection of site cards and photographs from the journey.</p>
+            <p className="rr-muted">Explore Gaborone's heritage landmarks through the Sites along the journey carousel, then browse the complete collection of heritage, team and approved rider photographs.</p>
           </header>
 
           <section className="rr-gallery-collection" aria-labelledby="gallery-collection-title">
