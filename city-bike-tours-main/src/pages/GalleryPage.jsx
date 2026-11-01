@@ -46,6 +46,13 @@ export default function GalleryPage() {
     return () => window.clearInterval(timer);
   }, [paused, inView, move]);
   useEffect(() => {
+    const node = carouselRef.current;
+    if (!node || !("IntersectionObserver" in window)) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.15 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
     if (!hash) return undefined;
     const timer = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" }), 200);
     return () => window.clearTimeout(timer);
