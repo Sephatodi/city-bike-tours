@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { desc, eq, count, avg, sql } from "drizzle-orm";
+import { desc, eq, count, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { reviews, reviewVotes } from "@/db/schema";
+import { reviews, reviewVotes, bookings } from "@/db/schema";
 import { newId } from "@/lib/id";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { fireWebhook } from "@/lib/webhook";
@@ -20,18 +20,20 @@ const schema = z.object({
 // Only approved reviews are public. Summary values are calculated from the full approved set.
 export async function GET() {
   const rows = await db.select({
-    id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment,
+    id: reviews.id, userId: reviews.userId, name: reviews.name, rating: reviews.rating, comment: reviews.comment,
     rideDate: reviews.rideDate, tour: reviews.tour, riderOrigin: reviews.riderOrigin,
     photoUrl: reviews.photoUrl, stops: reviews.stops, createdAt: reviews.createdAt,
     adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt,
   }).from(reviews).where(eq(reviews.status, "approved")).orderBy(desc(reviews.createdAt)).limit(100);
   const approved = await db.select({ rating: reviews.rating }).from(reviews).where(eq(reviews.status, "approved"));
+  const checkedInUsers = await db.select({ userId: bookings.userId }).from(bookings).where(isNotNull(bookings.checkedInAt));
+  const verifiedUserIds = new Set(checkedInUsers.map((row) => row.userId));
   const distribution = Object.fromEntries([1,2,3,4,5].map(n => [n, approved.filter(r => r.rating === n).length]));
   const total = approved.length;
   const average = total ? approved.reduce((sum, r) => sum + r.rating, 0) / total : 0;
   const helpful = await db.select({ reviewId: reviewVotes.reviewId, total: count() }).from(reviewVotes).groupBy(reviewVotes.reviewId);
   const counts = new Map(helpful.map(x => [x.reviewId, Number(x.total)]));
-  return NextResponse.json({ reviews: rows.map(r => ({ ...r, helpfulCount: counts.get(r.id) || 0 })), summary: {
+  return NextResponse.json({ reviews: rows.map(({ userId, ...r }) => ({ ...r, verifiedRider: Boolean(userId && verifiedUserIds.has(userId)), helpfulCount: counts.get(r.id) || 0 })), summary: {
     count: total, average: Number(average.toFixed(2)), distribution,
     fourPlusPercent: total ? Math.round(((distribution[4] + distribution[5]) / total) * 100) : 0,
   }});
