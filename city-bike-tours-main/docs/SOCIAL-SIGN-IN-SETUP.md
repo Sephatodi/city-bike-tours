@@ -25,7 +25,7 @@ Never commit real values or expose secrets in frontend `VITE_*` variables.
 
 ## Sign-in flow
 
-The website uses `@neondatabase/auth` through the backend proxy at `/api/neon-auth/*`. Google sign-in returns to `/api/customer/neon/complete`, where the backend checks the Neon Auth session, maps the identity to a customer record, rejects staff identities, and issues the existing customer token.
+The backend uses `@neondatabase/auth/next/server` and proxies Better Auth-compatible requests at `/api/neon-auth/*`. The website starts Google sign-in through that backend proxy with credentialed requests. Google sign-in returns to `/api/customer/neon/complete`, where the backend checks the Neon Auth session, maps the identity to a customer record, rejects staff identities, and issues the existing customer token.
 
 Facebook and Apple continue through the backend's `/customer-social` page and NextAuth OAuth providers. Do not configure Google as a NextAuth customer provider.
 

@@ -10,5 +10,6 @@ export const neonAuth = createNeonAuth({
   cookies: {
     secret: cookieSecret || "development-only-cookie-secret-change-before-deploy",
     sessionDataTtl: 300,
+    sameSite: "none",
   },
 });
