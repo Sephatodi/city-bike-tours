@@ -176,3 +176,37 @@
 .rr-upload-message{color:#D4A017;font-size:.8rem}
 .rr-photo-upload a{color:#D4A017;text-decoration:underline}
 @media(max-width:700px){.rr-photo-upload{grid-template-columns:1fr}}
+
+/* Single shared heritage carousel: used by Gallery and the Heritage Trail. */
+.site-folders-carousel{position:relative;width:100%;padding:1rem 0 2rem;overflow:hidden;touch-action:pan-y}
+.site-folders-track{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:clamp(300px,38vw,440px);perspective:1100px}
+.site-folder{position:relative;grid-row:1;grid-column:1/-1;justify-self:center;width:min(58%,680px);height:clamp(260px,34vw,410px);display:flex;align-items:flex-end;overflow:hidden;border:1px solid rgba(212,160,23,.38);border-radius:10px;background:#052011;color:#F5EDD9;text-decoration:none;box-shadow:0 20px 48px rgba(0,0,0,.35);transform:translateX(calc(var(--folder-offset)*72%)) translateZ(calc(abs(var(--folder-offset))*-130px)) rotateY(calc(var(--folder-offset)*-17deg)) scale(calc(1 - abs(var(--folder-offset))*.13));transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s,border-color .3s;transform-style:preserve-3d}
+.site-folder.is-active{z-index:3;border:2px solid #D4A017;box-shadow:0 25px 60px rgba(0,0,0,.42),0 0 0 1px rgba(212,160,23,.2)}
+.site-folder-image,.site-folder-shade{position:absolute;inset:0;width:100%;height:100%}
+.site-folder-image{object-fit:cover}
+.site-folder-shade{background:linear-gradient(180deg,rgba(0,0,0,.03) 15%,rgba(0,15,7,.88) 100%)}
+.site-folder-number{position:absolute;top:1rem;left:1rem;padding:.4rem .65rem;border:1px solid rgba(255,255,255,.55);background:rgba(0,20,9,.65);color:#F5EDD9;font-size:.68rem;font-weight:800;letter-spacing:.13em}
+.site-folder-copy{position:relative;z-index:1;display:grid;gap:.45rem;width:100%;padding:1.4rem}
+.site-folder-copy strong{font:700 clamp(1.35rem,2.8vw,2.2rem)/1.1 var(--font-display),Georgia,serif}
+.site-folder-copy small{color:rgba(245,237,217,.8);font-size:.75rem}
+.site-folder-copy em{margin-top:.3rem;color:#D4A017;font-size:.72rem;font-style:normal;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.site-folders-controls{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:1rem;color:#D4A017;font-size:.72rem;font-weight:800;letter-spacing:.12em}
+.site-folders-controls>button{width:42px;height:42px;border:1px solid rgba(212,160,23,.5);border-radius:50%;background:transparent;color:#D4A017;font-size:1.25rem;cursor:pointer}
+.site-folders-controls>button:hover{background:#D4A017;color:#0D0805}
+.site-folders-dots{display:flex;align-items:center;gap:.45rem}
+.site-folders-dots button{width:7px;height:7px;padding:0;border:0;border-radius:99px;background:rgba(245,237,217,.35);cursor:pointer}
+.site-folders-dots button.active{width:24px;background:#D4A017}
+.rr-photo-tile{min-width:0;overflow:hidden;border:1px solid rgba(212,160,23,.22);border-radius:8px;background:rgba(5,32,17,.88)}
+.rr-photo-open{display:block;width:100%;padding:0;text-align:left;background:transparent;color:#F5EDD9;cursor:zoom-in}
+.rr-photo-open img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.rr-photo-open span{display:block;padding:.7rem .8rem;font-size:.76rem}
+.rr-photo-download{display:block;margin:0 .8rem .8rem;padding:.45rem .65rem;border:1px solid rgba(212,160,23,.5);border-radius:99px;background:transparent;color:#D4A017;font-size:.68rem;font-weight:800;cursor:pointer}
+.rr-photo-download:hover{background:#D4A017;color:#0D0805}
+.rr-rider-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr));gap:1rem}
+.rr-rider-photo-card{overflow:hidden}
+.rr-rider-photo-card>img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.rr-rider-photo-card>div{padding:1rem}
+.rr-rider-photo-card h3{margin-top:.35rem;color:#F5EDD9;font:700 1.15rem var(--font-display),Georgia,serif}
+.rr-rider-photo-card .rr-muted{margin-top:.45rem;font-size:.82rem;line-height:1.6}
+@media(max-width:700px){.site-folders-track{min-height:310px}.site-folder{width:76%;height:280px;transform:translateX(calc(var(--folder-offset)*65%)) scale(calc(1 - abs(var(--folder-offset))*.1))}.site-folder-copy{padding:1rem}.site-folders-controls{gap:.65rem}.site-folders-controls>button{width:38px;height:38px}}
+@media(prefers-reduced-motion:reduce){.site-folder{transition:none}}
