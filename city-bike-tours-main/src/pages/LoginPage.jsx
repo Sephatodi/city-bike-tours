@@ -4,7 +4,7 @@ import { BACKEND_BASE_URL, backendUrl } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
 import PasswordInput from "../components/PasswordInput";
-import { neonAuthClient } from "../auth/neonAuth";
+import { startNeonGoogleSignIn } from "../auth/neonAuth";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
@@ -118,7 +118,7 @@ export default function LoginPage() {
       try {
         const callback = new URL("/api/customer/neon/complete", backendOrigin());
         callback.searchParams.set("return", window.location.origin);
-        await neonAuthClient.signIn.social({ provider: "google", callbackURL: callback.toString() });
+        await startNeonGoogleSignIn(callback.toString());
       } catch (err) {
         setError(err?.message || "Google sign-in could not be started. Please try again.");
         setBusy(false);
