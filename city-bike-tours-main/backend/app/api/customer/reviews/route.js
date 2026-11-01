@@ -27,7 +27,7 @@ export async function GET(request) {
   const auth = await requireCustomer(request);
   if (auth.error) return auth.error;
   const rows = await db.select({
-    id: reviews.id, rating: reviews.rating, comment: reviews.comment, rideDate: reviews.rideDate, status: reviews.status,
+    id: reviews.id, rating: reviews.rating, comment: reviews.comment, headline: reviews.headline, rideDate: reviews.rideDate, status: reviews.status,
     adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt, createdAt: reviews.createdAt, tour: reviews.tour, riderOrigin: reviews.riderOrigin, stops: reviews.stops,
   }).from(reviews).where(eq(reviews.userId, auth.user.id)).orderBy(desc(reviews.createdAt)).limit(50);
   return NextResponse.json({ reviews: rows });
