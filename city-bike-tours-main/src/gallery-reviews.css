@@ -180,7 +180,7 @@
 /* Single shared heritage carousel: used by Gallery and the Heritage Trail. */
 .site-folders-carousel{position:relative;width:100%;padding:1rem 0 2rem;overflow:hidden;touch-action:pan-y}
 .site-folders-track{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:clamp(300px,38vw,440px);perspective:1100px}
-.site-folder{position:relative;grid-row:1;grid-column:1/-1;justify-self:center;width:min(58%,680px);height:clamp(260px,34vw,410px);display:flex;align-items:flex-end;overflow:hidden;border:1px solid rgba(212,160,23,.38);border-radius:10px;background:#052011;color:#F5EDD9;text-decoration:none;box-shadow:0 20px 48px rgba(0,0,0,.35);transform:translateX(calc(var(--folder-offset)*72%)) translateZ(calc(abs(var(--folder-offset))*-130px)) rotateY(calc(var(--folder-offset)*-17deg)) scale(calc(1 - abs(var(--folder-offset))*.13));transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s,border-color .3s;transform-style:preserve-3d}
+.site-folder{position:relative;grid-row:1;grid-column:1/-1;justify-self:center;width:min(58%,680px);height:clamp(260px,34vw,410px);display:flex;align-items:flex-end;overflow:hidden;border:1px solid rgba(212,160,23,.38);border-radius:10px;background:#052011;color:#F5EDD9;text-decoration:none;box-shadow:0 20px 48px rgba(0,0,0,.35);transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s,border-color .3s;transform-style:preserve-3d}
 .site-folder.is-active{z-index:3;border:2px solid #D4A017;box-shadow:0 25px 60px rgba(0,0,0,.42),0 0 0 1px rgba(212,160,23,.2)}
 .site-folder-image,.site-folder-shade{position:absolute;inset:0;width:100%;height:100%}
 .site-folder-image{object-fit:cover}
@@ -208,5 +208,5 @@
 .rr-rider-photo-card>div{padding:1rem}
 .rr-rider-photo-card h3{margin-top:.35rem;color:#F5EDD9;font:700 1.15rem var(--font-display),Georgia,serif}
 .rr-rider-photo-card .rr-muted{margin-top:.45rem;font-size:.82rem;line-height:1.6}
-@media(max-width:700px){.site-folders-track{min-height:310px}.site-folder{width:76%;height:280px;transform:translateX(calc(var(--folder-offset)*65%)) scale(calc(1 - abs(var(--folder-offset))*.1))}.site-folder-copy{padding:1rem}.site-folders-controls{gap:.65rem}.site-folders-controls>button{width:38px;height:38px}}
+@media(max-width:700px){.site-folders-track{min-height:310px}.site-folder{width:76%;height:280px;}.site-folder-copy{padding:1rem}.site-folders-controls{gap:.65rem}.site-folders-controls>button{width:38px;height:38px}}
 @media(prefers-reduced-motion:reduce){.site-folder{transition:none}}
