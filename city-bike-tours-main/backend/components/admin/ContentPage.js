@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Badge, DataGate, Empty, Icon, Modal, PageTop, api, useDash, useRun, useToast } from "./ui";
 
 const TYPES = { picture: "image", video: "video", article: "doc" };
-const BLANK = { contentType: "picture", title: "", mediaUrl: "", bodyText: "", isFeatured: false, downloadable: false };
+const BLANK = { contentType: "picture", title: "", mediaUrl: "", bodyText: "", isFeatured: false, downloadable: false, includeInCollection: false };
 
 function Thumb({ item }) {
   if (item.contentType === "picture" && item.mediaUrl) return <img src={item.mediaUrl} alt="" loading="lazy" />;
@@ -16,7 +16,7 @@ function Editor({ item, onClose }) {
   const { refresh } = useDash();
   const toast = useToast();
   const [run, busy] = useRun();
-  const [form, setForm] = useState(item ? { contentType: item.contentType, title: item.title, mediaUrl: item.mediaUrl || "", bodyText: item.bodyText || "", isFeatured: item.isFeatured, downloadable: Boolean(item.downloadable) } : BLANK);
+  const [form, setForm] = useState(item ? { contentType: item.contentType, title: item.title, mediaUrl: item.mediaUrl || "", bodyText: item.bodyText || "", isFeatured: item.isFeatured, downloadable: Boolean(item.downloadable), includeInCollection: Boolean(item.includeInCollection) } : BLANK);
   const [brief, setBrief] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
   const isArticle = form.contentType === "article";
@@ -83,9 +83,14 @@ function Editor({ item, onClose }) {
           <input type="checkbox" checked={form.isFeatured} onChange={set("isFeatured")} /> Feature this on the website
         </label>
         {form.contentType === "picture" && (
-          <label className="field wide" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <input type="checkbox" checked={form.downloadable} onChange={set("downloadable")} /> Let signed-in riders download this picture
-          </label>
+          <>
+            <label className="field wide" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <input type="checkbox" checked={form.includeInCollection} onChange={set("includeInCollection")} /> Include this picture in the Complete collection
+            </label>
+            <label className="field wide" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <input type="checkbox" checked={form.downloadable} onChange={set("downloadable")} /> Approve this picture for signed-in rider downloads
+            </label>
+          </>
         )}
       </form>
     </Modal>
@@ -109,7 +114,7 @@ function Body() {
   return (
     <>
       <PageTop title="Website content" actions={write && <button className="btn btn-primary" onClick={() => setEditing("new")}><Icon name="plus" size={16} /> Add content</button>}>
-        Pictures, videos and articles shown on the public website. Hidden items stay here but visitors can't see them.
+        Pictures, videos and articles shown on the public website. For each picture, independently choose whether it appears in the Complete collection and whether signed-in riders may download it.
       </PageTop>
       <div className="adm-toolbar">
         <div className="tabs" role="group" aria-label="Filter by type">
@@ -129,14 +134,17 @@ function Body() {
               <div className="adm-media-body">
                 <h3>{item.title}</h3>
                 {item.bodyText && <p>{item.bodyText}</p>}
-                <div className="muted" style={{ fontSize: 12 }}>{item.contentType}{item.isFeatured ? " · Featured" : ""}{item.contentType === "picture" ? (item.downloadable ? " · Downloadable" : " · No download") : ""}</div>
+                <div className="muted" style={{ fontSize: 12 }}>{item.contentType}{item.isFeatured ? " · Featured" : ""}{item.contentType === "picture" ? ` · ${item.includeInCollection ? "In Complete collection" : "Not in Complete collection"} · ${item.downloadable ? "Downloads allowed" : "Downloads blocked"}` : ""}</div>
                 {write && (
                   <div className="adm-media-foot">
                     <button className="btn btn-sm" disabled={busy} onClick={() => setEditing(item)}><Icon name="edit" size={13} /> Edit</button>
                     <button className="btn btn-sm" disabled={busy} onClick={() => patch(item, { isPublished: !item.isPublished }, item.isPublished ? "Hidden from the website." : "Published.")}>
                       <Icon name={item.isPublished ? "eyeoff" : "eye"} size={13} /> {item.isPublished ? "Hide" : "Publish"}
                     </button>
-                    {item.contentType === "picture" && <button className="btn btn-sm" disabled={busy} aria-pressed={item.downloadable} onClick={() => patch(item, { downloadable: !item.downloadable }, item.downloadable ? "Downloads turned off." : "Signed-in riders can now download it.")} title="Allow riders to download"><Icon name="download" size={13} /></button>}
+                    {item.contentType === "picture" && <>
+                      <button className="btn btn-sm" disabled={busy} aria-pressed={item.includeInCollection} onClick={() => patch(item, { includeInCollection: !item.includeInCollection }, item.includeInCollection ? "Removed from the Complete collection." : "Added to the Complete collection.")}>{item.includeInCollection ? "Remove from collection" : "Add to collection"}</button>
+                      <button className="btn btn-sm" disabled={busy} aria-pressed={item.downloadable} onClick={() => patch(item, { downloadable: !item.downloadable }, item.downloadable ? "Downloads turned off." : "Signed-in riders can now download it.")}>{item.downloadable ? "Block downloads" : "Allow downloads"}</button>
+                    </>}
                     <button className="btn btn-sm" disabled={busy} aria-pressed={item.isFeatured} onClick={() => patch(item, { isFeatured: !item.isFeatured }, item.isFeatured ? "Removed from featured." : "Featured on the website.")} title="Feature">
                       <Icon name="star" size={13} style={item.isFeatured ? { fill: "#ffbe4d", color: "#ffbe4d" } : undefined} />
                     </button>

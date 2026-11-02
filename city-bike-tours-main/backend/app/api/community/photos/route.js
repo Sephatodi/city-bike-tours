@@ -15,7 +15,9 @@ const MAX_BYTES = 4 * 1024 * 1024; // serverless request bodies are capped aroun
 
 const columns = {
   id: communityPhotos.id, authorName: communityPhotos.authorName, title: communityPhotos.title, story: communityPhotos.story,
-  imageUrl: communityPhotos.imageUrl, siteId: communityPhotos.siteId, status: communityPhotos.status, downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
+  imageUrl: communityPhotos.imageUrl, siteId: communityPhotos.siteId, status: communityPhotos.status,
+  downloadable: communityPhotos.downloadable, includeInCollection: communityPhotos.includeInCollection,
+  createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
 };
 
 // Approved rider photos for everyone, plus the signed-in rider's own pending uploads so they can see them.

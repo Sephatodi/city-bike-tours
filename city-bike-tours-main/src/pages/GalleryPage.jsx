@@ -27,10 +27,10 @@ export default function GalleryPage() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [downloadMessage, setDownloadMessage] = useState("");
 
-  const publishedPictures = useMemo(() => content.filter((item) => item.isFeatured === true && item.downloadable === true && item.mediaUrl && item.contentType === "picture"), [content]);
+  const publishedPictures = useMemo(() => content.filter((item) => item.includeInCollection === true && item.downloadable === true && item.mediaUrl && item.contentType === "picture"), [content]);
   useEffect(() => { const controller = new AbortController(); fetch(backendUrl("/api/community/photos"), { signal: controller.signal, cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => { if (!controller.signal.aborted && Array.isArray(data?.photos)) setRiderPhotos(data.photos.filter((photo) => photo.status === "approved")); }).catch(() => {}); return () => controller.abort(); }, []);
   const photos = useMemo(() => [
-    ...riderPhotos.filter((photo) => photo.status === "approved" && photo.downloadable === true).map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName, downloadable: true, downloadKind: "community", downloadId: photo.id })),
+    ...riderPhotos.filter((photo) => photo.status === "approved" && photo.includeInCollection === true && photo.downloadable === true).map((photo) => ({ key: `rider-${photo.id}`, src: photo.imageUrl, title: photo.title, siteId: photo.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === photo.siteId), authorName: photo.authorName, downloadable: true, downloadKind: "community", downloadId: photo.id })),
     ...publishedPictures.map((item) => ({
       key: `published-${item.id}`, src: item.mediaUrl, title: item.title,
       siteId: item.siteId || "community", siteIndex: SITES.findIndex((s) => s.id === item.siteId), downloadable: true, downloadKind: "content", downloadId: item.id,

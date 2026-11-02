@@ -72,6 +72,7 @@ export const siteContent = pgTable("site_content", {
   isFeatured: boolean("is_featured").notNull().default(false),
   isPublished: boolean("is_published").notNull().default(true),
   downloadable: boolean("downloadable").notNull().default(false), // signed-in riders may download it
+  includeInCollection: boolean("include_in_collection").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -234,5 +235,6 @@ export const communityPhotos = pgTable("community_photos", {
   siteId: text("site_id"),
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   downloadable: boolean("downloadable").notNull().default(false), // staff allow riders to download it
+  includeInCollection: boolean("include_in_collection").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
