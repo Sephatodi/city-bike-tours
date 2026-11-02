@@ -1481,3 +1481,8 @@ body { background-color: #123222; }
   .trail-site-card, .trail-booking-button { transition: none; }
   .trail-site-card:hover, .trail-booking-button:hover { transform: none; }
 }
+
+.trail-animation-controls button{min-height:44px;padding:.65rem 1rem;border:1px solid rgba(212,160,23,.7);border-radius:4px;background:rgba(5,32,17,.92);color:#F5EDD9;font:600 .85rem Outfit,sans-serif;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.trail-animation-controls button:hover,.trail-animation-controls button[aria-pressed="true"]{background:#D4A017;color:#0D0805;border-color:#D4A017}
+.trail-animation-controls button:focus-visible,.heritage-trail-page button:focus-visible{outline:3px solid #F5B800;outline-offset:3px}
+.trail-moving-bicycle{background:transparent;border:0}

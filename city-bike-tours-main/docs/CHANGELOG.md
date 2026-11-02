@@ -13,3 +13,4 @@
 - Reworked `/gallery` into a three-slide looping heritage carousel synced with the six site cards, plus a filtered photo wall and community picture strip.
 - Restored the original forest-green/gold/cream palette, Fraunces/Outfit typography and transparent page surfaces so SiteBackdrop bicycles and the bicycle cursor remain visible.
 - Added review headlines, opt-in profile avatars and admin-controlled featured quote cards; registered migration `0019_review_presentation`.
+- Added optional Mapbox/ORS cycling-street route generation and a `/heritage-trail`-only animated bicycle that follows one continuous blue route, rotates with its heading, pauses at each stop and includes playback controls and provider attribution; LandingPage and BookingPage map behavior remains unchanged.
