@@ -164,6 +164,7 @@ export default function Inbox() {
 
         {error ? <div className="adm-alert bad" role="alert"><Icon name="alert" /><div>{error}</div></div> : !data ? <Skeleton h={220} /> : (
           <>
+            {tab === "photos" && <p className="muted" style={{ margin: "0 16px 14px" }}>Approve a rider photo first, then independently allow or block downloads and add or remove it from the Complete collection. Both settings are required for a photo to appear in that collection.</p>}
             {tab === "enquiries" && (data.enquiries.length ? (
               <div className="adm-table-wrap"><table>
                 <thead><tr><th>From</th><th>Message</th><th>Status</th><th>Received</th></tr></thead>
@@ -217,9 +218,10 @@ export default function Inbox() {
                   <tr key={x.id}>
                     <td><a href={x.imageUrl} target="_blank" rel="noreferrer"><img src={x.imageUrl} alt={x.title} style={{ width: 96, height: 72, objectFit: "cover", borderRadius: 6 }} /></a></td>
                     <td style={{ maxWidth: 420 }}><span className="strong">{x.title}</span><small>{x.authorName} · {ago(x.createdAt)}</small>{x.story && <div className="muted" style={{ marginTop: 4 }}>{x.story.length > 160 ? `${x.story.slice(0, 160)}…` : x.story}</div>}</td>
-                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Download allowed" : "No download"}</small></td>
+                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Downloads allowed" : "Downloads blocked"} · {x.includeInCollection ? "In Complete collection" : "Not in Complete collection"}</small></td>
                     {write && <td><div className="row-actions">
-                      <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Downloads turned off." : "Signed-in riders can download it.")}>{x.downloadable ? "Block download" : "Allow download"}</button>
+                      <button className="btn btn-sm" disabled={busy || (x.status !== "approved" && !x.downloadable)} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Downloads turned off." : "Signed-in riders can download it.")}>{x.downloadable ? "Block downloads" : "Allow downloads"}</button>
+                      <button className="btn btn-sm" disabled={busy || (x.status !== "approved" && !x.includeInCollection)} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { includeInCollection: !x.includeInCollection }, x.includeInCollection ? "Removed from the Complete collection." : "Added to the Complete collection.")}>{x.includeInCollection ? "Remove from collection" : "Add to collection"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows in the rider gallery.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}

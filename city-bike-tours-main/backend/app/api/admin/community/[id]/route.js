@@ -11,17 +11,27 @@ import { isOurBlob } from "@/lib/blob-url";
 export async function PATCH(request, { params }) {
   const guard = await requirePermission("inbox:write");
   if (guard.error) return guard.error;
-  const parsed = z.object({ status: z.enum(["pending", "approved", "rejected"]).optional(), downloadable: z.boolean().optional() })
+  const parsed = z.object({
+    status: z.enum(["pending", "approved", "rejected"]).optional(),
+    downloadable: z.boolean().optional(),
+    includeInCollection: z.boolean().optional(),
+  })
     .refine((v) => Object.keys(v).length > 0).safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Choose approve, reject, pending or a download setting." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Choose a photo status, download permission, or collection setting." }, { status: 400 });
   const [current] = await db.select({ status: communityPhotos.status }).from(communityPhotos).where(eq(communityPhotos.id, params.id)).limit(1);
   if (!current) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
   const nextStatus = parsed.data.status || current.status;
   if (parsed.data.downloadable === true && nextStatus !== "approved") return NextResponse.json({ error: "Approve a photo before allowing downloads." }, { status: 400 });
-  const update = { ...parsed.data, ...(nextStatus !== "approved" ? { downloadable: false } : {}) };
+  if (parsed.data.includeInCollection === true && nextStatus !== "approved") return NextResponse.json({ error: "Approve a photo before adding it to the Complete collection." }, { status: 400 });
+  const update = { ...parsed.data, ...(nextStatus !== "approved" ? { downloadable: false, includeInCollection: false } : {}) };
   const [updated] = await db.update(communityPhotos).set(update).where(eq(communityPhotos.id, params.id)).returning();
   if (!updated) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
-  await logAudit(guard.staff, "community.photo", `${"downloadable" in parsed.data ? (updated.downloadable ? "Allowed downloads of" : "Blocked downloads of") : updated.status === "approved" ? "Approved" : updated.status === "rejected" ? "Rejected" : "Reset"} "${updated.title}" by ${updated.authorName}`, { targetType: "community_photo", targetId: updated.id });
+  const action = "includeInCollection" in parsed.data
+    ? `${updated.includeInCollection ? "Added to" : "Removed from"} Complete collection`
+    : "downloadable" in parsed.data
+      ? (updated.downloadable ? "Allowed downloads of" : "Blocked downloads of")
+      : updated.status === "approved" ? "Approved" : updated.status === "rejected" ? "Rejected" : "Reset";
+  await logAudit(guard.staff, "community.photo", `${action} "${updated.title}" by ${updated.authorName}`, { targetType: "community_photo", targetId: updated.id });
   return NextResponse.json({ photo: updated });
 }
 
