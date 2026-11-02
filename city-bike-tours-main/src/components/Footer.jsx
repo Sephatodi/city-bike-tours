@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import BikeSVG from "./BikeSVG";
+import RiderIcon from "./RiderIcon";
 import Icon from "./Icon";
 import { BACKEND_BASE_URL, ADMIN_BASE_URL } from "../api/backend";
 
@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-10">
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <BikeSVG size={32} color="#D4A017" />
+              <RiderIcon size={40} color="#D4A017" />
               <div>
                 <div className="font-display font-bold text-lg" style={{ color: "#F5EDD9" }}>City Bike Tours</div>
                 <div className="text-xs tracking-widest uppercase" style={{ color: "#D4A017" }}>Gaborone Heritage</div>
@@ -31,9 +31,6 @@ export default function Footer() {
                 { label: "Gallery", to: "/gallery" },
                 { label: "Reviews & Messages", to: "/connect" },
                 { label: "Sign in", to: "/login" },
-                { label: "Privacy notice", to: "/privacy" },
-                { label: "Terms of use", to: "/terms" },
-                { label: "Data deletion", to: "/data-deletion" },
               ].map(({ label, to }) => (
                 <Link key={to} to={to} className="text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(245,237,217,0.6)" }}>
                   {label}
@@ -66,6 +63,7 @@ export default function Footer() {
           style={{ borderTop: "1px solid rgba(245,237,217,0.08)", color: "rgba(245,237,217,0.3)" }}
         >
           <span>© 2026 City Bike Tours · Gaborone, Botswana</span>
+          <span className="flex gap-4"><Link to="/privacy" className="hover:opacity-80">Privacy</Link><Link to="/terms" className="hover:opacity-80">Terms</Link><Link to="/data-deletion" className="hover:opacity-80">Delete my data</Link></span>
           <span>Built with pride in Botswana 🇧🇼</span>
           {ADMIN_BASE_URL ? (
             <a

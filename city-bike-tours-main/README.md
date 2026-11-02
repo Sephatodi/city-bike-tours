@@ -29,32 +29,50 @@ After a booking is confirmed, the customer receives a signed ride-pass link by e
 
 Before enabling check-in, apply migrations from the `backend` directory with `npm run db:migrate`. Set `PUBLIC_FRONTEND_URL` to the public Vite site origin and configure a stable `RIDE_PASS_SECRET` (or retain the same `NEXTAUTH_SECRET` across deployments). WhatsApp requires `TWILIO_WHATSAPP_FROM` and an approved `TWILIO_WHATSAPP_CONTENT_SID` template with placeholders `{{1}}` rider, `{{2}}` route, `{{3}}` date, `{{4}}` riders, `{{5}}` pass URL, and `{{6}}` reference. SMS also requires an SMS-capable `TWILIO_PHONE_NUMBER`. Camera scanning requires HTTPS in production.
 
+## Website pages
+
+| Page | What it is |
+|---|---|
+| `/` | Home |
+| `/schedule` | Reserve: ride cards with live price, rider count, total and Book button in one section, the next ride in Gaborone time, the week at a glance, what's included and common questions. `/pricing` redirects to `/schedule#pricing`. |
+| `/heritage-trail` | Six heritage folders; click one to open its photos, story and videos (with a "View all photos" link). |
+| `/gallery` | Roundabout of the six sites, six route buttons, food stops, the team's pictures and rider stories. |
+| `/gallery/:siteId` | Every picture, video, rider photo and nearby food stop for one heritage site. Unknown ids redirect to `/gallery`. |
+| `/connect` | Reviews (real score summary, filters, helpful votes, photo) and messages to the team. |
+| `/login`, `/login/callback` | Sign in or create an account; social sign-in returns here with a token. |
+| `/dashboard` | Where customers land after signing in: profile, quick links and their own reviews. |
+| `/book`, `/ticket/:token`, `/messages` | Booking request, ride pass, inbox. `/routes` redirects to `/book`. |
+| `/privacy`, `/terms`, `/data-deletion` | Legal pages (Meta and Google require the privacy and deletion pages). |
+
+The backend serves only the API, the admin dashboard (`/admin`) and the short hand-off page `/customer-social`. Its `/` and `/register` redirect to the website; the old customer pages of a previous cycling-shop site no longer exist.
+
+## Sign-in setup
+
+- **Email + password** always works. **Phone (SMS) codes** go through Twilio and/or Infobip (the next provider is tried if one fails; see [docs/SMS-CODES-SETUP.md](./docs/SMS-CODES-SETUP.md)); **WhatsApp codes** use Twilio.
+- **Google** goes through Neon Auth (server-driven flow in `backend/lib/neon-auth-server.js`, `/api/neon-auth`, `/api/customer/neon/complete`). It is switched on by `NEON_AUTH_BASE_URL` and `NEON_AUTH_COOKIE_SECRET`; without them Google falls back to `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` through NextAuth.
+- **Facebook and Apple** use NextAuth (`backend/lib/auth.js`). Neon Auth does not support them.
+- The website's social buttons open `<backend>/customer-social?provider=...&return=<website origin>`. Do not link directly to `/api/auth/signin/<provider>`: NextAuth only starts OAuth from a POST with a token.
+- Step-by-step setup (Neon Console, Google Cloud, Meta, Render, Vercel): [docs/SOCIAL-SIGN-IN-SETUP.md](./docs/SOCIAL-SIGN-IN-SETUP.md).
+- Customers never receive admin access: social and phone sign-in always create or match a `customer` account, and staff emails are refused.
+
+## Environment variables (names only, never commit values)
+
+Backend (Render): `DATABASE_URL` or `NEON_DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `FRONTEND_ORIGIN`, `CORS_ORIGIN_PATTERNS`, `PUBLIC_FRONTEND_URL`, `PUBLIC_BACKEND_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (fallback only), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` (a plain `+` number, no `whatsapp:` prefix), `INFOBIP_API_KEY`, `INFOBIP_BASE_URL`, `INFOBIP_SENDER`, `SMS_PROVIDER_ORDER`, `TWILIO_WHATSAPP_FROM` (`whatsapp:+...`), `TWILIO_WHATSAPP_OTP_CONTENT_SID`, `BLOB_READ_WRITE_TOKEN`, `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD`.
+
+Website (Vercel build): `VITE_API_BASE_URL` (the backend origin) and optionally `VITE_CONTACT_EMAIL` (shown on the legal pages).
+
+`FRONTEND_ORIGIN` must be the website origin exactly (scheme, no path, no trailing slash; commas for several). `CORS_ORIGIN_PATTERNS` may hold anchored https patterns with `*` for Vercel preview addresses, for example `https://city-bike-tours-*-your-team.vercel.app`.
+
+## Database migrations
+
+Run `cd backend && npm run db:migrate` after every deploy that adds a migration. **Every migration file must also be listed in `backend/db/migrations/meta/_journal.json`; Drizzle silently skips files that are not.** Recent migrations: `0015_managed_auth_identity` (`users.managed_auth_id`), `0016_review_details` (review tour, origin, photo, stops, highlights), `0017_review_votes` (helpful votes), `0018_photo_site` (rider photos can name a heritage site). All are idempotent.
+
 ## Customer accounts, reviews, messages and rider photos
 
-- **Pages:** `/login` (create account / sign in), `/connect` (message the team, leave a review, read replies) and the rider-stories section of `/gallery`. `/routes` redirects to `/book`; `/pricing` redirects to `/schedule#pricing`.
-- **Sign-in methods:** email + password always works. Google, Facebook and Apple work once their env vars are set (see `backend/.env.example`); phone (SMS) and WhatsApp codes need the Twilio variables. Buttons for methods that aren't configured are shown disabled. Running locally without Twilio, the code is printed in the backend console and shown on the page.
-- **Database:** run `cd backend && npm run db:migrate` (adds `customer_messages`, `otp_codes`, `community_photos` and review reply columns).
-- **Moderation:** in the admin dashboard, **Customers → Inbox & reviews** now has *Rider chats* (reply to messages), *Reviews* (approve, reply, hide) and *Rider photos* (approve, hide, delete). Riders' reviews and photos appear publicly only after approval.
-- **Photos:** rider uploads go to Vercel Blob (`BLOB_READ_WRITE_TOKEN`) under `city-tours-community/`, separate from the team's media library. The team's gallery pictures are the built-in site photos plus *Picture* items posted from **Website → Content**. Both galleries have download buttons.
-- **CORS:** the backend now allows the `Authorization` header and `PATCH`/`DELETE` from `FRONTEND_ORIGIN`.
-
-### Photo downloads and booking
-
-- Booking now needs an account: `POST /api/booking-requests` returns 401 without a signed-in rider's token.
-- Downloads are off by default. Staff turn them on per photo: **Website → Content** (tick "Let signed-in riders download this picture") for the team's pictures, and **Inbox & reviews → Rider photos → Allow download** for rider photos. `GET /api/download` checks the rider is signed in and the photo is allowed. The built-in site photos have no download button.
-- Run `cd backend && npm run db:migrate` again: migration `0014_downloadable_photos` adds the download switch.
-- Food stops on the Reserve page are listed in `src/data.js` (`FOOD_STOPS`); edit them to match the stops you use.
-
-
-### Review presentation migration
-
-The review presentation update adds migration `0019_review_presentation` (headline, featured flag and explicit profile-avatar consent). Apply it with `cd backend && npm run db:migrate` before deploying the updated review API. The Drizzle journal now contains migration entries `0000` through `0019` (20 entries total).
-
-## Cycling-street heritage trail
-
-The `/heritage-trail` map can use a generated street-following cycling route and an animated bicycle. The home and booking maps keep their existing straight-line route and never show the moving bicycle.
-
-- Install **Node.js 22.9.0 or newer** (the script uses Node's `--env-file-if-exists` flag and built-in `fetch`).
-- Copy the route variable names from `.env.example` into a local `.env` file and supply either `MAPBOX_TOKEN` (or `VITE_MAPBOX_TOKEN`) or `ORS_API_KEY`. `TRAIL_PROVIDER` may be `mapbox` or `ors`; when omitted, the script selects Mapbox if its token exists, otherwise OpenRouteService.
-- Run `npm run trail:build` from `city-bike-tours-main/`. This writes public coordinates only to `src/data/trail-route.json`; never put a secret in that file or commit `.env`.
-- See [Trail routing setup](./docs/TRAIL-ROUTING-SETUP.md) for provider setup, via-point tuning, validation and troubleshooting.
+- **Reviews:** approved reviews only appear publicly. The score summary (average, distribution, "rated 4★ or higher", highlight shares) is calculated from real reviews and the page shows an empty state when there are none. A "Verified rider" badge is shown only when the author's phone number matches a booking staff checked in. Reviews may carry a ride, origin, stops, highlight tags and one photo (needs `BLOB_READ_WRITE_TOKEN`). Signed-in customers can mark other people's reviews helpful once each.
+- **Messages:** customers chat with the team on `/connect`; replies are posted from the admin dashboard.
+- **Moderation:** in the admin dashboard, **Customers → Inbox & reviews** has *Rider chats*, *Reviews* (approve, reply, hide; shows the photo and details) and *Rider photos* (approve, hide, delete). Reviews and photos are public only after approval.
+- **Rider photos:** uploads go to Vercel Blob under `city-tours-community/` and may name a heritage site; they then appear on that site's page.
+- **Time:** all dates and times are shown in Gaborone time (`src/lib/time.js`). Messages refresh about every 20 seconds, reviews, prices and content about every minute and when the tab regains focus.
+- **More pictures or videos for a site:** edit that site in `src/data.js` (`imgs`, and `videos: [{ title, src }]` with a YouTube link or video file).
+- See also [docs/REVIEWS-AND-GALLERY.md](./docs/REVIEWS-AND-GALLERY.md), [docs/DESIGN.md](./docs/DESIGN.md) and [docs/CHANGELOG.md](./docs/CHANGELOG.md).

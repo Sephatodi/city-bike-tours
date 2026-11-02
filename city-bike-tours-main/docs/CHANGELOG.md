@@ -1,16 +1,21 @@
 # Changelog
 
-## 2026-11-01
+## October 2026 update
 
-- Added customer Google sign-in through Neon Auth's server-side Next.js integration and backend proxy.
-- Kept Facebook and Apple customer OAuth on NextAuth and preserved the existing staff credentials/MFA flow.
-- Added a customer Neon Auth completion route that checks account status and role before issuing a customer token.
-- Added Privacy, Terms of Use and Data Deletion pages and footer links.
-- Extended public reviews with verified-rider status based on matching customer phone numbers to checked-in bookings.
-- Added review score summary, rating filters, sorting, helpful votes and optional photo URL metadata.
-- Registered an idempotent index migration for review helpful votes.
+1. Google sign-in through Neon Auth; Facebook and Apple stay on NextAuth; social buttons start at the backend `/customer-social` page.
+2. The old customer pages and components of a previous site were removed from the backend; the backend `/` and `/register` redirect to the website.
+3. Migration `0015` is now registered in the Drizzle journal (it was being skipped); new migrations `0016` (review details), `0017` (helpful votes) and `0018` (rider photos name a site).
+4. Customer dashboard at `/dashboard`, the default page after sign-in.
+5. Legal pages: `/privacy`, `/terms`, `/data-deletion`.
+6. Reserve page: ride cards with price, rider count, total and Book button in one section; next ride and today marker.
+7. Heritage trail: six folders that open one at a time.
+8. Gallery: roundabout with six route buttons; a page per site with all pictures; rider photos can name a stop.
+9. Reviews page redesigned in the rr theme with a real score summary, filters, helpful votes, verified-rider rule and optional photo.
+10. Gaborone-time dates everywhere, live refresh through polling, `Stamp` and `SiteClock`.
+11. Show / hide password buttons on the website and in the admin dashboard.
+12. Branding: rider favicon and app icons, sky-blue cursor and riders, new fonts, mobile bottom navigation.
+13. CORS: `FRONTEND_ORIGIN` plus anchored `CORS_ORIGIN_PATTERNS` for preview deployments.
 
-- Reworked `/gallery` into a three-slide looping heritage carousel synced with the six site cards, plus a filtered photo wall and community picture strip.
-- Restored the original forest-green/gold/cream palette, Fraunces/Outfit typography and transparent page surfaces so SiteBackdrop bicycles and the bicycle cursor remain visible.
-- Added review headlines, opt-in profile avatars and admin-controlled featured quote cards; registered migration `0019_review_presentation`.
-- Added optional Mapbox/ORS cycling-street route generation and a `/heritage-trail`-only animated bicycle that follows one continuous blue route, rotates with its heading, pauses at each stop and includes playback controls and provider attribution; LandingPage and BookingPage map behavior remains unchanged.
+## SMS codes through Infobip
+
+SMS sign-in codes can now be sent through Infobip as well as Twilio, with automatic fallback to the next configured provider (`SMS_PROVIDER_ORDER`). WhatsApp codes are unchanged. Guide: `docs/SMS-CODES-SETUP.md`.

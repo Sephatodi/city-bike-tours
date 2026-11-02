@@ -1,10 +1,9 @@
+import PasswordInput from "../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { BACKEND_BASE_URL, backendUrl } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
-import PasswordInput from "../components/PasswordInput";
-import { startNeonGoogleSignIn } from "../auth/neonAuth";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
@@ -41,7 +40,6 @@ export default function LoginPage() {
   const next = params.get("next") && params.get("next").startsWith("/") && !params.get("next").startsWith("//") ? params.get("next") : "/dashboard";
 
   const [providers, setProviders] = useState(null);
-  const [providerLoadError, setProviderLoadError] = useState(false);
   const [mode, setMode] = useState(params.get("mode") === "signin" ? "signin" : "create");
   const [method, setMethod] = useState("email"); // email | sms | whatsapp
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -63,12 +61,12 @@ export default function LoginPage() {
         if (!controller.signal.aborted) setProviders(result && typeof result === "object" ? result : {});
       })
       .catch(() => {
-        if (!controller.signal.aborted) { setProviders({}); setProviderLoadError(true); }
+        if (!controller.signal.aborted) setProviders({});
       });
     return () => controller.abort();
   }, []);
 
-  if (ready && isSignedIn) return <Navigate to="/dashboard" replace />;
+  if (ready && isSignedIn) return <Navigate to={next} replace />;
 
   const update = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
@@ -84,7 +82,7 @@ export default function LoginPage() {
     try { await task(); } catch (err) { setError(err.message || "Something went wrong."); } finally { setBusy(false); }
   }
 
-  const finish = (result) => { signIn(result.token, result.user); try { window.sessionStorage.removeItem("cbt-after-login"); } catch { /* ignore */ } navigate("/dashboard", { replace: true }); };
+  const finish = (result) => { signIn(result.token, result.user); navigate(next === "/dashboard" ? takeNext(next) : next, { replace: true }); };
 
   const submitEmail = (event) => {
     event.preventDefault();
@@ -109,27 +107,16 @@ export default function LoginPage() {
     run(async () => finish(await post("/api/customer/otp/verify", { phone, code, name: form.name || undefined })));
   };
 
-  async function goSocial(id) {
+  function goSocial(id) {
     if (!enabled(id) || busy) return;
     rememberNext(next);
-    if (id === "google") {
-      setBusy(true);
-      setError("");
-      try {
-        const callback = new URL("/api/customer/neon/complete", backendOrigin());
-        callback.searchParams.set("return", window.location.origin);
-        await startNeonGoogleSignIn(callback.toString());
-      } catch (err) {
-        setError(err?.message || "Google sign-in could not be started. Please try again.");
-        setBusy(false);
-      }
-      return;
-    }
-    // Facebook and Apple continue through the dedicated NextAuth customer-social page.
-    const socialUrl = new URL("/customer-social", backendOrigin());
-    socialUrl.searchParams.set("provider", id);
-    socialUrl.searchParams.set("return", window.location.origin);
-    window.location.assign(socialUrl.toString());
+    // Hand over to the backend's /customer-social page. NextAuth only starts Google / Facebook / Apple sign-in
+    // from a POST with a security token, which that page sends; opening /api/auth/signin/<provider> directly
+    // just bounces back to the register page with ?error=<provider>.
+    const start = new URL("/customer-social", backendOrigin());
+    start.searchParams.set("provider", id);
+    start.searchParams.set("return", window.location.origin);
+    window.location.assign(start.toString());
   }
 
   const phoneMethod = method === "sms" || method === "whatsapp";
@@ -162,7 +149,6 @@ export default function LoginPage() {
               <span aria-hidden="true">📱</span> Continue with phone number{providers && !providers.sms && <small>Not set up yet</small>}
             </button>
           </div>
-          {providerLoadError && <p className="auth-error" role="status">We could not load sign-in providers. Check the backend connection and CORS settings, then reload this page.</p>}
 
           <div className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></div>
 

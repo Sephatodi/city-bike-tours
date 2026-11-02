@@ -22,6 +22,7 @@ const NAV = [
     id: "customers", label: "Customers", icon: "inbox",
     children: [
       { href: "/admin/inbox", label: "Inbox & reviews", perm: "inbox:read", badge: "inbox" },
+      { href: "/admin/photos", label: "Rider photo approvals", perm: "inbox:read" },
       { href: "/admin/messages", label: "Messages", perm: "messages:read" },
     ],
   },

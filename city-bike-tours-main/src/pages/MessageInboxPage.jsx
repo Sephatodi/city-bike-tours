@@ -1,8 +1,8 @@
+import Stamp from "../components/Stamp";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { backendUrl } from "../api/backend";
 import Footer from "../components/Footer";
-import Stamp from "../components/Stamp";
 
 export default function MessageInboxPage() {
   const [messages, setMessages] = useState([]);
@@ -48,10 +48,10 @@ export default function MessageInboxPage() {
   };
 
   return (
-    <main className="message-inbox-page">
-      <div className="message-inbox-shell">
+    <main className="rr rr-bg message-inbox-page">
+      <div className="rr-wrap message-inbox-shell">
         <Link to="/" className="message-inbox-brand"><span>CB</span> City Bike Tours</Link>
-        <section className="message-inbox-card">
+        <section className="rr-plate rr-pad message-inbox-card">
           <h1>Your Messages</h1>
           <p className="message-inbox-sub">Enter your phone number to see messages from City Bike Tours.</p>
           <div className="message-inbox-phone-input">

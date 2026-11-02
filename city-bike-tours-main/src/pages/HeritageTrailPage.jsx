@@ -1,12 +1,10 @@
 import { Link } from "react-router";
-import SiteFolders from "../components/SiteFolders";
-import { useLiveData } from "../hooks/LiveDataContext";
 import Footer from "../components/Footer";
 import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
+import SiteFolders from "../components/SiteFolders";
 
 export default function HeritageTrailPage() {
-  const { content = [] } = useLiveData();
   return (
     <main className="heritage-trail-page">
       <header className="trail-hero">
@@ -28,10 +26,10 @@ export default function HeritageTrailPage() {
             <p className="trail-eyebrow">THE ROUTE</p>
             <h2 id="trail-map-heading">A city-sized story.</h2>
           </div>
-          <p>Follow the cycling-street route around all six heritage stops. The bicycle pauses at each landmark; select a marker or site name to bring that place into focus.</p>
+          <p>Explore the six stops on the map. Select a marker or a site name to bring that place into focus.</p>
         </div>
         <div className="trail-map-frame">
-          <HeritageMap height="min(64vh, 600px)" trail />
+          <HeritageMap height="min(64vh, 600px)" />
         </div>
       </section>
 
@@ -39,11 +37,11 @@ export default function HeritageTrailPage() {
         <div className="trail-section-heading trail-sites-heading">
           <div>
             <p className="trail-eyebrow">THE NATION’S STORY</p>
-            <h2 id="trail-sites-heading">Six stops. Six experiences.</h2>
+            <h2 id="trail-sites-heading">Six stops. Six perspectives.</h2>
           </div>
-          <p>Each landmark marks a different chapter in the making of modern Botswana.</p>
+          <p>Each landmark marks a different chapter in the making of modern Botswana. Open a folder to see its photos, story and videos.</p>
         </div>
-        <SiteFolders content={content} />
+        <SiteFolders />
       </section>
 
       <section className="trail-booking-cta" aria-labelledby="trail-booking-heading">

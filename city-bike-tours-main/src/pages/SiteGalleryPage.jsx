@@ -1,24 +1,124 @@
-import {useEffect,useMemo,useState} from "react";
-import {Link,useNavigate,useParams} from "react-router";
-import {SITES,FOOD_STOPS} from "../data";
-import {useLiveData} from "../hooks/LiveDataContext";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, Navigate, useParams } from "react-router";
 import Footer from "../components/Footer";
+import FoodStops from "../components/FoodStops";
 import Icon from "../components/Icon";
-import "../rr-theme.css";
-export default function SiteGalleryPage(){
- const {siteId}=useParams(),navigate=useNavigate(),{content=[]}=useLiveData(),[limit,setLimit]=useState(24),[active,setActive]=useState(-1);
- const site=SITES.find(s=>s.id===siteId);
- const images=useMemo(()=>site?[...site.imgs.map((src,i)=>({src,title:site.name+" · Photo "+(i+1)})),...content.filter(x=>x.mediaUrl&&x.contentType==="picture"&&((x.title+" "+(x.bodyText||"")).toLowerCase().includes(site.name.toLowerCase()))).map(x=>({src:x.mediaUrl,title:x.title}))]:[],[site,content]);
- useEffect(()=>{if(!site){navigate("/gallery",{replace:true});return}document.title=site.name+" | City Bike Tours";},[site,navigate]);
- useEffect(()=>{if(active<0)return;const key=e=>{if(e.key==="Escape")setActive(-1);if(e.key==="ArrowRight")setActive(v=>(v+1)%images.length);if(e.key==="ArrowLeft")setActive(v=>(v-1+images.length)%images.length)};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[active,images.length]);
- if(!site)return null;
- const index=SITES.findIndex(s=>s.id===site.id),prev=SITES[(index+SITES.length-1)%SITES.length],next=SITES[(index+1)%SITES.length];
- const videos=content.filter(x=>x.contentType==="video"&&x.mediaUrl&&((x.title+" "+(x.bodyText||"")).toLowerCase().includes(site.name.toLowerCase())));
- const food=FOOD_STOPS.filter(x=>(x.area+" "+x.note).toLowerCase().includes(site.street.toLowerCase())||(site.id==="museum"&&x.id==="museum-cafe"));
- return <><main className="rr rr-page"><div className="rr-container"><header className="rr-hero"><Link className="rr-chip" to="/gallery">← All six sites</Link><p className="rr-kicker mt-7">Heritage site · {String(index+1).padStart(2,"0")} / 06</p><h1>{site.name}</h1><p className="rr-muted mt-4">{site.street} · Gaborone, Botswana</p><p className="mt-5 max-w-3xl">{site.short}</p><div className="mt-6 flex flex-wrap gap-3"><Link className="rr-btn-primary" to="/schedule#pricing">Ride this route ↗</Link><Link className="rr-btn-ghost" to={`/gallery/${prev.id}`}>← Previous site</Link><Link className="rr-btn-ghost" to={`/gallery/${next.id}`}>Next site →</Link></div></header>
- <section className="rr-plate-elevated p-6 md:p-8"><p className="rr-kicker">The story</p><h2 className="mt-2 text-3xl">A place in Botswana's story</h2><p className="mt-4 leading-8">{site.history}</p><p className="rr-muted mt-4 flex items-center gap-2"><Icon name="mapPin" size={17}/>{site.street}, Gaborone, Botswana</p></section>
- <section className="py-12"><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="rr-kicker">Explore the collection</p><h2 className="mt-2 text-4xl">Photos from this stop</h2></div><span className="rr-chip">{images.length} photos</span></div>{images.length?<><div className="rr-masonry">{images.slice(0,limit).map((item,i)=><button key={item.src+i} type="button" onClick={()=>setActive(i)} aria-label={`Open ${item.title}`}><img src={item.src} loading="lazy" decoding="async" alt={item.title}/></button>)}</div>{limit<images.length&&<button className="rr-btn-ghost mx-auto mt-4" onClick={()=>setLimit(v=>Math.min(v+24,images.length))}>Load more photos</button>}</>:<p className="rr-muted rr-plate p-6">Photos for this site will be added to the heritage collection.</p>}</section>
- {videos.length>0&&<section className="pb-12"><p className="rr-kicker">Watch and discover</p><h2 className="mt-2 mb-5 text-3xl">Videos</h2><div className="grid gap-4 md:grid-cols-2">{videos.map(v=><article className="rr-plate p-4" key={v.id}><h3 className="text-xl">{v.title}</h3><a className="rr-chip mt-3" href={v.mediaUrl} target="_blank" rel="noreferrer">Watch video ↗</a></article>)}</div></section>}
- {food.length>0&&<section className="pb-16"><p className="rr-kicker">Around the area</p><h2 className="mt-2 mb-5 text-3xl">Food stops nearby</h2><div className="grid gap-4 md:grid-cols-2">{food.map(f=><article className="rr-plate p-5" key={f.id}><h3 className="text-xl">{f.name}</h3><p className="rr-muted mt-1">{f.area}</p><p className="mt-3">{f.note}</p></article>)}</div></section>}
- </div></main>{active>=0&&<div className="rr-lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick={()=>setActive(-1)}><button className="absolute right-5 top-5 text-white" onClick={()=>setActive(-1)} aria-label="Close">✕</button><button className="absolute left-4 text-white" onClick={e=>{e.stopPropagation();setActive(v=>(v-1+images.length)%images.length)}} aria-label="Previous photo">←</button><figure onClick={e=>e.stopPropagation()}><img src={images[active]?.src} alt={images[active]?.title}/><figcaption className="mt-3 text-center text-white">{images[active]?.title} · {active+1} / {images.length}</figcaption></figure><button className="absolute right-4 text-white" onClick={e=>{e.stopPropagation();setActive(v=>(v+1)%images.length)}} aria-label="Next photo">→</button></div>}<Footer/></>;
+import Lightbox from "../components/Lightbox";
+import RrIcon from "../components/RrIcon";
+import SiteVideo from "../components/SiteVideo";
+import Stamp from "../components/Stamp";
+import { useCustomer } from "../auth/CustomerAuth";
+import { FOOD_STOPS, SITES } from "../data";
+import { usePolling } from "../hooks/usePolling";
+
+const PAGE_SIZE = 24;
+
+// One page per heritage site with every picture we have of it. To show more pictures, add image paths to that
+// site's `imgs` list in src/data.js (and `videos` for video).
+export default function SiteGalleryPage() {
+  const { siteId } = useParams();
+  const index = SITES.findIndex((item) => item.id === siteId);
+  const site = SITES[index];
+  const { api } = useCustomer();
+  const [shown, setShown] = useState(PAGE_SIZE);
+  const [openAt, setOpenAt] = useState(null);
+  const [riderPhotos, setRiderPhotos] = useState([]);
+
+  useEffect(() => { setShown(PAGE_SIZE); setOpenAt(null); }, [siteId]);
+  useEffect(() => {
+    if (!site) return undefined;
+    const previous = document.title;
+    document.title = `${site.name} · Heritage photos · City Bike Tours`;
+    return () => { document.title = previous; };
+  }, [site]);
+
+  const load = useCallback(async () => {
+    try { setRiderPhotos(((await api("/api/community/photos")).photos || []).filter((photo) => photo.siteId === siteId && photo.status === "approved")); }
+    catch { /* the section simply stays hidden */ }
+  }, [api, siteId]);
+  usePolling(load, 120000, Boolean(site));
+
+  const items = useMemo(() => (site ? site.imgs.filter(Boolean).map((src, i) => ({ key: `${site.id}-${i}`, src, title: `${site.name} — photo ${i + 1}`, story: site.short, downloadable: false })) : []), [site]);
+  const riderItems = useMemo(() => riderPhotos.map((photo) => ({ key: photo.id, src: photo.imageUrl, title: photo.title, story: photo.story, credit: photo.authorName, downloadable: false })), [riderPhotos]);
+  const food = useMemo(() => {
+    if (!site) return [];
+    const name = site.name.toLowerCase();
+    return FOOD_STOPS.filter((stop) => stop.near && (stop.near.toLowerCase().includes(name) || name.includes(stop.near.toLowerCase())));
+  }, [site]);
+
+  if (!site) return <Navigate to="/gallery" replace />;
+  const prev = SITES[(index - 1 + SITES.length) % SITES.length];
+  const next = SITES[(index + 1) % SITES.length];
+  const videos = site.videos || [];
+
+  return (
+    <>
+      <main className="rr rr-bg site-page">
+        <div className="rr-wrap">
+          <nav className="sp-nav" aria-label="Site navigation">
+            <Link to="/gallery#heritage" className="rr-btn-ghost"><RrIcon name="left" size={16} /> All six sites</Link>
+            <div>
+              <Link to={`/gallery/${prev.id}`} className="rr-btn-ghost" aria-label={`Previous site: ${prev.name}`}><RrIcon name="left" size={16} /> Previous</Link>
+              <Link to={`/gallery/${next.id}`} className="rr-btn-ghost" aria-label={`Next site: ${next.name}`}>Next <RrIcon name="right" size={16} /></Link>
+            </div>
+          </nav>
+
+          <header className="sp-head rr-plate-elevated rr-pad">
+            <span className="rr-pill">Site {String(index + 1).padStart(2, "0")} of {SITES.length}</span>
+            <h1><Icon name={site.icon} size={34} /> {site.name}</h1>
+            <p className="sp-street"><RrIcon name="pin" size={15} /> {site.street}, Gaborone</p>
+            <p className="sp-short">{site.short}</p>
+            <p className="sp-history">{site.history}</p>
+          </header>
+
+          <section aria-labelledby="photos-heading">
+            <div className="sp-section-head">
+              <h2 id="photos-heading">Photos</h2>
+              <span className="rr-chip"><RrIcon name="camera" size={13} /> {items.length} photo{items.length === 1 ? "" : "s"}</span>
+            </div>
+            <div className="sp-grid">
+              {items.slice(0, shown).map((item, i) => (
+                <button key={item.key} type="button" className="sp-photo" onClick={() => setOpenAt(i)} aria-label={`Open ${item.title}`}>
+                  <img src={item.src} alt={item.title} loading={i < 8 ? "eager" : "lazy"} decoding="async" />
+                </button>
+              ))}
+            </div>
+            {shown < items.length && (
+              <div className="sp-more"><button type="button" className="rr-btn-ghost" onClick={() => setShown((count) => count + PAGE_SIZE)}>Load more photos ({items.length - shown} left)</button></div>
+            )}
+          </section>
+
+          {videos.length > 0 && (
+            <section aria-labelledby="videos-heading">
+              <div className="sp-section-head"><h2 id="videos-heading">Videos</h2></div>
+              <div className="sp-videos">{videos.map((video) => <figure key={video.src}><SiteVideo video={video} /><figcaption>{video.title}</figcaption></figure>)}</div>
+            </section>
+          )}
+
+          {riderItems.length > 0 && (
+            <section aria-labelledby="riders-heading">
+              <div className="sp-section-head"><h2 id="riders-heading">Photos from riders</h2></div>
+              <div className="sp-grid">
+                {riderPhotos.map((photo) => (
+                  <figure key={photo.id} className="sp-rider">
+                    <img src={photo.imageUrl} alt={photo.title} loading="lazy" decoding="async" />
+                    <figcaption><strong>{photo.title}</strong><span>{photo.authorName}</span><Stamp value={photo.createdAt} compact /></figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {food.length > 0 && <FoodStops stops={food} kicker="NEAR THIS STOP" title="Eat and drink nearby" intro={`Cafés and eateries close to ${site.name}.`} />}
+
+          <section className="sp-cta rr-plate-elevated rr-pad">
+            <div><h2>Ride this route</h2><p className="rr-muted">See {site.name} and five more heritage sites on one guided ride from Main Mall.</p></div>
+            <Link to="/schedule#pricing" className="rr-btn-primary">See rides and prices</Link>
+          </section>
+        </div>
+      </main>
+      {openAt !== null && <Lightbox items={items} index={openAt} onChange={setOpenAt} onClose={() => setOpenAt(null)} onDownload={() => {}} />}
+      <Footer />
+    </>
+  );
 }

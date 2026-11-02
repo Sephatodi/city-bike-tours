@@ -3,9 +3,11 @@ import Icon from "./Icon";
 
 // A looping "roundabout" carousel: the photo in front is large and its neighbours sweep round behind it.
 // Arrows, dots, swipe, keyboard and slow auto-rotation (paused on hover) all work; it loops forever.
-export default function RoundaboutCarousel({ items, label, onOpen, onDownload, renderCaption, paused = false }) {
+export default function RoundaboutCarousel({ items, label, onOpen, onDownload, renderCaption, renderOverlay, onActiveChange, paused = false }) {
   const [active, setActive] = useState(0);
   const [hover, setHover] = useState(false);
+  const [inView, setInView] = useState(true);
+  const rootRef = useRef(null);
   const swipe = useRef(null);
   const count = items.length;
   const current = count ? ((active % count) + count) % count : 0;
@@ -14,12 +16,24 @@ export default function RoundaboutCarousel({ items, label, onOpen, onDownload, r
 
   useEffect(() => { if (active >= count && count) setActive(0); }, [count, active]);
 
+  // Lets the page show details for whichever item is in front.
+  useEffect(() => { if (count) onActiveChange?.(current); }, [current, count, onActiveChange]);
+
+  // Several carousels can share a page, so only the one on screen keeps turning.
   useEffect(() => {
-    if (count < 2 || hover || paused) return undefined;
+    const node = rootRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.25 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [count]);
+
+  useEffect(() => {
+    if (count < 2 || hover || paused || !inView) return undefined;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
     const timer = setInterval(() => go(1), 5200);
     return () => clearInterval(timer);
-  }, [count, hover, paused, go]);
+  }, [count, hover, paused, inView, go]);
 
   if (!count) return null;
   const half = Math.floor(count / 2);
@@ -39,6 +53,7 @@ export default function RoundaboutCarousel({ items, label, onOpen, onDownload, r
 
   return (
     <div
+      ref={rootRef}
       className="roundabout"
       role="region"
       aria-roledescription="carousel"
@@ -84,6 +99,7 @@ export default function RoundaboutCarousel({ items, label, onOpen, onDownload, r
                 onClick={() => (offset === 0 ? onOpen?.(index) : setActive((value) => value + offset))}
               >
                 <img src={item.src} alt={item.title} loading="lazy" draggable="false" />
+                {offset === 0 && renderOverlay && <span className="roundabout-overlay">{renderOverlay(item, index)}</span>}
               </button>
               {offset === 0 && item.downloadable && (
                 <button type="button" className="photo-download" onClick={() => onDownload?.(item)} aria-label={`Download ${item.title}`} title="Download">

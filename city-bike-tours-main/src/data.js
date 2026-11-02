@@ -168,34 +168,55 @@ export const MAIN_MALL = [-24.6553, 25.9086];
 // six sites and back to the start.
 export const LOOP_ORDER = ["monument", "parliament", "enclave", "gallery", "museum", "archives"];
 
-// Cafés and restaurants within an easy ride of Main Mall and the museum. Opening hours change,
+// Cafés and eateries within an easy ride of Main Mall and the heritage sites. Opening hours change,
 // so riders are told to check; edit this list to match the stops you actually use on a ride.
+// `near` names the heritage stop it is closest to, and `kind` is the short tag shown on the card.
 export const FOOD_STOPS = [
   {
     id: "daily-grind",
     name: "The Daily Grind Cafe + Kitchen",
-    area: "Independence Avenue",
-    note: "Breakfast, brunch and good coffee, close to the museum and Main Mall. A favourite for a morning ride break.",
+    area: "Plot 133, Independence Avenue",
+    near: "National Museum & Art Gallery",
+    note: "Breakfast, brunch and good coffee, a short ride from the museum and Main Mall. A favourite for a morning ride break.",
     stop: "Morning refuel",
   },
   {
     id: "museum-cafe",
     name: "Museum Cafe",
     area: "Pula Circle, by the National Museum",
+    near: "National Museum & Art Gallery",
     note: "A relaxed spot right beside the museum, easy to reach on bicycles for lunch or a cold drink.",
     stop: "Museum stop",
+  },
+  {
+    id: "agang",
+    name: "Agang's Dessert Corner",
+    area: "Diamond Square, Main Mall",
+    near: "Botswana Post Office Gallery",
+    note: "Local and international desserts right on the Main Mall, a sweet reward after the Post Office Gallery.",
+    stop: "Sweet stop",
   },
   {
     id: "main-deck",
     name: "Main Deck Restaurant & Bar",
     area: "Above Main Mall",
+    near: "Main Mall (start and finish)",
     note: "A big menu with Botswana and international dishes, and a patio overlooking Main Mall, right where every ride starts and ends.",
     stop: "Post-ride meal",
+  },
+  {
+    id: "main-mall-vendors",
+    name: "Main Mall street vendors",
+    area: "Main Mall, city centre",
+    near: "Main Mall (start and finish)",
+    note: "Quick, cheap bites and cold drinks from the vendors along the pedestrian mall, ideal before or after the Government Enclave.",
+    stop: "Quick bite",
   },
   {
     id: "patio",
     name: "The Patio Cafe & Deli",
     area: "Mokgosi",
+    near: "Government Enclave",
     note: "A cosy café and deli with indoor and outdoor seating for breakfast and light meals.",
     stop: "Coffee and a bite",
   },
