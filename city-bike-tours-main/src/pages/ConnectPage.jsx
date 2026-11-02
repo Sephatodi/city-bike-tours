@@ -9,7 +9,7 @@ import "../rr-theme.css";
 import "../gallery-reviews.css";
 
 const Stars = ({ n }) => (
-  <span aria-label={`${n} out of 5 stars`} style={{ color: "#D4A017", letterSpacing: 2 }}>
+  <span className="review-stars" aria-label={`${n} out of 5 stars`}>
     {"★".repeat(n)}<span style={{ color: "rgba(245,237,217,0.25)" }}>{"★".repeat(5 - n)}</span>
   </span>
 );

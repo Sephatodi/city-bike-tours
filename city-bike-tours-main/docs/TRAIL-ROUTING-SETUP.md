@@ -59,7 +59,7 @@ A key is the stop ID after which the points should be inserted on the way to the
 
 ## Validation and safe writes
 
-The script converts source coordinates from `[lat, lng]` to API order `[lng, lat]`, then converts the returned geometry back. It simplifies the line with approximately 2 m Douglas–Peucker tolerance while retaining each stop's nearest route vertex. It rejects routes with fewer than 50 coordinates, coordinates outside the Gaborone bounding box, route distances outside 4–30 km, or stop indexes that do not increase around the loop.
+The script sends one ordered waypoint list from Main Mall through every site in `LOOP_ORDER` and back to Main Mall, converting source coordinates from `[lat, lng]` to API order `[lng, lat]`, then converts the returned geometry back. It simplifies the single route line with approximately 2 m Douglas–Peucker tolerance while retaining each stop's nearest route vertex. It rejects routes with fewer than 50 coordinates, coordinates outside the Gaborone bounding box, route distances outside 4–30 km, stop indexes that do not increase around the loop, or any stop more than 100 m from the returned road geometry.
 
 An API error or failed validation exits non-zero and leaves an existing `src/data/trail-route.json` untouched. The output is written to a temporary file and renamed only after validation succeeds.
 
@@ -69,7 +69,7 @@ An API error or failed validation exits non-zero and leaves an existing `src/dat
 - **422 / invalid coordinates:** API coordinates must be `[longitude, latitude]`; source site coordinates in `src/data.js` are `[latitude, longitude]`. The script performs this conversion automatically. Check custom via points are also entered as `[lat, lng]`.
 - **NoRoute / no route found:** one or more waypoints may be inaccessible to the cycling profile or snapped to unsuitable roads. Check the coordinates and add street-following `TRAIL_VIA` points to guide the route.
 - **Straight lines are shown:** the optional generated JSON is absent or invalid. Run `npm run trail:build` with a working provider key. The trail page intentionally falls back to the existing straight line and logs one informational message; other pages always retain their original map.
-- **Bicycle is not moving:** generate a valid route first, then press Play. Check that the map is on screen and the browser tab is visible. A reduced-motion preference disables autoplay but manual Play remains available. Pause, Restart, speed and Follow controls are only shown when valid route data loads.
+- **Bicycle is not moving:** generate a valid route first and make sure the map is on screen and the browser tab is visible. With normal motion settings, the bicycle starts automatically; Pause, Restart, speed and Follow controls are available when valid route data loads. A reduced-motion preference keeps the bicycle at Main Mall until Play is pressed.
 - **Mapbox tiles work but route generation does not:** tile access and Directions API access are separate token permissions. Ensure the token has Directions API access.
 
 ## Provider terms and attribution

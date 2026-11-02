@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "npm run --prefix city-bike-tours-main dev --",
+    "build": "npm run --prefix city-bike-tours-main build",
+    "trail:build": "npm run --prefix city-bike-tours-main trail:build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
