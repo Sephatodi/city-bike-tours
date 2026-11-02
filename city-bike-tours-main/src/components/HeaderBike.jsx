@@ -6,7 +6,7 @@ const LANES = 4;
 const DURATIONS = [42, 50, 38, 46];
 const BIKES_PER_LANE = 2;
 
-// Rows of complete bicycles drifting across the screen. Each row is spread over the height of
+// Rows of cyclists (the same rider as the cursor) drifting across the screen. Each row is spread over the height of
 // its container and nothing is clipped vertically, so every bicycle is drawn in full.
 export default function HeaderBike() {
   return (
@@ -23,7 +23,7 @@ export default function HeaderBike() {
               className="header-bike-rider"
               style={{ animationDelay: `${-(bikeIndex * (DURATIONS[layerIndex] / BIKES_PER_LANE) + layerIndex * 3.1)}s` }}
             >
-              <RiderIcon size={220} color="#38BDF8" />
+              <RiderIcon responsive color="#38BDF8" />
             </div>
           ))}
         </div>

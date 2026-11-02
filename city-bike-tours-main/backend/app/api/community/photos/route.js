@@ -8,6 +8,7 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { optionalCustomer, requireCustomer } from "@/lib/customer-auth";
 import { sniffImage } from "@/lib/blob-url";
 import { fireWebhook } from "@/lib/webhook";
+import { SITE_IDS } from "@/lib/review-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,7 @@ const MAX_BYTES = 4 * 1024 * 1024; // serverless request bodies are capped aroun
 
 const columns = {
   id: communityPhotos.id, authorName: communityPhotos.authorName, title: communityPhotos.title, story: communityPhotos.story,
-  imageUrl: communityPhotos.imageUrl, siteId: communityPhotos.siteId, status: communityPhotos.status,
-  downloadable: communityPhotos.downloadable, includeInCollection: communityPhotos.includeInCollection,
-  createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
+  imageUrl: communityPhotos.imageUrl, siteId: communityPhotos.siteId, status: communityPhotos.status, downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
 };
 
 // Approved rider photos for everyone, plus the signed-in rider's own pending uploads so they can see them.
@@ -27,7 +26,7 @@ export async function GET(request) {
     ? or(eq(communityPhotos.status, "approved"), and(eq(communityPhotos.userId, user.id), eq(communityPhotos.status, "pending")))
     : eq(communityPhotos.status, "approved");
   try {
-    const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt));
+    const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt)).limit(60);
     return NextResponse.json({
       photos: rows.map(({ userId, ...photo }) => ({ ...photo, mine: Boolean(user && userId === user.id) })),
     });
@@ -47,7 +46,8 @@ export async function POST(request) {
   const file = form?.get("file");
   const title = String(form?.get("title") || "").trim().slice(0, 120);
   const story = String(form?.get("story") || "").trim().slice(0, 1500);
-  const siteId = String(form?.get("siteId") || "").trim().slice(0, 80) || null;
+  const rawSite = String(form?.get("siteId") || "");
+  const siteId = SITE_IDS.includes(rawSite) ? rawSite : null;
   if (!file || typeof file === "string") return NextResponse.json({ error: "Choose a photo to upload." }, { status: 400 });
   if (!title) return NextResponse.json({ error: "Give your photo a short title." }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "That photo is too large (max 4MB)." }, { status: 400 });
@@ -60,30 +60,12 @@ export async function POST(request) {
   const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" }[type];
   let url;
   try {
-    // Pass the configured token explicitly because this API runs on Render,
-    // not inside the Vercel project that owns the Blob store.
-    ({ url } = await put(`city-tours-community/${id}.${extension}`, Buffer.from(bytes), {
-      access: "public",
-      contentType: type,
-      addRandomSuffix: false,
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    }));
+    ({ url } = await put(`city-tours-community/${id}.${extension}`, Buffer.from(bytes), { access: "public", contentType: type }));
   } catch (error) {
-    // Keep credentials out of logs/responses, but preserve the provider's
-    // safe diagnostic message so storage configuration errors can be fixed.
-    const detail = error instanceof Error ? error.message : String(error);
-    console.error("Community upload failed:", {
-      name: error?.name || "UnknownError",
-      message: detail,
-      status: error?.status || error?.statusCode || null,
-      code: error?.code || null,
-      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-    });
-    return NextResponse.json({
-      error: "Photo storage rejected the upload. Please check the backend BLOB_READ_WRITE_TOKEN configuration and try again.",
-    }, { status: 502 });
+    console.error("Community upload failed:", error);
+    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 502 });
   }
-  const [photo] = await db.insert(communityPhotos).values({ id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, siteId, imageUrl: url }).returning(columns);
+  const [photo] = await db.insert(communityPhotos).values({ id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, imageUrl: url, siteId }).returning(columns);
   await fireWebhook("community_photo.created", { id, name: auth.user.name, title });
   const { userId, ...rest } = photo;
   return NextResponse.json({ photo: { ...rest, mine: true }, message: "Thank you! Your photo will appear once our team has looked at it." }, { status: 201 });

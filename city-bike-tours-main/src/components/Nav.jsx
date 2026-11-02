@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import BikeSVG from "./BikeSVG";
+import RiderIcon from "./RiderIcon";
 import { useCustomer } from "../auth/CustomerAuth";
 
 const NAV_LINKS = [
@@ -16,7 +16,6 @@ export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const { isSignedIn, user, signOut } = useCustomer();
-  const navLinks = isSignedIn ? [...NAV_LINKS, { label: "Dashboard", to: "/dashboard" }] : NAV_LINKS;
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -36,7 +35,7 @@ export default function Nav() {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <BikeSVG size={36} color="#D4A017" />
+          <RiderIcon size={44} color="#D4A017" />
           <div>
             <div className="font-display font-bold text-lg leading-tight" style={{ color: "#F5EDD9" }}>
               City Bike Tours
@@ -49,7 +48,7 @@ export default function Nav() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6">
-          {navLinks.map(({ label, to }) => {
+          {NAV_LINKS.map(({ label, to }) => {
             const active = location.pathname === to;
             return (
               <Link
@@ -66,9 +65,12 @@ export default function Nav() {
 
         <div className="hidden md:flex items-center gap-3">
           {isSignedIn ? (
-            <button type="button" onClick={signOut} className="text-xs uppercase tracking-wide font-medium" style={{ color: "#F5EDD9" }} title="Sign out">
-              {user?.name?.split(" ")[0] || "Account"} · Sign out
-            </button>
+            <>
+              <Link to="/dashboard" className="text-xs uppercase tracking-wide font-medium" style={{ color: location.pathname === "/dashboard" ? "#D4A017" : "#F5EDD9" }}>Dashboard</Link>
+              <button type="button" onClick={signOut} className="text-xs uppercase tracking-wide font-medium" style={{ color: "#F5EDD9" }} title="Sign out">
+                {user?.name?.split(" ")[0] || "Account"} · Sign out
+              </button>
+            </>
           ) : (
             <Link to="/login" className="text-xs uppercase tracking-wide font-medium" style={{ color: "#F5EDD9" }}>Sign in</Link>
           )}
@@ -101,7 +103,7 @@ export default function Nav() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden px-6 pb-6 flex flex-col gap-4" style={{ backgroundColor: "rgba(26,42,32,0.9)" }}>
-          {navLinks.map(({ label, to }) => (
+          {NAV_LINKS.map(({ label, to }) => (
             <Link
               key={to}
               to={to}
@@ -112,6 +114,7 @@ export default function Nav() {
               {label}
             </Link>
           ))}
+          {isSignedIn && <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#D4A017" }}>Dashboard</Link>}
           {isSignedIn ? (
             <button type="button" onClick={() => { signOut(); setMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-widest" style={{ color: "#F5EDD9" }}>Sign out ({user?.name?.split(" ")[0]})</button>
           ) : (

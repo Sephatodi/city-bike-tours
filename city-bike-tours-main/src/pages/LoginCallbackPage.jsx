@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { backendUrl } from "../api/backend";
-import { NEXT_KEY, useCustomer } from "../auth/CustomerAuth";
+import { takeNext, useCustomer } from "../auth/CustomerAuth";
 
 const ERRORS = {
   signin_failed: "The sign-in didn't finish. Please try again.",
@@ -25,8 +25,7 @@ export default function LoginCallbackPage() {
         const result = await response.json().catch(() => null);
         if (!response.ok || !result?.user) throw new Error();
         signIn(token, result.user);
-        try { window.sessionStorage.removeItem(NEXT_KEY); } catch { /* ignore */ }
-        navigate("/dashboard", { replace: true });
+        navigate(takeNext(), { replace: true });
       })
       .catch(() => setError("We couldn't finish signing you in. Please try again."));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

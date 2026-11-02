@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { desc, eq, count, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { reviews, reviewVotes, bookings, bookingRequests, users } from "@/db/schema";
+import { bookingRequests, reviewVotes, reviews, users } from "@/db/schema";
 import { newId } from "@/lib/id";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { fireWebhook } from "@/lib/webhook";
+import { HIGHLIGHTS } from "@/lib/review-meta";
+import { optionalCustomer } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,28 +19,53 @@ const schema = z.object({
   website: z.string().max(0).optional(),
 });
 
-// Only approved reviews are public. Summary values are calculated from the full approved set.
-export async function GET() {
+// Approved reviews only. Anything new waits in Dashboard > Reviews until staff approve it.
+// Everything the page shows (average, distribution, "verified", helpful counts) is worked out here from real rows.
+export async function GET(request) {
+  const { user } = await optionalCustomer(request);
   const rows = await db.select({
-    id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, headline: reviews.headline, featured: reviews.featured, showAvatar: reviews.showAvatar, avatarUrl: users.image, userId: reviews.userId, authorPhone: users.phone,
-    rideDate: reviews.rideDate, tour: reviews.tour, riderOrigin: reviews.riderOrigin,
-    photoUrl: reviews.photoUrl, stops: reviews.stops, createdAt: reviews.createdAt,
-    adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt,
-  }).from(reviews).leftJoin(users, eq(reviews.userId, users.id)).where(eq(reviews.status, "approved")).orderBy(desc(reviews.createdAt)).limit(100);
-  const approved = await db.select({ rating: reviews.rating }).from(reviews).where(eq(reviews.status, "approved"));
-  const bookingPhones = await db.select({ phone: bookingRequests.phone }).from(bookingRequests).where(isNotNull(bookingRequests.checkedInAt));
-  const accountPhones = await db.select({ phone: users.phone }).from(bookings).innerJoin(users, eq(bookings.userId, users.id)).where(isNotNull(bookings.checkedInAt));
-  const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
-  const verifiedPhones = new Set([...bookingPhones, ...accountPhones].map((row) => normalizePhone(row.phone)).filter(Boolean));
-  const distribution = Object.fromEntries([1,2,3,4,5].map(n => [n, approved.filter(r => r.rating === n).length]));
-  const total = approved.length;
-  const average = total ? approved.reduce((sum, r) => sum + r.rating, 0) / total : 0;
-  const helpful = await db.select({ reviewId: reviewVotes.reviewId, total: count() }).from(reviewVotes).groupBy(reviewVotes.reviewId);
-  const counts = new Map(helpful.map(x => [x.reviewId, Number(x.total)]));
-  return NextResponse.json({ reviews: rows.map(({ authorPhone, userId, showAvatar, avatarUrl, ...r }) => ({ ...r, avatarUrl: showAvatar ? avatarUrl || null : null, verifiedRider: Boolean(normalizePhone(authorPhone) && verifiedPhones.has(normalizePhone(authorPhone))), helpfulCount: counts.get(r.id) || 0 })), summary: {
-    count: total, average: Number(average.toFixed(2)), distribution,
-    fourPlusPercent: total ? Math.round(((distribution[4] + distribution[5]) / total) * 100) : 0,
-  }});
+    id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, rideDate: reviews.rideDate,
+    adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt, createdAt: reviews.createdAt, userId: reviews.userId,
+    tour: reviews.tour, riderOrigin: reviews.riderOrigin, photoUrl: reviews.photoUrl, stops: reviews.stops, highlights: reviews.highlights,
+  }).from(reviews).where(eq(reviews.status, "approved")).orderBy(desc(reviews.createdAt)).limit(200);
+
+  // Helpful votes per review.
+  const ids = rows.map((row) => row.id);
+  const votes = ids.length ? await db.select({ reviewId: reviewVotes.reviewId, count: sql`count(*)::int` }).from(reviewVotes).where(inArray(reviewVotes.reviewId, ids)).groupBy(reviewVotes.reviewId) : [];
+  const helpful = new Map(votes.map((vote) => [vote.reviewId, Number(vote.count)]));
+  const mine = user && ids.length ? new Set((await db.select({ reviewId: reviewVotes.reviewId }).from(reviewVotes).where(and(eq(reviewVotes.userId, user.id), inArray(reviewVotes.reviewId, ids)))).map((row) => row.reviewId)) : new Set();
+
+  // "Verified rider" = the author's phone number matches a booking that staff checked in on the day.
+  const userIds = [...new Set(rows.map((row) => row.userId).filter(Boolean))];
+  const phones = userIds.length ? await db.select({ id: users.id, phone: users.phone }).from(users).where(inArray(users.id, userIds)) : [];
+  const phoneOf = new Map(phones.filter((row) => row.phone).map((row) => [row.id, row.phone]));
+  const ridden = phoneOf.size
+    ? new Set((await db.selectDistinct({ phone: bookingRequests.phone }).from(bookingRequests).where(and(isNotNull(bookingRequests.checkedInAt), inArray(bookingRequests.phone, [...new Set(phoneOf.values())])))).map((row) => row.phone))
+    : new Set();
+
+  const list = rows.map(({ userId, ...row }) => ({ ...row, verified: Boolean(userId && ridden.has(phoneOf.get(userId))), helpfulCount: helpful.get(row.id) || 0, voted: mine.has(row.id), mine: Boolean(user && userId === user.id) }));
+
+  // Summary over every approved review (not just the page).
+  const [totals] = await db.select({
+    count: sql`count(*)::int`, average: sql`coalesce(avg(${reviews.rating}), 0)::float`,
+    five: sql`count(*) filter (where ${reviews.rating} = 5)::int`, four: sql`count(*) filter (where ${reviews.rating} = 4)::int`,
+    three: sql`count(*) filter (where ${reviews.rating} = 3)::int`, two: sql`count(*) filter (where ${reviews.rating} = 2)::int`, one: sql`count(*) filter (where ${reviews.rating} = 1)::int`,
+  }).from(reviews).where(eq(reviews.status, "approved"));
+  const count = Number(totals.count);
+  const distribution = { 5: Number(totals.five), 4: Number(totals.four), 3: Number(totals.three), 2: Number(totals.two), 1: Number(totals.one) };
+  const tagCounts = Object.fromEntries(HIGHLIGHTS.map((tag) => [tag, 0]));
+  for (const row of list) for (const tag of Array.isArray(row.highlights) ? row.highlights : []) if (tag in tagCounts) tagCounts[tag] += 1;
+  const withHighlights = list.filter((row) => Array.isArray(row.highlights) && row.highlights.length).length;
+
+  return NextResponse.json({
+    reviews: list,
+    summary: {
+      count, average: count ? Math.round(Number(totals.average) * 10) / 10 : 0, distribution,
+      fourPlusPercent: count ? Math.round(((distribution[5] + distribution[4]) / count) * 100) : 0,
+      // Share of reviews that picked each tag, among the reviews that picked any.
+      highlights: withHighlights ? Object.entries(tagCounts).filter(([, n]) => n > 0).map(([tag, n]) => ({ tag, percent: Math.round((n / withHighlights) * 100) })).sort((a, b) => b.percent - a.percent) : [],
+    },
+  });
 }
 
 export async function POST(request) {

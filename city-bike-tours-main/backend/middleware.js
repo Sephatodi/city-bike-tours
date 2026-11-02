@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAllowedFrontendOrigin } from "@/lib/origins";
+import { neonAuth } from "@/lib/neon-auth-server";
 
 function corsHeaders(origin) {
   return {
@@ -12,7 +13,16 @@ function corsHeaders(origin) {
   };
 }
 
-export function middleware(request) {
+// Neon Auth must see the browser coming back from Google so it can swap its one-time code for a session cookie.
+// If sign-in did not finish, the visitor is sent back to the website's login page with an error.
+function neonReturn(request) {
+  const site = (process.env.FRONTEND_ORIGIN || "").split(",")[0].trim().replace(/\/$/, "");
+  return neonAuth.middleware({ loginUrl: `${site}/login/callback#error=signin_failed` })(request);
+}
+
+export async function middleware(request) {
+  if (neonAuth && request.nextUrl.pathname === "/api/customer/neon/complete") return neonReturn(request);
+
   const origin = request.headers.get("origin");
   const allowed = Boolean(origin && isAllowedFrontendOrigin(origin));
 

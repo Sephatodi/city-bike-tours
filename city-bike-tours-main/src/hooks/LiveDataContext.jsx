@@ -1,8 +1,76 @@
-import {createContext,useCallback,useContext,useMemo,useState} from "react";
-import {fetchBackendJson} from "../api/backend";
-import {ROUTES_DATA} from "../data";
-import usePolling from "./usePolling";
-const LiveDataContext=createContext(null);
-function mergeRoutes(configuredRoutes){const byId=new Map(configuredRoutes.map(route=>[route.routeId,route]));return ROUTES_DATA.map(route=>{const configured=byId.get(route.id);if(!configured)return route;const price=Number(configured.priceBwp);return {...route,...(typeof configured.routeName==="string"?{name:configured.routeName}:{}),...(Number.isFinite(price)?{price}:{})};});}
-export function LiveDataProvider({children}){const [routes,setRoutes]=useState(ROUTES_DATA);const [content,setContent]=useState([]);const [errors,setErrors]=useState({});const [updatedAt,setUpdatedAt]=useState(null);const refresh=useCallback(async()=>{const controller=new AbortController();const load=async(key,path,property,onData)=>{try{const result=await fetchBackendJson(path,{signal:controller.signal,cache:"no-store"},`Could not load live ${key}.`);if(!Array.isArray(result[property]))throw new Error(`The backend returned invalid ${key} data.`);onData(result[property]);setErrors(v=>({...v,[key]:""}));}catch(error){if(!controller.signal.aborted)setErrors(v=>({...v,[key]:error.message||`Could not load live ${key}.`}));}};await Promise.all([load("prices","/api/routes-config","routes",v=>setRoutes(mergeRoutes(v))),load("content","/api/content","content",setContent)]);setUpdatedAt(new Date().toISOString());controller.abort();},[]);usePolling(refresh,60000);const value=useMemo(()=>({routes,content,errors,updatedAt,refresh}),[routes,content,errors,updatedAt,refresh]);return <LiveDataContext.Provider value={value}>{Object.values(errors).some(Boolean)&&<div role="status" aria-live="polite" style={{position:"fixed",top:92,left:16,right:16,zIndex:60,padding:"10px 16px",color:"#fff",background:"#7a2812",textAlign:"center"}}>Some live website data could not be loaded. Please try again later.</div>}{children}</LiveDataContext.Provider>;}
-export function useLiveData(){const value=useContext(LiveDataContext);if(!value)throw new Error("useLiveData must be used within LiveDataProvider.");return value;}
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { usePolling } from "./usePolling";
+import { fetchBackendJson } from "../api/backend";
+import { ROUTES_DATA } from "../data";
+
+const LiveDataContext = createContext(null);
+
+function mergeRoutes(configuredRoutes) {
+  const byId = new Map(configuredRoutes.map((route) => [route.routeId, route]));
+  return ROUTES_DATA.map((route) => {
+    const configured = byId.get(route.id);
+    if (!configured) return route;
+
+    const price = Number(configured.priceBwp);
+    return {
+      ...route,
+      ...(typeof configured.routeName === "string" ? { name: configured.routeName } : {}),
+      ...(Number.isFinite(price) ? { price } : {}),
+    };
+  });
+}
+
+export function LiveDataProvider({ children }) {
+  const [routes, setRoutes] = useState(ROUTES_DATA);
+  const [content, setContent] = useState([]);
+  const [errors, setErrors] = useState({});
+
+  const [updatedAt, setUpdatedAt] = useState(null);
+
+  // Prices and website content are re-checked every minute and whenever the visitor returns to the tab,
+  // so a change made in the admin dashboard shows up without anyone refreshing the page.
+  const refresh = useCallback(async () => {
+    async function load(key, path, property, onData) {
+      try {
+        const result = await fetchBackendJson(path, { cache: "no-store" }, `Could not load live ${key}.`);
+        if (!Array.isArray(result[property])) throw new Error(`The backend returned invalid ${key} data.`);
+        onData(result[property]);
+        setErrors((current) => ({ ...current, [key]: "" }));
+        return true;
+      } catch (error) {
+        setErrors((current) => ({ ...current, [key]: error.message || `Could not load live ${key}.` }));
+        return false;
+      }
+    }
+    const results = await Promise.all([
+      load("prices", "/api/routes-config", "routes", (configured) => setRoutes(mergeRoutes(configured))),
+      load("content", "/api/content", "content", setContent),
+    ]);
+    if (results.some(Boolean)) setUpdatedAt(new Date());
+  }, []);
+
+  usePolling(refresh, 60000);
+
+  const value = useMemo(() => ({ routes, content, errors, updatedAt }), [routes, content, errors, updatedAt]);
+
+  return (
+    <LiveDataContext.Provider value={value}>
+      {Object.values(errors).some(Boolean) && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{ position: "fixed", top: 92, left: 16, right: 16, zIndex: 60, padding: "10px 16px", color: "#fff", background: "#7a2812", textAlign: "center" }}
+        >
+          Some live website data could not be loaded. Please try again later.
+        </div>
+      )}
+      {children}
+    </LiveDataContext.Provider>
+  );
+}
+
+export function useLiveData() {
+  const value = useContext(LiveDataContext);
+  if (!value) throw new Error("useLiveData must be used within LiveDataProvider.");
+  return value;
+}

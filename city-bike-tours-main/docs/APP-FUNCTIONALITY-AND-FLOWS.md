@@ -7,20 +7,24 @@ This guide describes the application as it is currently implemented in this repo
 | Application | Location | Purpose |
 | --- | --- | --- |
 | Public website | Repository root (`src/`) | Visitor information, route and price discovery, booking requests, static heritage gallery, and ride-pass display |
-| Backend and admin | `city-tours-backend/` | Next.js API, PostgreSQL persistence, authentication, admin operations, Twilio integration, uploads, and a separate legacy account-booking UI |
+| Backend and admin | `city-tours-backend/` | Next.js API, PostgreSQL persistence, authentication (email, phone and WhatsApp codes, Google through Neon Auth, Facebook and Apple through NextAuth), admin operations, Twilio integration, uploads, reviews and messages. It has no public pages of its own. |
 
 For the planned two-project Vercel deployment, the public website is built from the repository root and the backend from `city-tours-backend/`. The root `vercel.json` rewrites website paths to the Vite app so browser routes can be refreshed directly.
 
 ### Public website navigation
 
 - `/` — Home
-- `/schedule` — Weekly schedule and meeting point
-- `/routes` — Route descriptions and map
-- `/pricing` — Prices, comparison, and calculator
-- `/gallery` — Dynamic admin-published content
-- `/book` — Public booking-request form
+- `/schedule` — Reserve: ride cards with live price and booking, next ride, weekly schedule, meeting point (`/pricing` redirects here)
+- `/heritage-trail` — Six heritage folders
+- `/gallery` and `/gallery/:siteId` — Heritage roundabout, one page per site with all pictures, team content and rider stories
+- `/connect` — Reviews and messages
+- `/book` — Public booking-request form (`/routes` redirects here)
+- `/login`, `/dashboard` — Sign in, and the customer dashboard
+- `/privacy`, `/terms`, `/data-deletion` — Legal pages
 - `/ticket/:token` — Ride pass for a confirmed booking
 - `/admin/login`, `/admin` — Forward to backend admin when `VITE_API_BASE_URL` is configured
+
+On phones a docked bottom bar (Trail, Gallery, Reviews, Book) complements the header. All dates and times are shown in Gaborone time.
 
 The shared website header provides navigation, a mobile menu, and a Book Now call to action. The footer links to the principal visitor pages and opens the backend admin login when configured.
 
@@ -38,38 +42,43 @@ The shared website header provides navigation, a mobile menu, and a Book Now cal
 
 The homepage gallery is built into the website from local/static site data. It is distinct from `/gallery`, whose published entries come from the backend.
 
-### Schedule — `/schedule`
+### Reserve — `/schedule`
 
-- Describes the guided Wednesday–Friday ride (9:00 AM or 2:00 PM, maximum 10 riders) and the flexible Saturday ride.
-- Shows the weekly open/closed schedule.
-- Identifies Main Mall, Gaborone City Centre, as the meeting point and tells riders to look for the tour flag.
-- Includes the route map, ride statistics, and selected heritage-site highlights.
-- Its reservation links take visitors to `/book`.
+- One combined section, "When would you like to ride?", holds both rides: the guided Heritage City Ride (Wednesday–Friday, 9:00 AM or 2:00 PM, maximum 10 riders) and the flexible Casual Saturday ride. Each card shows the live price per rider (from the backend routes endpoint), duration, distance and sites, a rider stepper with the running total, and a Book button that opens `/book`.
+- A "Next ride" line and a live Gaborone clock are worked out from the current Gaborone time; the week-at-a-glance strip marks today.
+- Below: meeting point (Main Mall, Gaborone City Centre), route map and ride statistics, "What's included" comparison table, lessons note and common questions.
+- `/pricing` redirects to `/schedule#pricing`; `/routes` redirects to `/book`.
 
-### Routes — `/routes`
+### Heritage trail — `/heritage-trail`
 
-- Shows a map, route cards, route characteristics, and six heritage stops.
-- Route names and prices are overlaid from the public backend routes endpoint when available. Static route data supplies descriptive details such as distance, duration, inclusions, and visuals.
-- Each route card has a “Book This Route” action that opens an on-page drawer.
+- "Six stops. Six perspectives." Six folders side by side; clicking one opens it (the others fold aside) with a photo roundabout, the story, address and optional videos. Previous, Next, Close and Escape work; each opened folder links to `/gallery/:siteId`.
 
-**Current limitation:** the drawer form is only a visual reservation interaction. Its submit handler closes the drawer and does not create a booking request. Use `/book` for an actual reservation request.
+### Gallery — `/gallery`
 
-### Pricing — `/pricing`
+- "Six sites. One living story.": a 3D roundabout of the six heritage sites (the front slide shows the number and name), details for the site in front, and six route buttons. Each button, and the front photo, opens that site's own page.
+- Food stops near the trail, the team's published pictures, videos and articles (`GET /api/content`), and rider photo stories with an upload form (optional "Which stop?").
 
-- Displays the live-configured route names and prices.
-- Compares included features, such as guided stories, bike provision, group size, and Saturday lessons.
-- Provides a route/rider calculator. It multiplies the displayed per-rider price by the selected rider count.
-- Links into `/book`.
+### Site gallery — `/gallery/:siteId`
 
-The public backend’s editable routes table supplies route IDs, names, and prices. The remaining descriptive text and comparison features are part of the frontend.
+- Header with the site's number, address, tagline and history; a photo grid with a count, "Load more photos" and a full-size viewer; videos if the site has any; approved rider photos tagged to the site; nearby food stops; a call to action to the Reserve page. Unknown ids redirect to `/gallery`.
 
-### Gallery & stories — `/gallery`
+### Reviews and messages — `/connect`
 
-- Fetches published picture, video, and article entries from the backend.
-- Displays pictures inline, video entries as an external “Watch video” link, and article text below its title.
-- Shows an empty state when no entries have been published and an error message if the backend cannot load the gallery.
+- Score summary, filter pills, sorting and review cards, all computed from approved reviews (empty state when none). A "Verified rider" badge only appears when the reviewer's phone number matches a booking staff checked in. Customers can mark reviews helpful, share a review, and see the team's reply with its time.
+- The composer (signed-in customers) takes a star rating, ride, origin, ride date, stops, highlight tags, a story and an optional photo. New reviews wait for approval in the admin dashboard.
+- "Message the team" is a chat with day dividers and times; it refreshes about every 20 seconds.
 
-This page depends on the backend’s public `GET /api/content` endpoint and the `VITE_API_BASE_URL` build variable in production.
+### Sign in — `/login` and `/login/callback`
+
+- Email and password; phone and WhatsApp one-time codes (a 6-digit code valid for 10 minutes, with rate limits; SMS goes through Twilio and/or Infobip with fallback, WhatsApp through Twilio); Google through Neon Auth; Facebook and Apple through NextAuth. Social buttons open the backend page `/customer-social`, which starts the right flow and returns to `/login/callback#token=...`. After sign-in the customer lands on `/dashboard`.
+
+### Customer dashboard — `/dashboard`
+
+- Welcome, profile (name, email, phone, picture), sign-out, quick links (Book a ride, Heritage trail, Messages & reviews, Gallery) and the customer's own reviews with status and replies. Signed-out visitors are sent to `/login?next=/dashboard`.
+
+### Legal pages — `/privacy`, `/terms`, `/data-deletion`
+
+- Plain-language privacy policy, terms and data-deletion instructions, linked from the footer and required by Meta and Google for social sign-in.
 
 ### Booking — `/book`
 
@@ -126,19 +135,13 @@ When an admin confirms a website booking request, the backend changes its status
 
 **Current admin UI boundary:** the Next.js dashboard added for the separate backend deployment covers routes/prices, website requests, and site content. The repository also contains a more extensive frontend-local admin UI (overview charts, registered account bookings, request editing, AI draft controls, and camera scanner), but the website redirects admin users to the backend dashboard in production. Those additional controls are therefore not exposed through the current separate-origin backend dashboard, even where related API endpoints exist.
 
-### Other Next.js pages in `city-tours-backend/`
+### Other backend pages
 
-The backend project also retains a separate, older Next.js customer experience:
+The backend no longer has public pages of its own (the old customer pages and sign-up form were removed). It serves only:
 
-- **`/`** — legacy home page with its own three-route catalogue, weekday/holiday prices and links to bookings.
-- **`/routes`** — details for the legacy Heritage Dash, Eco-Retail Explorer, and Complete Urban Loop routes.
-- **`/book`** — legacy account-booking form for booking category, date, time slot, route and child rate. It checks availability and requires sign-in/account creation to finalize.
-- **`/book/complete`** — completes the account booking after authentication and displays success or failure.
-- **`/register`** — create an account or sign in with credentials; optional configured social sign-in is also available. If the user came from `/book`, the form carries the pending selection through authentication and submits it after sign-in.
-- **`/holiday-rides`** — static list of upcoming public holidays and legacy holiday ride times.
-- **`/safety`** — riding guidance and a link to the legacy booking flow.
-
-These pages use distinct route IDs, schedules, prices, registration, and account-based booking. They are not the root Vite website used in the two-project deployment plan. The two experiences should not be treated as having identical route or booking behavior.
+- **`/`** and **`/register`** — redirect to the website (`PUBLIC_FRONTEND_URL` or the first `FRONTEND_ORIGIN`). NextAuth sends failed or cancelled social sign-ins to `/register`, which returns them to the website's login page.
+- **`/customer-social`** — a short hand-off page that starts Google (Neon Auth), Facebook or Apple sign-in and returns to the website with a token.
+- **`/api/...`** and **`/admin/...`** — the API and the admin dashboard.
 
 ## 4. Booking lifecycle and event flow
 
@@ -229,21 +232,8 @@ Prices shown on the site are informational estimates. The public request flow do
 
 ## 8. Current implementation boundaries
 
-- The route-page drawer currently does not persist a booking; `/book` is the functional request path.
+- Booking buttons on `/schedule` open `/book`, which is the functional request path.
 - Booking-request confirmation is staff-mediated; the request endpoint does not reserve capacity or take payment.
 - The new backend admin dashboard does not yet surface the repository’s camera check-in UI or registered-booking management UI.
-- The backend’s legacy Next.js customer pages and account-booking flow are separate from the Vite website’s public request flow.
+- The backend's older account-booking API (`/api/bookings`, `/api/availability`) remains, but its customer pages were removed; the Vite website's request flow is the supported one.
 - Live routes/content require a reachable backend and database; the website starts with local static route data as a fallback and shows a notice if the live fetch fails.
-
-
-### Gallery — `/gallery`
-
-The gallery now presents the six heritage sites in a looping carousel with exactly three visible positions (previous, active, next), keyboard and swipe navigation, autoplay pause on hover/focus, and a synced six-card grid. The card for the active carousel site is highlighted and each card links to its site detail page. Below the grid, the photo wall filters static site images and published picture content by site, progressively loads more tiles, and opens a keyboard-accessible lightbox. The rider-stories strip displays published picture content only; it does not invent rider posts.
-
-### Reviews and messages — `/connect`
-
-Approved reviews can be shown as admin-featured quote cards (up to three) or standard cream review cards. Featured reviews are selected in Admin → Inbox & reviews; no quote cards appear unless an approved review is explicitly featured. Reviewers can optionally add an 80-character headline and opt in to showing their profile picture. Avatar photos are returned only when consent is true and a user image exists; otherwise the frontend uses initials. Existing score summary, filters, sorting, helpful voting, replies, photo URL, customer messages and review composer remain available.
-
-### Heritage trail — `/heritage-trail`
-
-The heritage trail map can display one continuous Mapbox Cycling or OpenRouteService `cycling-regular` route from Main Mall through all six sites in geographical order and back. A gold bicycle marker follows the route's actual street geometry and rotates to face its direction of travel; it pauses at each heritage stop. Visitors can play/pause, restart, change speed and optionally follow the bicycle. The generated route is loaded only on this page. LandingPage and BookingPage continue using the original straight-line HeritageMap without an animated bicycle. If the generated route file is absent or invalid, the page quietly falls back to the original line and does not show a bicycle.

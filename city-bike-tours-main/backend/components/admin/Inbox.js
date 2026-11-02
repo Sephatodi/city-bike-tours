@@ -111,9 +111,9 @@ function ChatModal({ userId, onClose, onSaved }) {
   );
 }
 
-export default function Inbox() {
+export default function Inbox({ initialTab = "enquiries" }) {
   const { can, refresh } = useDash();
-  const [tab, setTab] = useState("enquiries");
+  const [tab, setTab] = useState(initialTab);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(null);
@@ -149,8 +149,8 @@ export default function Inbox() {
 
   return (
     <>
-      <PageTop title="Inbox & reviews" actions={can("export:read") && ["enquiries", "reviews", "subscribers"].includes(tab) && <a className="btn" href={`/api/admin/export?type=${tab}`}><Icon name="download" size={16} /> Export {tab} (CSV)</a>}>
-        Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates.
+      <PageTop title={initialTab === "photos" ? "Rider photo approvals" : "Inbox & reviews"} actions={can("export:read") && ["enquiries", "reviews", "subscribers"].includes(tab) && <a className="btn" href={`/api/admin/export?type=${tab}`}><Icon name="download" size={16} /> Export {tab} (CSV)</a>}>
+        {initialTab === "photos" ? "Review rider-uploaded photos, decide which ones appear in the gallery, and control whether signed-in riders may download each approved photo." : "Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates."}
       </PageTop>
       <div className="adm-card">
         <div className="adm-toolbar">
@@ -164,7 +164,6 @@ export default function Inbox() {
 
         {error ? <div className="adm-alert bad" role="alert"><Icon name="alert" /><div>{error}</div></div> : !data ? <Skeleton h={220} /> : (
           <>
-            {tab === "photos" && <p className="muted" style={{ margin: "0 16px 14px" }}>Approve a rider photo first, then independently allow or block downloads and add or remove it from the Complete collection. Both settings are required for a photo to appear in that collection.</p>}
             {tab === "enquiries" && (data.enquiries.length ? (
               <div className="adm-table-wrap"><table>
                 <thead><tr><th>From</th><th>Message</th><th>Status</th><th>Received</th></tr></thead>
@@ -184,13 +183,12 @@ export default function Inbox() {
                 <tbody>{data.reviews.map((x) => (
                   <tr key={x.id}>
                     <td><span className="strong">{x.name}</span><small>{ago(x.createdAt)}</small></td>
-                    <td style={{ maxWidth: 420 }}><Stars n={x.rating} /><br /><span className="muted">{x.comment}</span>{x.adminReply && <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid rgba(76,201,176,.6)" }}><small>Your reply · {x.adminReplyBy}</small><br /><span>{x.adminReply}</span></div>}</td>
+                    <td style={{ maxWidth: 420 }}><Stars n={x.rating} /><br /><span className="muted">{x.comment}</span>{(x.tour || x.riderOrigin || x.stops?.length) && <small style={{ display: "block", marginTop: 6 }}>{[x.tour && `Tour: ${x.tour}`, x.riderOrigin, x.stops?.length && `Stops: ${x.stops.join(", ")}`].filter(Boolean).join(" · ")}</small>}{x.photoUrl && <a href={x.photoUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8 }}><img src={x.photoUrl} alt="Photo attached to this review" style={{ maxWidth: 160, maxHeight: 110, borderRadius: 6, objectFit: "cover" }} /></a>}{x.adminReply && <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid rgba(76,201,176,.6)" }}><small>Your reply · {x.adminReplyBy}</small><br /><span>{x.adminReply}</span></div>}</td>
                     <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge></td>
                     {write && <td><div className="row-actions">
                       <button className="btn btn-sm" disabled={busy} onClick={() => setReplyTo(x.id)}>{x.adminReply ? "Edit reply" : "Reply"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows on your website.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
-                      {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { featured: !x.featured }, x.featured ? "Review removed from featured quotes." : "Review featured on the website.")}>{x.featured ? "Unfeature quote" : "Feature this review"}</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}
                       <button className="btn btn-sm btn-danger btn-icon" disabled={busy} aria-label={`Delete review by ${x.name}`} onClick={() => window.confirm("Delete this review for good?") && act(`/api/admin/reviews/${x.id}`, "DELETE", undefined, "Deleted.")}><Icon name="trash" size={13} /></button>
                     </div></td>}
@@ -218,10 +216,9 @@ export default function Inbox() {
                   <tr key={x.id}>
                     <td><a href={x.imageUrl} target="_blank" rel="noreferrer"><img src={x.imageUrl} alt={x.title} style={{ width: 96, height: 72, objectFit: "cover", borderRadius: 6 }} /></a></td>
                     <td style={{ maxWidth: 420 }}><span className="strong">{x.title}</span><small>{x.authorName} · {ago(x.createdAt)}</small>{x.story && <div className="muted" style={{ marginTop: 4 }}>{x.story.length > 160 ? `${x.story.slice(0, 160)}…` : x.story}</div>}</td>
-                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Downloads allowed" : "Downloads blocked"} · {x.includeInCollection ? "In Complete collection" : "Not in Complete collection"}</small></td>
+                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Downloads enabled" : "Downloads disabled"}</small></td>
                     {write && <td><div className="row-actions">
-                      <button className="btn btn-sm" disabled={busy || (x.status !== "approved" && !x.downloadable)} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Downloads turned off." : "Signed-in riders can download it.")}>{x.downloadable ? "Block downloads" : "Allow downloads"}</button>
-                      <button className="btn btn-sm" disabled={busy || (x.status !== "approved" && !x.includeInCollection)} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { includeInCollection: !x.includeInCollection }, x.includeInCollection ? "Removed from the Complete collection." : "Added to the Complete collection.")}>{x.includeInCollection ? "Remove from collection" : "Add to collection"}</button>
+                      <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Downloads turned off." : "Signed-in riders can download it.")}>{x.downloadable ? "Disable downloads" : "Enable downloads"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows in the rider gallery.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}

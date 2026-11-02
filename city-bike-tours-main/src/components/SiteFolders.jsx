@@ -1,53 +1,107 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import RoundaboutCarousel from "./RoundaboutCarousel";
+import Lightbox from "./Lightbox";
+import Icon from "./Icon";
+import SiteVideo from "./SiteVideo";
 import { Link } from "react-router";
 import { SITES } from "../data";
 
-export default function SiteFolders({ content = [] }) {
-  const [active, setActive] = useState(0);
-  const startX = useRef(null);
-  const folders = useMemo(() => SITES.map((site) => ({
-    ...site,
-    extra: content.filter((item) => item.mediaUrl && ((item.title + " " + (item.bodyText || "")).toLowerCase().includes(site.name.toLowerCase()))),
-  })), [content]);
-  const move = (step) => setActive((value) => (value + step + folders.length) % folders.length);
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if (!event.target.closest?.(".site-folders-carousel")) return;
-      if (event.key === "ArrowRight") { event.preventDefault(); move(1); }
-      if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [folders.length]);
+function FolderContent({ site, index, total, onPrev, onNext, onClose }) {
+  const [openPhoto, setOpenPhoto] = useState(null);
+  const items = useMemo(() => site.imgs.filter(Boolean).map((src, i) => ({
+    key: `${site.id}-${i}`, src, title: `${site.name} — photo ${i + 1}`, story: site.short,
+  })), [site]);
+  const videos = site.videos || [];
 
   return (
-    <div className="site-folders-carousel" aria-label="Six heritage sites carousel"
-      onPointerDown={(event) => { startX.current = event.clientX; }}
-      onPointerUp={(event) => { if (startX.current === null) return; const delta = event.clientX - startX.current; startX.current = null; if (Math.abs(delta) > 45) move(delta < 0 ? 1 : -1); }}>
-      <div className="site-folders-track">
-        {folders.map((site, index) => {
-          let offset = (index - active + folders.length) % folders.length;
-          if (offset > folders.length / 2) offset -= folders.length;
-          const visible = Math.abs(offset) <= 1;
-          return (
-            <Link key={site.id} className={`site-folder ${offset === 0 ? "is-active" : ""}`}
-              to={`/gallery/${site.id}`} aria-hidden={!visible} tabIndex={visible ? 0 : -1}
-              style={{ "--folder-offset": offset, opacity: visible ? (offset === 0 ? 1 : .58) : 0, pointerEvents: visible ? "auto" : "none", zIndex: 3 - Math.abs(offset), transform: `translateX(${offset * 72}%) translateZ(${-Math.abs(offset) * 130}px) rotateY(${offset * -17}deg) scale(${1 - Math.abs(offset) * .13})` }}>
-              <img className="site-folder-image" src={site.imgs[0]} alt="" loading="lazy" />
-              <span className="site-folder-shade" />
-              <span className="site-folder-number">STOP {String(index + 1).padStart(2, "0")}</span>
-              <span className="site-folder-copy"><strong>{site.name}</strong><small>{site.street} · {site.imgs.length + site.extra.length} photos</small><em>Open heritage site ↗</em></span>
-            </Link>
-          );
-        })}
+    <div className="folder-content">
+      <div className="folder-toolbar">
+        <span className="folder-stop">Stop {index + 1} of {total}</span>
+        <div className="folder-toolbar-buttons">
+          <button type="button" onClick={onPrev} aria-label="Previous site">‹ Previous</button>
+          <button type="button" onClick={onNext} aria-label="Next site">Next ›</button>
+          <Link to={`/gallery/${site.id}`} className="folder-all">View all photos →</Link>
+          <button type="button" onClick={onClose} aria-label="Close folder">Close ×</button>
+        </div>
       </div>
-      <div className="site-folders-controls">
-        <button type="button" onClick={() => move(-1)} aria-label="Previous heritage site">←</button>
-        <div className="site-folders-dots">{folders.map((site, index) => <button key={site.id} type="button" className={index === active ? "active" : ""} aria-label={`Show ${site.name}`} aria-current={index === active ? "true" : undefined} onClick={() => setActive(index)} />)}</div>
-        <span>{String(active + 1).padStart(2, "0")} / {String(folders.length).padStart(2, "0")}</span>
-        <button type="button" onClick={() => move(1)} aria-label="Next heritage site">→</button>
+      <RoundaboutCarousel items={items} label={`${site.name} photos`} onOpen={setOpenPhoto} />
+      <div className="folder-info">
+        <div>
+          <p className="folder-short">{site.short}</p>
+          <p className="folder-history">{site.history}</p>
+        </div>
+        <ul className="folder-facts">
+          <li><Icon name="mapPin" size={16} /> {site.street}, Gaborone</li>
+          <li>📷 {items.length} photo{items.length === 1 ? "" : "s"}</li>
+          {videos.length > 0 && <li>🎬 {videos.length} video{videos.length === 1 ? "" : "s"}</li>}
+        </ul>
       </div>
+      {videos.length > 0 && (
+        <div className="folder-videos" aria-label={`${site.name} videos`}>
+          {videos.map((video) => <figure key={video.src}><SiteVideo video={video} /><figcaption>{video.title}</figcaption></figure>)}
+        </div>
+      )}
+      {openPhoto !== null && <Lightbox items={items} index={openPhoto} onChange={setOpenPhoto} onClose={() => setOpenPhoto(null)} onDownload={() => {}} />}
+    </div>
+  );
+}
+
+// Six folders side by side. Click one and it opens, with the others folding to the side.
+export default function SiteFolders({ sites = SITES }) {
+  const [active, setActive] = useState(null);
+  const refs = useRef([]);
+  const total = sites.length;
+
+  useEffect(() => {
+    if (active === null) return undefined;
+    const onKey = (event) => { if (event.key === "Escape") setActive(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active]);
+
+  function open(index) {
+    setActive(index);
+    // On phones the folders stack, so bring the opened one into view.
+    requestAnimationFrame(() => refs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  return (
+    <div className={`folders ${active !== null ? "has-open" : ""}`}>
+      {sites.map((site, index) => {
+        const isOpen = active === index;
+        return (
+          <section
+            key={site.id}
+            ref={(node) => { refs.current[index] = node; }}
+            className={`folder ${isOpen ? "is-open" : ""}`}
+            style={{ "--folder-accent": site.color === "#1A3A2A" ? "#D4A017" : site.color }}
+            aria-label={site.name}
+          >
+            <button type="button" className="folder-face" aria-expanded={isOpen} aria-controls={`folder-${site.id}`} onClick={() => (isOpen ? setActive(null) : open(index))}>
+              <img src={site.imgs[0]} alt="" loading="lazy" />
+              <span className="folder-shade" aria-hidden="true" />
+              <span className="folder-number">{String(index + 1).padStart(2, "0")}</span>
+              <span className="folder-label">
+                <Icon name={site.icon} size={20} />
+                <strong>{site.name}</strong>
+                <small>{isOpen ? "Open" : "Open folder"}</small>
+              </span>
+            </button>
+            {isOpen && (
+              <div id={`folder-${site.id}`} className="folder-body" role="region" aria-label={`${site.name} details`}>
+                <FolderContent
+                  site={site}
+                  index={index}
+                  total={total}
+                  onPrev={() => open((index - 1 + total) % total)}
+                  onNext={() => open((index + 1) % total)}
+                  onClose={() => setActive(null)}
+                />
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

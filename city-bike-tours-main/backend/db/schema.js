@@ -72,7 +72,6 @@ export const siteContent = pgTable("site_content", {
   isFeatured: boolean("is_featured").notNull().default(false),
   isPublished: boolean("is_published").notNull().default(true),
   downloadable: boolean("downloadable").notNull().default(false), // signed-in riders may download it
-  includeInCollection: boolean("include_in_collection").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -166,21 +165,20 @@ export const reviews = pgTable("reviews", {
   adminReply: text("admin_reply"),
   adminReplyBy: text("admin_reply_by"),
   adminReplyAt: timestamp("admin_reply_at", { withTimezone: true }),
-  tour: text("tour"),
-  riderOrigin: text("rider_origin"),
-  photoUrl: text("photo_url"),
-  headline: text("headline"),
-  featured: boolean("featured").notNull().default(false),
-  showAvatar: boolean("show_avatar").notNull().default(false),
-  stops: jsonb("stops").notNull().default([]),
+  tour: text("tour"), // which ride the rider joined (a route id such as "complete" or "loop")
+  riderOrigin: text("rider_origin"), // "Gaborone", "Visitor from Zurich" ...
+  photoUrl: text("photo_url"), // optional photo attached by the rider; only shown once the review is approved
+  stops: jsonb("stops"), // heritage site ids the review talks about
+  highlights: jsonb("highlights"), // short tags the rider picked ("Expert guide", ...)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// One "found this helpful" vote per signed-in customer per review.
 export const reviewVotes = pgTable("review_votes", {
   reviewId: text("review_id").notNull().references(() => reviews.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({ pk: primaryKey({ columns: [table.reviewId, table.userId] }) }));
+}, (table) => [primaryKey({ columns: [table.reviewId, table.userId] })]);
 
 export const subscribers = pgTable("subscribers", {
   id: text("id").primaryKey(),
@@ -232,9 +230,8 @@ export const communityPhotos = pgTable("community_photos", {
   title: text("title").notNull(),
   story: text("story"),
   imageUrl: text("image_url").notNull(),
-  siteId: text("site_id"),
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   downloadable: boolean("downloadable").notNull().default(false), // staff allow riders to download it
-  includeInCollection: boolean("include_in_collection").notNull().default(false),
+  siteId: text("site_id"), // which heritage site the photo shows (optional)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

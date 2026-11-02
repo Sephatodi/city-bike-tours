@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Empty, Icon, PageTop, Skeleton, ago, api, niceTime, useDash, useRun } from "./ui";
 import PasswordInput from "./PasswordInput";
+import { Badge, Empty, Icon, PageTop, Skeleton, ago, api, niceTime, useDash, useRun } from "./ui";
 
 const REASONS = {
   wrong_password: "Wrong password", wrong_code: "Wrong authenticator code", unknown_account: "No such account", suspended: "Account suspended",
@@ -79,9 +79,9 @@ function ChangePassword() {
       <div className="adm-card-head"><h2>Change your password</h2></div>
       <form onSubmit={save} style={{ display: "grid", gap: 14, maxWidth: 420 }}>
         {error && <div className="adm-alert bad" role="alert">{error}</div>}
-        <label className="field">Current password<PasswordInput required value={form.current} onChange={set("current")} autoComplete="current-password" /></label>
-        <label className="field">New password<PasswordInput required value={form.new} onChange={set("new")} autoComplete="new-password" minLength={12} /><span className="hint">At least 12 characters</span></label>
-        <label className="field">Confirm new password<PasswordInput required value={form.confirm} onChange={set("confirm")} autoComplete="new-password" /></label>
+        <label className="field">Current password<PasswordInput className="input" required value={form.current} onChange={set("current")} autoComplete="current-password" /></label>
+        <label className="field">New password<PasswordInput className="input" required value={form.new} onChange={set("new")} autoComplete="new-password" minLength={12} /><span className="hint">At least 12 characters</span></label>
+        <label className="field">Confirm new password<PasswordInput className="input" required value={form.confirm} onChange={set("confirm")} autoComplete="new-password" /></label>
         <button className="btn btn-primary" disabled={busy}><Icon name="key" size={15} /> Save new password</button>
       </form>
     </div>

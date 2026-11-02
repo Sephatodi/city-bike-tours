@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import Footer from "../components/Footer";
 import HeritageMap from "../components/HeritageMap";
+import RoundaboutCarousel from "../components/RoundaboutCarousel";
+import FoodStops from "../components/FoodStops";
 import Icon from "../components/Icon";
 import { SITES } from "../data";
 import { ROUTES_DATA } from "../data";
@@ -17,7 +19,9 @@ const ROUTE_VISUALS = {
 export default function BookingPage() {
   const { routes } = useLiveData();
   const { isSignedIn, ready, user, token, signOut } = useCustomer();
-  const { hash, search } = useLocation();
+  const { hash } = useLocation();
+  const navigate = useNavigate();
+  const siteCovers = SITES.map((site, i) => ({ key: site.id, src: site.imgs[0], title: `Stop ${i + 1} · ${site.name}`, story: site.short }));
   const primaryRoutes = routes.filter((item) => item.id === "complete" || item.id === "loop");
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
@@ -34,16 +38,7 @@ export default function BookingPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
 
-  // Preserve the selected ride and rider count from the live price calculator.
-  useEffect(() => {
-    const params = new URLSearchParams(search);
-    const selected = params.get("route");
-    const count = Number(params.get("riders"));
-    if (selected === "complete" || selected === "loop") setRoute(selected);
-    if (Number.isInteger(count) && count > 0) setRiders(Math.min(count, selected === "loop" ? 20 : 10));
-  }, [search]);
-
-  // Links like /book#book-form should land on the form.
+  // Links like /book#book-form (from the pricing cards) should land on the form.
   useEffect(() => {
     if (!hash) return undefined;
     const timer = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
@@ -314,18 +309,21 @@ export default function BookingPage() {
 
         {/* Sites along the route */}
         <div className="mb-16">
-          <h2 className="font-display font-bold text-2xl mb-2" style={{ color: "#F5EDD9" }}>Sites Along the Heritage City Ride</h2>
-          <p className="text-sm mb-8" style={{ color: "rgba(245,237,217,0.55)" }}>The guided Heritage City Ride visits all six in a single loop from Main Mall.</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            {SITES.map((site, i) => (
-              <div key={site.id} className="p-4 rounded-sm text-center" style={{ backgroundColor: "rgba(13,8,5,0.4)", border: `1px solid ${site.color === "#1A3A2A" ? "rgba(212,160,23,0.4)" : site.color + "80"}`, backdropFilter: "blur(6px)" }}>
-                <Icon name={site.icon} size={24} style={{ color: "#D4A017", marginBottom: "0.5rem" }} />
-                <div className="font-bold text-xs leading-tight" style={{ color: "#F5EDD9" }}>{site.name}</div>
-                <div className="text-xs mt-1" style={{ color: "rgba(245,237,217,0.45)" }}>Stop {i + 1}</div>
-              </div>
-            ))}
-          </div>
+          <h2 className="font-display font-bold mb-2" style={{ color: "#F5EDD9", fontSize: "2rem" }}>Sites Along the Heritage City Ride</h2>
+          <p className="mb-8" style={{ color: "rgba(245,237,217,0.7)", fontSize: "1.05rem" }}>The guided Heritage City Ride visits all six in a single loop from Main Mall. Tap the front photo to see every picture of the trail.</p>
+          <RoundaboutCarousel
+            items={siteCovers}
+            label="The six heritage sites"
+            onOpen={() => navigate("/gallery#heritage")}
+            renderCaption={(item) => (<><strong>{item.title}</strong><span>{item.story}</span><em>See the full trail →</em></>)}
+          />
         </div>
+
+        <FoodStops
+          kicker="BEFORE OR AFTER YOUR RIDE"
+          title="Food stops & spit-stop spots"
+          intro="Cafés and eateries close to the trail, so you can refuel before, during or after the ride."
+        />
 
       </div>
 

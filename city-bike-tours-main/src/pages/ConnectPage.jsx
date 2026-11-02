@@ -1,59 +1,311 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
-import { backendUrl } from "../api/backend";
+import RrIcon, { StarRow, Verified } from "../components/RrIcon";
 import Stamp from "../components/Stamp";
-import { dayKey, dayLabel } from "../lib/time";
 import { useCustomer } from "../auth/CustomerAuth";
-import "../rr-theme.css";
-import "../gallery-reviews.css";
+import { SITES } from "../data";
+import { usePolling } from "../hooks/usePolling";
+import { useNow } from "../hooks/useNow";
+import { dayKey, dayLabel, formatDateTime, formatTime } from "../lib/time";
+import { prepareImage } from "../utils/images";
 
-const Stars = ({ n }) => (
-  <span className="review-stars" aria-label={`${n} out of 5 stars`}>
-    {"★".repeat(n)}<span style={{ color: "rgba(245,237,217,0.25)" }}>{"★".repeat(5 - n)}</span>
-  </span>
-);
+const TOUR_LABELS = { complete: "Heritage City Ride", loop: "Casual Saturday", other: "Another ride" };
+const HIGHLIGHTS = ["Expert guide", "Civic architecture", "Beginner friendly", "Safety", "Bike quality", "Value for money"];
+const SITE_NAME = Object.fromEntries(SITES.map((site) => [site.id, site.name]));
+const RATING_WORDS = ["", "Poor", "Fair", "Good", "Very good", "Exceptional"];
+const initials = (name = "") => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() || "").join("") || "?";
 
-const initials = (name="Rider") => name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
-const avatarColor = (name="") => { let h=0; for(const ch of name) h=(h*31+ch.charCodeAt(0))|0; return ["#8B4A32","#426B55","#9A7130","#59658A","#8B5D7B"][Math.abs(h)%5]; };
-
-function SignInPrompt({ what }) {
+// ─── Score summary (real numbers only) ───────────────────────────────────────
+function ScoreCard({ summary }) {
+  if (!summary?.count) return null;
+  const rows = [5, 4, 3, 2, 1];
   return (
-    <div className="connect-gate">
-      <p>Sign in to {what}.</p>
-      <Link to="/login?next=/connect" className="auth-primary">Sign in or create an account</Link>
-    </div>
+    <section className="rr-plate-elevated rr-pad rr-score" aria-label="Rating summary">
+      <div className="rr-score-main">
+        <div className="rr-score-number"><span className="rr-serif">{summary.average.toFixed(1)}</span><small>/ 5.0</small></div>
+        <StarRow value={summary.average} size={20} label={`Average rating ${summary.average} out of 5`} />
+        <p className="rr-score-count">{summary.count} rider review{summary.count === 1 ? "" : "s"}</p>
+        <p className="rr-score-rec"><RrIcon name="thumb" size={14} /> {summary.fourPlusPercent}% rated 4★ or higher</p>
+      </div>
+      <div className="rr-bars">
+        {rows.map((star) => {
+          const percent = Math.round(((summary.distribution[star] || 0) / summary.count) * 100);
+          return (
+            <div key={star} className="rr-bar-row">
+              <span>{star}★</span>
+              <div className="rr-bar" role="img" aria-label={`${percent}% gave ${star} stars`}><i style={{ width: `${percent}%`, opacity: 0.4 + star * 0.12 }} /></div>
+              <span>{percent}%</span>
+            </div>
+          );
+        })}
+      </div>
+      {summary.highlights?.length > 0 && (
+        <div className="rr-highlights" aria-label="What riders pick most">
+          {summary.highlights.slice(0, 4).map((item) => <span key={item.tag} className="rr-chip">{item.tag} <strong>{item.percent}%</strong></span>)}
+        </div>
+      )}
+    </section>
   );
 }
 
+// ─── One review ──────────────────────────────────────────────────────────────
+function ReviewCard({ review, first, isSignedIn, onVote }) {
+  const [shared, setShared] = useState("");
+  const stops = (review.stops || []).filter((id) => SITE_NAME[id]);
+
+  async function share() {
+    const url = `${window.location.origin}/connect#review-${review.id}`;
+    const text = `${review.name} rated City Bike Tours ${review.rating}/5: “${review.comment.slice(0, 120)}”`;
+    try {
+      if (navigator.share) await navigator.share({ title: "City Bike Tours review", text, url });
+      else { await navigator.clipboard.writeText(url); setShared("Link copied"); setTimeout(() => setShared(""), 2500); }
+    } catch { /* the visitor closed the share sheet */ }
+  }
+
+  return (
+    <article id={`review-${review.id}`} className={`rr-plate rr-pad rr-review ${first ? "rr-review-first" : ""}`}>
+      <header className="rr-review-head">
+        <span className="rr-avatar" aria-hidden="true">{initials(review.name)}</span>
+        <div className="rr-review-who">
+          <h3 className="rr-name">{review.name}{review.verified && <Verified />}</h3>
+          <p>{[review.verified && "Verified rider", review.riderOrigin].filter(Boolean).join(" · ") || "Rider"}</p>
+        </div>
+        <Stamp value={review.createdAt} compact className="rr-when" />
+      </header>
+      <div className="rr-review-meta">
+        <StarRow value={review.rating} size={17} />
+        {review.tour && <span className="rr-tag">{TOUR_LABELS[review.tour] || review.tour}</span>}
+      </div>
+      <p className="rr-comment">“{review.comment}”</p>
+      {review.photoUrl && (
+        <figure className="rr-photo">
+          <img src={review.photoUrl} alt={`Photo shared by ${review.name}`} loading="lazy" />
+          {stops[0] && <figcaption><RrIcon name="pin" size={13} /> {SITE_NAME[stops[0]]}</figcaption>}
+        </figure>
+      )}
+      {stops.length > 0 && <div className="rr-stops">{stops.map((id) => <Link key={id} to={`/gallery/${id}`} className="rr-hash">#{SITE_NAME[id].replace(/[^A-Za-z0-9]+/g, "")}</Link>)}</div>}
+      <footer className="rr-review-foot">
+        {isSignedIn ? (
+          <button type="button" className={`rr-link-btn ${review.voted ? "is-on" : ""}`} aria-pressed={Boolean(review.voted)} disabled={review.mine} onClick={() => onVote(review)}>
+            <RrIcon name="thumb" size={15} /> {review.helpfulCount} found this helpful
+          </button>
+        ) : (
+          <Link className="rr-link-btn" to="/login?next=/connect" title="Sign in to mark reviews as helpful"><RrIcon name="thumb" size={15} /> {review.helpfulCount} found this helpful</Link>
+        )}
+        <button type="button" className="rr-link-btn" onClick={share}><RrIcon name="share" size={15} /> {shared || "Share"}</button>
+      </footer>
+      {review.adminReply && (
+        <div className="rr-reply">
+          <div><strong>City Bike Tours team</strong><Stamp value={review.adminReplyAt} compact className="rr-when" /></div>
+          <p>{review.adminReply}</p>
+        </div>
+      )}
+    </article>
+  );
+}
+
+// ─── The feed: filters, sorting, cards ───────────────────────────────────────
+function Feed({ reviews, loaded, failed, isSignedIn, onVote }) {
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("recent");
+
+  const pills = useMemo(() => {
+    const list = [{ id: "all", label: `All reviews (${reviews.length})` }];
+    const withPhotos = reviews.filter((r) => r.photoUrl).length;
+    if (withPhotos) list.push({ id: "photos", label: `With photos (${withPhotos})`, icon: true });
+    for (const id of Object.keys(TOUR_LABELS)) {
+      const n = reviews.filter((r) => r.tour === id).length;
+      if (n) list.push({ id: `tour:${id}`, label: `${TOUR_LABELS[id]} (${n})` });
+    }
+    for (const site of SITES) {
+      const n = reviews.filter((r) => r.stops?.includes(site.id)).length;
+      if (n) list.push({ id: `stop:${site.id}`, label: `${site.name} (${n})` });
+    }
+    return list;
+  }, [reviews]);
+
+  const visible = useMemo(() => {
+    const [kind, value] = filter.split(":");
+    const filtered = reviews.filter((r) => kind === "all" || (kind === "photos" ? r.photoUrl : kind === "tour" ? r.tour === value : r.stops?.includes(value)));
+    return sort === "top" ? [...filtered].sort((a, b) => b.rating - a.rating || new Date(b.createdAt) - new Date(a.createdAt)) : filtered;
+  }, [reviews, filter, sort]);
+
+  useEffect(() => { if (!pills.some((pill) => pill.id === filter)) setFilter("all"); }, [pills, filter]);
+
+  if (failed && !loaded) return <p className="rr-empty rr-plate rr-pad">Reviews couldn’t be loaded right now. Please try again in a moment.</p>;
+  if (!loaded) return <p className="rr-empty rr-plate rr-pad">Loading reviews…</p>;
+  if (!reviews.length) return <p className="rr-empty rr-plate rr-pad">No reviews yet. Ride with us and be the first to share your story.</p>;
+
+  return (
+    <section className="rr-feed" aria-label="Rider reviews">
+      <div className="rr-filter-head">
+        <span className="rr-label">Filter by experience</span>
+        <label className="rr-sort"><RrIcon name="sort" size={14} /><span className="rr-sr">Sort reviews</span>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}><option value="recent">Most recent</option><option value="top">Highest rated</option></select>
+        </label>
+      </div>
+      <div className="rr-pills" role="group" aria-label="Filter reviews">
+        {pills.map((pill) => (
+          <button key={pill.id} type="button" aria-pressed={filter === pill.id} className={`rr-pill-btn ${filter === pill.id ? "is-on" : ""}`} onClick={() => setFilter(pill.id)}>
+            {pill.icon && <RrIcon name="camera" size={13} />} {pill.label}
+          </button>
+        ))}
+      </div>
+      <div className="rr-cards" aria-live="polite">
+        {visible.map((review, index) => <ReviewCard key={review.id} review={review} first={index === 0} isSignedIn={isSignedIn} onVote={onVote} />)}
+      </div>
+    </section>
+  );
+}
+
+// ─── Composer ────────────────────────────────────────────────────────────────
+function Composer({ onSent }) {
+  const { api, isSignedIn, user } = useCustomer();
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [tour, setTour] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [stops, setStops] = useState([]);
+  const [highlights, setHighlights] = useState([]);
+  const [comment, setComment] = useState("");
+  const [rideDate, setRideDate] = useState("");
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [thanks, setThanks] = useState("");
+
+  useEffect(() => {
+    if (!file) { setPreview(""); return undefined; }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const toggle = (list, setList, value) => setList(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (!rating) { setError("Choose a star rating."); return; }
+    setBusy(true); setError(""); setThanks("");
+    try {
+      const payload = { rating, comment, ...(rideDate && { rideDate }), ...(tour && { tour }), ...(origin.trim() && { riderOrigin: origin.trim() }), ...(stops.length && { stops }), ...(highlights.length && { highlights }) };
+      let result;
+      if (file) {
+        const form = new FormData();
+        form.append("data", JSON.stringify(payload));
+        form.append("photo", await prepareImage(file));
+        result = await api("/api/customer/reviews", { method: "POST", form });
+      } else {
+        result = await api("/api/customer/reviews", { method: "POST", body: payload });
+      }
+      setThanks(result.message || "Thanks! Your review will appear once the team approves it.");
+      setRating(0); setTour(""); setOrigin(""); setStops([]); setHighlights([]); setComment(""); setRideDate(""); setFile(null);
+      onSent();
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="rr-plate-elevated rr-pad rr-composer" aria-labelledby="composer-heading">
+      <div className="rr-composer-head">
+        <span className="rr-label"><RrIcon name="star" size={14} /> Rider community voice</span>
+        <h2 id="composer-heading">Rode with us recently? Leave a review</h2>
+        <p className="rr-muted">Your words help other riders and help us keep Gaborone’s heritage alive.</p>
+      </div>
+      {!isSignedIn ? (
+        <div className="rr-gate"><p>Sign in to post a review.</p><Link to="/login?next=/connect" className="rr-btn-primary">Sign in or create an account</Link></div>
+      ) : (
+        <form onSubmit={submit} className="rr-form">
+          <p className="rr-muted">Posting as <strong>{user?.name}</strong></p>
+          <div>
+            <span className="rr-label">Your rating</span>
+            <div className="rr-rate" onMouseLeave={() => setHover(0)}>
+              <div className="rr-rate-stars" role="radiogroup" aria-label="Star rating">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} star${n > 1 ? "s" : ""}`} className={(hover || rating) >= n ? "on" : ""} onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onBlur={() => setHover(0)} onClick={() => setRating(n)}>
+                    <RrIcon name="star" size={28} />
+                  </button>
+                ))}
+              </div>
+              <span className="rr-rate-word">{rating || hover ? `${hover || rating}.0 (${RATING_WORDS[hover || rating]})` : "Tap a star"}</span>
+            </div>
+          </div>
+          <label className="rr-field"><span className="rr-label">Which ride did you join?</span>
+            <select value={tour} onChange={(event) => setTour(event.target.value)}><option value="">Choose a ride (optional)</option>{Object.entries(TOUR_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
+          </label>
+          <div className="rr-two">
+            <label className="rr-field"><span className="rr-label">Where are you from?</span><input type="text" maxLength={80} value={origin} onChange={(event) => setOrigin(event.target.value)} placeholder="Gaborone, or Visitor from…" /></label>
+            <label className="rr-field"><span className="rr-label">Ride date</span><input type="date" max={new Date().toISOString().slice(0, 10)} value={rideDate} onChange={(event) => setRideDate(event.target.value)} /></label>
+          </div>
+          <fieldset className="rr-field"><legend className="rr-label">Stops you loved (optional)</legend>
+            <div className="rr-toggles">{SITES.map((site) => <button key={site.id} type="button" aria-pressed={stops.includes(site.id)} className={`rr-toggle ${stops.includes(site.id) ? "is-on" : ""}`} onClick={() => toggle(stops, setStops, site.id)}>{site.name}</button>)}</div>
+          </fieldset>
+          <fieldset className="rr-field"><legend className="rr-label">What stood out? (optional)</legend>
+            <div className="rr-toggles">{HIGHLIGHTS.map((tag) => <button key={tag} type="button" aria-pressed={highlights.includes(tag)} className={`rr-toggle ${highlights.includes(tag) ? "is-on" : ""}`} onClick={() => toggle(highlights, setHighlights, tag)}>{tag}</button>)}</div>
+          </fieldset>
+          <label className="rr-field"><span className="rr-label">Your story and route impressions</span>
+            <textarea rows={4} required minLength={5} maxLength={600} value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Highlights of your ride, landmarks, bikes, guides…" />
+            <small className="rr-count">{comment.length} / 600</small>
+          </label>
+          <div className="rr-attach">
+            {preview ? <img src={preview} alt="Preview of your photo" /> : <RrIcon name="camera" size={26} />}
+            <div>
+              <p><strong>{file ? file.name : "Attach a photo (optional)"}</strong></p>
+              <p className="rr-muted">JPG, PNG or WebP. Large photos are shrunk for you.</p>
+            </div>
+            {file ? <button type="button" className="rr-btn-ghost" onClick={() => setFile(null)}>Remove</button> : (
+              <label className="rr-btn-ghost">Browse<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="rr-sr" onChange={(event) => { setFile(event.target.files?.[0] || null); setError(""); }} /></label>
+            )}
+          </div>
+          <button type="submit" className="rr-btn-primary rr-submit" disabled={busy}><RrIcon name="send" size={18} /> {busy ? "Posting…" : "Post review"}</button>
+          {error && <p role="alert" className="rr-error">{error}</p>}
+          {thanks && <p role="status" className="rr-success">{thanks}</p>}
+        </form>
+      )}
+    </section>
+  );
+}
+
+function MyReviews({ reviews }) {
+  if (!reviews?.length) return null;
+  const STATUS = { pending: "Waiting for approval", approved: "Published", rejected: "Not published" };
+  return (
+    <section className="rr-plate rr-pad rr-mine" aria-label="Your reviews">
+      <h3>Your reviews</h3>
+      {reviews.map((r) => (
+        <article key={r.id}>
+          <div className="rr-mine-head"><StarRow value={r.rating} size={14} /><span className={`rr-status ${r.status}`}>{STATUS[r.status] || r.status}</span></div>
+          <p>{r.comment}</p>
+          <Stamp value={r.createdAt} className="rr-when" />
+          {r.adminReply && <div className="rr-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p></div>}
+        </article>
+      ))}
+    </section>
+  );
+}
+
+// ─── Chat with the team ──────────────────────────────────────────────────────
 function Messages() {
   const { api, isSignedIn, user } = useCustomer();
   const [messages, setMessages] = useState(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkedAt, setCheckedAt] = useState(null);
   const listRef = useRef(null);
+  const now = useNow(60000);
 
   const load = useCallback(async () => {
-    try { setMessages((await api("/api/customer/messages")).messages); setError(""); }
+    try { setMessages((await api("/api/customer/messages")).messages); setCheckedAt(new Date()); setError(""); }
     catch (err) { setError(err.message); }
   }, [api]);
-
-  useEffect(() => {
-    if (!isSignedIn) return undefined;
-    void load();
-    const timer = setInterval(load, 20000);
-    const focus = () => { if (document.visibilityState === "visible") void load(); };
-    window.addEventListener("focus", focus);
-    document.addEventListener("visibilitychange", focus);
-    return () => { clearInterval(timer); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", focus); };
-  }, [isSignedIn, load]);
-
+  usePolling(load, 20000, isSignedIn);
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [messages?.length]);
 
   async function send(event) {
-    event.preventDefault();
-    if (!text.trim()) return;
+    event?.preventDefault();
+    if (!text.trim() || busy) return;
     setBusy(true); setError("");
     try {
       const { message } = await api("/api/customer/messages", { method: "POST", body: { body: text } });
@@ -62,239 +314,99 @@ function Messages() {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
 
+  let lastDay = "";
   return (
-    <section className="connect-panel glass" aria-labelledby="messages-heading">
-      <p className="connect-kicker">— Talk to us</p>
-      <h2 id="messages-heading" className="font-display">Message the team</h2>
-      <p className="connect-lead">Questions about a ride, a booking or anything else? Write to us here and we'll reply on this page.</p>
-      {!isSignedIn ? <SignInPrompt what="send us a message" /> : (
-        <>
-          <div ref={listRef} className="chat-list" aria-live="polite">
-            {!messages ? <p className="connect-muted">Loading your conversation…</p> : messages.length === 0 ? (
-              <p className="connect-muted">No messages yet. Say hello, {user?.name?.split(" ")[0] || "rider"}!</p>
-            ) : messages.map((m, index) => (
-              <div key={m.id}>
-                {(index === 0 || dayKey(m.createdAt) !== dayKey(messages[index - 1].createdAt)) && <div className="chat-day-divider"><span>{dayLabel(m.createdAt)}</span></div>}
-                <div className={`chat-bubble ${m.sender === "admin" ? "from-team" : "from-me"}`}>
-                <div className="chat-meta">{m.sender === "admin" ? "City Bike Tours" : "You"} · <Stamp value={m.createdAt} /></div>
-                <div className="chat-body">{m.body}</div>
-              </div>
-              </div>
-            ))}
-          </div>
-          <form onSubmit={send} className="chat-form">
-            <label className="sr-only" htmlFor="chat-input">Your message</label>
-            <textarea id="chat-input" rows={3} maxLength={1500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(text.trim()&&!busy)e.currentTarget.form?.requestSubmit();}}} placeholder="Write your message… (Enter to send · Shift+Enter for a new line)" />
-            {error && <p role="alert" className="auth-error">{error}</p>}
-            <button type="submit" className="auth-primary" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
-          </form>
-        </>
-      )}
-    </section>
-  );
-}
-
-function ReviewForm({ onSent }) {
-  const { api, isSignedIn } = useCustomer();
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
-  const [comment, setComment] = useState("");
-  const [headline, setHeadline] = useState("");
-  const [showAvatar, setShowAvatar] = useState(false);
-  const [rideDate, setRideDate] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [thanks, setThanks] = useState("");
-
-  async function submit(event) {
-    event.preventDefault();
-    if (!rating) { setError("Choose a star rating."); return; }
-    setBusy(true); setError(""); setThanks("");
-    try {
-      const result = await api("/api/customer/reviews", { method: "POST", body: { rating, comment, headline: headline.trim() || undefined, showAvatar, rideDate: rideDate || undefined, photoUrl: photoUrl.trim() || undefined } });
-      setThanks(result.message); setRating(0); setComment(""); setHeadline(""); setShowAvatar(false); setRideDate(""); setPhotoUrl("");
-      onSent();
-    } catch (err) { setError(err.message); } finally { setBusy(false); }
-  }
-
-  if (!isSignedIn) return <SignInPrompt what="leave a review" />;
-  return (
-    <form onSubmit={submit} className="auth-form">
-      <div>
-        <div className="connect-label">Your rating</div>
-        <div className="star-picker" role="radiogroup" aria-label="Star rating" onMouseLeave={() => setHover(0)}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} star${n > 1 ? "s" : ""}`} onMouseEnter={() => setHover(n)} onClick={() => setRating(n)} className={(hover || rating) >= n ? "on" : ""}>★</button>
-          ))}
-        </div>
-      </div>
-      <label>Review title <span className="auth-optional">optional · up to 80 characters</span>
-        <input type="text" maxLength={80} value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="A short headline for your review" />
-      </label>
-      <label>Your review
-        <textarea rows={4} required minLength={5} maxLength={600} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tell other riders about your experience…" />
-      </label>
-      <label className="review-avatar-consent"><input type="checkbox" checked={showAvatar} onChange={(e) => setShowAvatar(e.target.checked)} /> Show my profile picture with my review <span className="auth-optional">(off by default)</span></label>
-      <label>Photo URL <span className="auth-optional">optional</span>
-        <input type="url" maxLength={2000} value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
-      </label>
-      <label>Ride date <span className="auth-optional">optional</span>
-        <input type="date" max={new Date().toISOString().slice(0, 10)} value={rideDate} onChange={(e) => setRideDate(e.target.value)} />
-      </label>
-      {error && <p role="alert" className="auth-error">{error}</p>}
-      {thanks && <p role="status" className="auth-success">{thanks}</p>}
-      <button type="submit" className="auth-primary" disabled={busy}>{busy ? "Sending…" : "Submit review"}</button>
-    </form>
-  );
-}
-
-const STATUS_TEXT = { pending: "Waiting for approval", approved: "Published", rejected: "Not published" };
-
-function MyReviews({ reviews }) {
-  if (!reviews?.length) return null;
-  return (
-    <div className="review-mine">
-      <div className="connect-label">Your reviews</div>
-      {reviews.map((r) => (
-        <article key={r.id} className="review-card glass-soft">
-          <div className="review-head"><Stars n={r.rating} /><span className={`review-status ${r.status}`}>{STATUS_TEXT[r.status] || r.status}</span></div>
-          {r.headline && <h3 className="review-headline">{r.headline}</h3>}
-          <p>{r.comment}</p>
-          {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p>{r.adminReplyAt && <Stamp value={r.adminReplyAt} className="review-stamp" />}</div>}
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function PublicReviews({ refreshKey }) {
-  const { api, isSignedIn } = useCustomer();
-  const [reviews, setReviews] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [failed, setFailed] = useState(false);
-  const [sortBy, setSortBy] = useState("recent");
-  const [ratingFilter, setRatingFilter] = useState(0);
-  const [voteError, setVoteError] = useState("");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const run = () => fetch(backendUrl("/api/reviews"), { signal: controller.signal, cache: "no-store" }).then(async (r) => {
-      const body = await r.json().catch(() => null);
-      if (!r.ok || !Array.isArray(body?.reviews)) throw new Error();
-      setReviews(body.reviews);
-      setSummary(body.summary || null);
-      setFailed(false);
-    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
-    void run();
-    const timer = setInterval(run, 60000);
-    const focus = () => void run();
-    window.addEventListener("focus", focus);
-    return () => { controller.abort(); clearInterval(timer); window.removeEventListener("focus", focus); };
-  }, [refreshKey]);
-
-  async function markHelpful(reviewId) {
-    if (!isSignedIn) return;
-    setVoteError("");
-    try {
-      const result = await api(`/api/customer/reviews/${reviewId}/helpful`, { method: "POST" });
-      setReviews((current) => current?.map((item) => item.id === reviewId ? { ...item, helpfulCount: result.helpfulCount } : item));
-    } catch (err) { setVoteError(err.message || "Could not record your vote."); }
-  }
-
-  const visibleReviews = (reviews || []).filter((r) => !ratingFilter || r.rating === ratingFilter).sort((a, b) => {
-    if (sortBy === "highest") return b.rating - a.rating || new Date(b.createdAt) - new Date(a.createdAt);
-    if (sortBy === "lowest") return a.rating - b.rating || new Date(b.createdAt) - new Date(a.createdAt);
-    if (sortBy === "helpful") return (b.helpfulCount || 0) - (a.helpfulCount || 0);
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
-
-  return (
-    <section className="connect-wide" aria-labelledby="rider-reviews-heading">
-      <p className="connect-kicker">— Rider reviews</p>
-      <h2 id="rider-reviews-heading" className="font-display">What riders say</h2>
-      {summary && <div className="review-summary glass-soft">
-        <strong className="review-average">{summary.average.toFixed(1)} / 5</strong>
-        <div><Stars n={Math.round(summary.average)} /><p className="connect-muted">{summary.count} approved rider review{summary.count === 1 ? "" : "s"} · {summary.fourPlusPercent}% rated 4 or 5 stars</p></div>
-      </div>}
-      <div className="review-controls">
-        <label>Filter by rating <select value={ratingFilter} onChange={(e) => setRatingFilter(Number(e.target.value))}><option value={0}>All ratings</option>{[5,4,3,2,1].map((n)=><option key={n} value={n}>{n} stars</option>)}</select></label>
-        <label>Sort by <select value={sortBy} onChange={(e)=>setSortBy(e.target.value)}><option value="recent">Most recent</option><option value="highest">Highest rated</option><option value="lowest">Lowest rated</option><option value="helpful">Most helpful</option></select></label>
-      </div>
-      {failed ? <p className="connect-muted">Reviews couldn't be loaded right now.</p> : !reviews ? <p className="connect-muted">Loading reviews…</p> : visibleReviews.length === 0 ? (
-        <p className="connect-muted">No reviews match this filter.</p>
+    <section className="rr-plate rr-pad cx-panel" aria-labelledby="messages-heading">
+      <header className="cx-panel-head">
+        <span className="cx-team-avatar" aria-hidden="true">CB</span>
+        <div><h2 id="messages-heading">Message the team</h2><p>{checkedAt ? `Checked ${formatTime(checkedAt)} · we reply right here` : "We reply right here on this page"}</p></div>
+      </header>
+      {!isSignedIn ? (
+        <div className="rr-gate"><p>Sign in to send us a message.</p><Link to="/login?next=/connect" className="rr-btn-primary">Sign in or create an account</Link></div>
       ) : (
         <>
-        {visibleReviews.filter((r) => r.featured).slice(0, 3).length > 0 && <div className="featured-review-grid">
-          {visibleReviews.filter((r) => r.featured).slice(0, 3).map((r) => <article key={r.id} className="review-card featured-quote-card">
-            <span className="quote-mark" aria-hidden="true">“</span><Stars n={r.rating} />
-            {r.headline && <h3>{r.headline}</h3>}<p>{r.comment}</p>
-            {r.photoUrl && <img className="review-photo" src={r.photoUrl} alt="Photo shared with this review" loading="lazy" />}
-            <div className="featured-review-author">{r.avatarUrl ? <img src={r.avatarUrl} alt="" /> : <span className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}}>{initials(r.name)}</span>}<div><strong>{r.name}</strong><small>{[r.riderOrigin, r.tour].filter(Boolean).join(" · ")}</small></div></div>
-            <p className="review-caption">{[r.tour, r.riderOrigin].filter(Boolean).join(" · ")}</p>
-            <div className="review-card-actions"><button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div>
-          </article>)}
-        </div>}
-        <div className="review-grid">
-          {visibleReviews.filter((r) => !r.featured).map((r) => (
-            <article key={r.id} className="review-card testimonial-card">
-              {r.avatarUrl ? <img className="review-avatar-photo" src={r.avatarUrl} alt="" /> : <div className="testimonial-avatar" style={{"--avatar-color":avatarColor(r.name)}} aria-hidden="true">{initials(r.name)}</div>}
-              <div className="review-head"><Stars n={r.rating} /><span className="connect-muted">{r.rideDate || (r.createdAt ? <Stamp value={r.createdAt}/> : "")}</span></div>
-              {r.headline && <h3 className="review-headline">{r.headline}</h3>}<p>{r.comment}</p>
-              {r.photoUrl && <img className="review-photo" src={r.photoUrl} alt={`Photo shared by ${r.name} with their review`} loading="lazy" />}
-              <div className="review-by">— {r.name} {r.verifiedRider && <span className="verified-rider">✓ Verified rider</span>}</div>
-              {Array.isArray(r.stops) && r.stops.length > 0 && <div className="review-stop-chips">{r.stops.map((stop) => <span key={stop}>{stop}</span>)}</div>}
-              {r.createdAt && <Stamp value={r.createdAt} className="review-stamp" />}
-              {r.adminReply && <div className="review-reply"><strong>Reply from City Bike Tours</strong><p>{r.adminReply}</p></div>}
-              <div className="review-card-actions"><button type="button" className="review-helpful" disabled={!isSignedIn} onClick={() => markHelpful(r.id)}>Helpful · {r.helpfulCount || 0}</button><button type="button" className="review-share" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: r.headline || "City Bike Tours review", text: r.comment, url }).catch(() => {}); else navigator.clipboard?.writeText(url); }}>Share</button></div>
-            </article>
-          ))}
-        </div>
+          <div ref={listRef} className="cx-chat" aria-live="polite">
+            {!messages ? <p className="cx-muted">Loading your conversation…</p> : messages.length === 0 ? (
+              <p className="cx-muted">No messages yet. Say hello, {user?.name?.split(" ")[0] || "rider"}!</p>
+            ) : messages.map((m) => {
+              const key = dayKey(m.createdAt);
+              const divider = key !== lastDay ? <div className="cx-day"><span>{dayLabel(m.createdAt, now)}</span></div> : null;
+              lastDay = key;
+              return (
+                <div key={m.id}>
+                  {divider}
+                  <div className={`cx-msg ${m.sender === "admin" ? "from-team" : "from-me"}`}>
+                    <div className="cx-bubble">{m.body}</div>
+                    <time className="cx-msg-time" dateTime={new Date(m.createdAt).toISOString()} title={formatDateTime(m.createdAt)}>{m.sender === "admin" ? "City Bike Tours · " : ""}{formatTime(m.createdAt)}</time>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <form onSubmit={send} className="cx-composer">
+            <label className="rr-sr" htmlFor="chat-input">Your message</label>
+            <textarea id="chat-input" rows={2} maxLength={1500} value={text} placeholder="Write a message…" onChange={(event) => setText(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} />
+            <button type="submit" className="cx-send" disabled={busy || !text.trim()} aria-label="Send message">{busy ? "…" : "➤"}</button>
+          </form>
+          {error && <p role="alert" className="cx-error">{error}</p>}
         </>
       )}
-      {voteError && <p role="alert" className="auth-error">{voteError}</p>}
-      {!isSignedIn && <p className="connect-muted">Sign in to mark reviews as helpful.</p>}
     </section>
   );
 }
 
+// ─── Page ────────────────────────────────────────────────────────────────────
 export default function ConnectPage() {
-  const { api, isSignedIn, user, signOut } = useCustomer();
+  const { api, isSignedIn, signOut, user } = useCustomer();
+  const [reviews, setReviews] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [mine, setMine] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+
+  const loadReviews = useCallback(async () => {
+    try {
+      const body = await api("/api/reviews");
+      if (!Array.isArray(body?.reviews)) throw new Error("bad response");
+      setReviews(body.reviews); setSummary(body.summary || null); setLoaded(true); setFailed(false);
+    } catch { setFailed(true); }
+  }, [api]);
+  usePolling(loadReviews, 60000);
 
   const loadMine = useCallback(async () => {
     if (!isSignedIn) { setMine(null); return; }
-    try { setMine((await api("/api/customer/reviews")).reviews); } catch { /* shown elsewhere */ }
+    try { setMine((await api("/api/customer/reviews")).reviews); } catch { /* the composer reports problems */ }
   }, [api, isSignedIn]);
-  useEffect(() => { void loadMine(); }, [loadMine]);
+  usePolling(loadMine, 60000, isSignedIn);
+
+  async function vote(review) {
+    try {
+      const result = await api(`/api/customer/reviews/${review.id}/helpful`, { method: "POST" });
+      setReviews((current) => current.map((r) => (r.id === review.id ? { ...r, voted: result.helpful, helpfulCount: result.helpfulCount } : r)));
+    } catch { /* leave the count as it was */ }
+  }
 
   return (
-    <>
-      <main className="rr rr-connect-page connect-page">
-        <header className="connect-hero">
-          <p className="connect-kicker">— Reviews &amp; messages</p>
-          <h1 className="font-display">Connect with City Bike Tours</h1>
-          <p className="connect-lead">Message our team, tell other riders how your ride went, and read what the community is saying.</p>
-          {isSignedIn && (
-            <p className="connect-signed">Signed in as <strong>{user?.name}</strong> · <button type="button" onClick={signOut}>Sign out</button></p>
-          )}
-        </header>
-
-        <div className="connect-grid">
-          <Messages />
-          <section className="connect-panel glass" aria-labelledby="review-heading">
-            <p className="connect-kicker">— Share your ride</p>
-            <h2 id="review-heading" className="font-display">Leave a review</h2>
-            <p className="connect-lead">Our team reads every review and may reply. Approved reviews appear below for everyone to see.</p>
-            <ReviewForm onSent={() => { void loadMine(); setRefreshKey((k) => k + 1); }} />
-            <MyReviews reviews={mine} />
+    <main className="rr rr-bg">
+      <div className="rr-wrap rr-grid">
+        <div className="rr-col-main">
+          <section className="rr-hero">
+            <span className="rr-pill">Community stories &amp; feedback</span>
+            <h1>Stories from the <em>Saddle</em></h1>
+            <p className="rr-muted">Read what riders say about our six historic stops in Gaborone, or share your own journey along the lanes and civic boulevards.</p>
+            {isSignedIn && <p className="rr-muted">Signed in as <strong>{user?.name}</strong> · <button type="button" className="rr-inline" onClick={signOut}>Sign out</button></p>}
           </section>
+          <ScoreCard summary={summary} />
+          <Feed reviews={reviews} loaded={loaded} failed={failed} isSignedIn={isSignedIn} onVote={vote} />
         </div>
-
-        <PublicReviews refreshKey={refreshKey} />
-      </main>
+        <aside className="rr-col-side">
+          <Composer onSent={() => { void loadMine(); void loadReviews(); }} />
+          <MyReviews reviews={mine} />
+          <Messages />
+        </aside>
+      </div>
       <Footer />
-    </>
+    </main>
   );
 }

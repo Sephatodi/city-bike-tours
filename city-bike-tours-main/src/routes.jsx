@@ -7,31 +7,35 @@ import LoginCallbackPage from "./pages/LoginCallbackPage";
 import ConnectPage from "./pages/ConnectPage";
 import BookingPage from "./pages/BookingPage";
 import GalleryPage from "./pages/GalleryPage";
-import SiteGalleryPage from "./pages/SiteGalleryPage";
 import HeritageTrailPage from "./pages/HeritageTrailPage";
 import RideTicketPage from "./pages/RideTicketPage";
 import MessageInboxPage from "./pages/MessageInboxPage";
-import DashboardPage from "./pages/DashboardPage";
 import LegalPage from "./pages/LegalPage";
+import DashboardPage from "./pages/DashboardPage";
+import SiteGalleryPage from "./pages/SiteGalleryPage";
 
-export const router = createBrowserRouter([{
-  path: "/", Component: Root, children: [
-    { index: true, Component: LandingPage },
-    { path: "schedule", Component: SchedulePage },
-    { path: "routes", element: <Navigate to="/book" replace /> },
-    { path: "pricing", element: <Navigate to="/schedule#pricing" replace /> },
-    { path: "login", Component: LoginPage },
-    { path: "login/callback", Component: LoginCallbackPage },
-    { path: "dashboard", Component: DashboardPage },
-    { path: "connect", Component: ConnectPage },
-    { path: "book", Component: BookingPage },
-    { path: "gallery", Component: GalleryPage },
-    { path: "gallery/:siteId", Component: SiteGalleryPage },
-    { path: "heritage-trail", Component: HeritageTrailPage },
-    { path: "ticket/:token", Component: RideTicketPage },
-    { path: "messages", Component: MessageInboxPage },
-    { path: "privacy", Component: LegalPage },
-    { path: "terms", Component: LegalPage },
-    { path: "data-deletion", Component: LegalPage },
-  ]
-}]);
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: Root,
+    children: [
+      { index: true, Component: LandingPage },
+      { path: "schedule", Component: SchedulePage },
+      { path: "routes", element: <Navigate to="/book" replace /> },
+      { path: "pricing", element: <Navigate to="/schedule#pricing" replace /> },
+      { path: "login", Component: LoginPage },
+      { path: "login/callback", Component: LoginCallbackPage },
+      { path: "dashboard", Component: DashboardPage },
+      { path: "connect", Component: ConnectPage },
+      { path: "book", Component: BookingPage },
+      { path: "gallery", Component: GalleryPage },
+      { path: "gallery/:siteId", Component: SiteGalleryPage },
+      { path: "heritage-trail", Component: HeritageTrailPage },
+      { path: "ticket/:token", Component: RideTicketPage },
+      { path: "messages", Component: MessageInboxPage },
+      { path: "privacy", element: <LegalPage page="privacy" /> },
+      { path: "terms", element: <LegalPage page="terms" /> },
+      { path: "data-deletion", element: <LegalPage page="data-deletion" /> },
+    ],
+  },
+]);

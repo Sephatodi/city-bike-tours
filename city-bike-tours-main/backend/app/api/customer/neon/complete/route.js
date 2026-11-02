@@ -1,53 +1,40 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { neonAuth } from "@/lib/neon-auth-server";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { newId } from "@/lib/id";
-import { frontendOrigins, isAllowedCustomerReturnOrigin, issueCustomerToken } from "@/lib/customer-auth";
+import { neonAuth } from "@/lib/neon-auth-server";
+import { frontendOrigins, issueCustomerToken } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
+// Neon Auth sends the browser here after Google sign-in (middleware.js has already turned Neon's one-time
+// code into a session cookie). We match or create the customer in our own `users` table, then hand the
+// website its token in the URL fragment, exactly like the Facebook / Apple route does.
 export async function GET(request) {
-  const { data: session } = await neonAuth.getSession();
-  const identity = session?.user;
   const origins = frontendOrigins();
   const requested = (new URL(request.url).searchParams.get("return") || "").replace(/\/$/, "");
-  const origin = isAllowedCustomerReturnOrigin(requested)
-    ? requested
-    : origins.find((value) => value === "https://city-bike-tours.vercel.app") || origins[0];
-
+  const origin = origins.includes(requested) ? requested : origins[0];
   if (!origin) return NextResponse.json({ error: "FRONTEND_ORIGIN is not configured." }, { status: 500 });
-  const fail = (code) => NextResponse.redirect(new URL(`/login/callback#error=${code}`, origin));
-  if (!identity?.id || !identity.email || identity.emailVerified !== true) return fail("signin_failed");
 
-  const email = identity.email.trim().toLowerCase();
-  const [byAuthId] = await db.select().from(users).where(eq(users.managedAuthId, identity.id)).limit(1);
-  const [byEmail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  if (byAuthId && byEmail && byAuthId.id !== byEmail.id) return fail("account_unavailable");
+  const fail = (code) => NextResponse.redirect(`${origin}/login/callback#error=${code}`);
+  if (!neonAuth) return fail("signin_failed");
 
-  let user = byAuthId || byEmail;
-  if (user && (user.role !== "customer" || user.status !== "active")) return fail("staff_account");
-  if (user) {
-    [user] = await db.update(users).set({
-      managedAuthId: identity.id, email,
-      name: (identity.name || user.name || email.split("@")[0]).slice(0, 160),
-      image: identity.image || user.image, provider: "neon",
-    }).where(eq(users.id, user.id)).returning();
+  const { data: session } = await neonAuth.getSession();
+  const profile = session?.user;
+  const email = profile?.email?.trim().toLowerCase();
+  // Only trust an email address the provider has verified, otherwise someone could claim another person's account.
+  if (!email || profile.emailVerified === false) return fail("signin_failed");
+
+  const [existing] = await db.select().from(users).where(eq(users.email, email));
+  let user = existing;
+  if (existing) {
+    if (existing.status !== "active") return fail("account_unavailable");
+    if (existing.role !== "customer") return fail("staff_account");
+    await db.update(users).set({ name: profile.name || existing.name, image: profile.image || existing.image }).where(eq(users.id, existing.id));
   } else {
-    const [created] = await db.insert(users).values({
-      id: newId(), managedAuthId: identity.id,
-      name: (identity.name || email.split("@")[0]).slice(0, 160),
-      email, image: identity.image || null, provider: "neon", role: "customer",
-    }).onConflictDoNothing().returning();
-    user = created;
-    if (!user) {
-      const [byId] = await db.select().from(users).where(eq(users.managedAuthId, identity.id)).limit(1);
-      const [byMail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-      user = byId || byMail;
-    }
-    if (!user || user.role !== "customer" || user.status !== "active") return fail("account_unavailable");
+    user = { id: newId(), name: profile.name || email, email, image: profile.image || null, provider: "google", role: "customer" };
+    await db.insert(users).values(user);
   }
-  return NextResponse.redirect(new URL(`/login/callback#token=${issueCustomerToken(user.id)}`, origin));
+  return NextResponse.redirect(`${origin}/login/callback#token=${issueCustomerToken(user.id)}`);
 }

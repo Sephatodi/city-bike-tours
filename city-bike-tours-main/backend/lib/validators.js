@@ -86,7 +86,6 @@ export const siteContentSchema = z.object({
   bodyText: z.string().trim().max(10000).optional().or(z.literal("")),
   isFeatured: z.boolean().default(false),
   downloadable: z.boolean().default(false),
-  includeInCollection: z.boolean().default(false),
 }).superRefine((content, context) => {
   if (content.contentType !== "article" && !content.mediaUrl) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["mediaUrl"], message: "Add a valid media URL." });
@@ -104,7 +103,6 @@ export const siteContentUpdateSchema = z.object({
   isFeatured: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   downloadable: z.boolean().optional(),
-  includeInCollection: z.boolean().optional(),
 }).refine((v) => Object.keys(v).length > 0, "Nothing to update.");
 
 export const aiDraftSchema = z.object({

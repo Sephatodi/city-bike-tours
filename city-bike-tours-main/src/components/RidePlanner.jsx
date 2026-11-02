@@ -1,8 +1,89 @@
-import {useMemo,useState} from "react";
-import {Link} from "react-router";
-import {useLiveData} from "../hooks/LiveDataContext";
+import { useState } from "react";
+import { Link } from "react-router";
+import { useLiveData } from "../hooks/LiveDataContext";
+import { useNow } from "../hooks/useNow";
+import { nextRide } from "../lib/time";
 import SiteClock from "./SiteClock";
-import {nextRide} from "../lib/time";
-import useNow from "../hooks/useNow";
-const CARDS=[{id:"complete",eyebrow:"THE HERITAGE CITY RIDE",pill:"GUIDED · MAX 10",title:"Heritage City Ride",time:"Wednesday–Friday · 9:00 AM or 2:00 PM",duration:"1 hr – 1 hr 30 min",distance:"~12 km",sites:"6 heritage sites",description:"Ride with a local guide through Gaborone’s heritage sites and hear the stories behind each landmark.",max:10},{id:"loop",eyebrow:"COME AS YOU ARE",pill:"CASUAL · MAX 20",title:"Casual Saturday",time:"Saturday · relaxed and flexible",duration:"Flexible",distance:"Local city loop",sites:"6 heritage sites",description:"An easygoing ride for friends and families, with cycling lessons for kids and adults included.",max:20}];
-export default function RidePlanner(){const {routes=[]}=useLiveData();const now=useNow(30000);const upcoming=useMemo(()=>nextRide(now),[now]);const [counts,setCounts]=useState({complete:1,loop:1});return <section id="pricing" className="ride-planner-section" aria-labelledby="ride-planner-title"><div className="schedule-section-heading"><div><p className="schedule-section-kicker">CHOOSE YOUR RIDE</p><h2 id="ride-planner-title">Your ride. Your price.</h2></div><div><p>See the live price, choose your group size and book in one place.</p><SiteClock/></div></div><p className="ride-next">Next ride: <strong>{upcoming?`${upcoming.label}, ${upcoming.time} – ${upcoming.name}`:"Check with our team"}</strong></p><div id="price-calculator" className="ride-planner-grid">{CARDS.map(card=>{const route=routes.find(r=>r.id===card.id)||{};const price=Number(route.price)||0;const count=counts[card.id];const total=price*count;return <article className={`ride-plan-card glass ${card.id==="complete"?"featured":""}`} key={card.id}><div className="ride-plan-top"><span>{card.eyebrow}</span><span className="schedule-status-pill">{card.pill}</span></div><h3>{card.title}</h3><p className="ride-plan-time">{card.time}</p><p>{route.desc||card.description}</p><div className="ride-plan-price">P{price}<small> per rider, payable on the day</small></div><div className="ride-plan-facts"><span>{route.duration||card.duration}</span><span>{route.distance||card.distance}</span><span>{route.sites||card.sites}</span></div><div className="ride-plan-riders"><span>Riders <small>max {card.max}</small></span><div><button type="button" aria-label={`Remove rider from ${card.title}`} disabled={count<=1} onClick={()=>setCounts(v=>({...v,[card.id]:Math.max(1,v[card.id]-1)}))}>−</button><strong>{count}</strong><button type="button" aria-label={`Add rider to ${card.title}`} disabled={count>=card.max} onClick={()=>setCounts(v=>({...v,[card.id]:Math.min(card.max,v[card.id]+1)}))}>+</button></div></div><p className="ride-plan-total">Total <strong>P{total}</strong></p><Link className="ride-plan-book" to={`/book?route=${card.id}&riders=${count}#book-form`}>Book this ride - P{total}</Link></article>;})}</div></section>;}
+
+// "When would you like to ride?" and "Pricing" in one place: pick a ride, see its live price, choose how many
+// riders, and book, without scrolling.
+const CARDS = [
+  {
+    id: "complete", featured: true, max: 10,
+    eyebrow: "THE HERITAGE CITY RIDE", pill: "GUIDED · MAX 10", title: ["Heritage City", "Ride"],
+    time: <strong>9:00 AM or 2:00 PM</strong>,
+    blurb: "Ride with a local guide through Gaborone's heritage sites and hear the stories behind each landmark.",
+    footer: "Wednesday–Friday · Groups up to 10", cta: "Book this ride",
+  },
+  {
+    id: "loop", featured: false, max: 20,
+    eyebrow: "COME AS YOU ARE", pill: "CASUAL · ALL WELCOME", title: ["Casual", "Saturday"],
+    time: <><strong>Relaxed &amp; flexible</strong> <span>No rigid schedule</span></>,
+    blurb: "A fun, easygoing ride for friends, families, and anyone who wants to join. Cycling lessons are included for kids and adults.",
+    footer: "Lessons included · Main Mall", cta: "Join the ride",
+  },
+];
+
+function RideCard({ card, route, riders, onRiders }) {
+  const total = route ? route.price * riders : null;
+  return (
+    <article className={`schedule-option-card ride-card ${card.featured ? "schedule-option-featured" : ""}`}>
+      <div className="schedule-option-topline"><span>{card.eyebrow}</span><span className={`schedule-status-pill ${card.featured ? "" : "schedule-status-request"}`}>{card.pill}</span></div>
+      <h3>{card.title[0]}<br />{card.title[1]}</h3>
+      <div className="schedule-option-time">◷ {card.time}</div>
+      <p>{card.blurb}</p>
+
+      {route && (
+        <div className="ride-price-row">
+          <div>
+            <div className="ride-price">P{route.price}</div>
+            <div className="ride-price-note">per rider · payable on the day</div>
+          </div>
+          <div className="ride-facts">{route.duration}<br />{route.distance} · {route.sites} sites</div>
+        </div>
+      )}
+
+      <div className="ride-order">
+        <div className="ride-stepper" role="group" aria-label={`Riders for ${card.title.join(" ")}`}>
+          <button type="button" aria-label="One fewer rider" onClick={() => onRiders(Math.max(1, riders - 1))} disabled={riders <= 1}>−</button>
+          <span aria-live="polite"><strong>{riders}</strong> rider{riders === 1 ? "" : "s"}</span>
+          <button type="button" aria-label="One more rider" onClick={() => onRiders(Math.min(card.max, riders + 1))} disabled={riders >= card.max}>+</button>
+        </div>
+        {total !== null && <div className="ride-total">Total <strong>P{total}</strong></div>}
+      </div>
+
+      <Link to="/book#book-form" className="ride-book">{card.cta}{total !== null ? ` — P${total}` : ""} <span aria-hidden="true">↗</span></Link>
+      <div className="schedule-option-bottom"><span>{card.footer}</span><span>No deposit · pay on the day</span></div>
+    </article>
+  );
+}
+
+export default function RidePlanner() {
+  const { routes } = useLiveData();
+  const [riders, setRiders] = useState({ complete: 1, loop: 1 });
+  const next = nextRide(useNow(60000));
+
+  return (
+    <section id="pricing" className="schedule-options reveal">
+      <div className="schedule-section-heading">
+        <div><p className="schedule-section-kicker">CHOOSE YOUR PACE · TRANSPARENT PRICING</p><h2>When would you like to ride?</h2></div>
+        <p>Pick a ride, see what it costs, and book. No hidden fees, payment on the day, no deposit.</p>
+      </div>
+      <div className="ride-live">
+        {next && <span className="ride-next"><strong>Next ride:</strong> {next.when}, {next.text}</span>}
+        <SiteClock />
+      </div>
+      <div id="price-calculator" className="schedule-card-grid price-calculator-anchor">
+        {CARDS.map((card) => (
+          <RideCard
+            key={card.id}
+            card={card}
+            route={routes.find((route) => route.id === card.id)}
+            riders={riders[card.id]}
+            onRiders={(count) => setRiders((current) => ({ ...current, [card.id]: count }))}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}

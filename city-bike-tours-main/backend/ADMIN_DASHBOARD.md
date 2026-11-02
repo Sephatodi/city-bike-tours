@@ -14,7 +14,7 @@ The public header, footer and global CSS never load on `/admin`.
 | Area | Pages |
 |---|---|
 | Dashboard | Overview, Website traffic, Bookings, Check-in |
-| Customers | Inbox & reviews (enquiries, review approval, subscribers), Messages (riders on a date, or subscribers) |
+| Customers | Inbox & reviews (enquiries, rider chats, review approval with the rider's photo, ride, origin and stops, rider photos, subscribers), Messages (riders on a date, or subscribers) |
 | Website | Routes & prices, Content, Media library, Search (SEO) |
 | Administration | Users & roles (+ teams, two-step reset), Site settings, Integrations, Security, System & backups, Audit log |
 
@@ -28,6 +28,7 @@ Admin: everything, plus users, settings, integrations, security, system/backups,
 Role and suspension changes apply on the person's next click.
 
 ## Security
+- Password fields on Users & roles and Security have a Show / Hide button so you can check what you typed.
 - Two-step sign-in (authenticator app). Admins can require it for all staff (Security page).
 - Failed sign-ins are logged; an email is locked for 15 minutes after N wrong tries (default 5).
 - Session length is enforced (default 8 hours). IP blocklist covers sign-in, the dashboard API and the booking form.

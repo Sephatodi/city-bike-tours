@@ -17,8 +17,7 @@ export async function GET(request) {
     const content = await db
       .select({
         id: siteContent.id, contentType: siteContent.contentType, title: siteContent.title,
-        mediaUrl: siteContent.mediaUrl, bodyText: siteContent.bodyText, isFeatured: siteContent.isFeatured,
-        downloadable: siteContent.downloadable, includeInCollection: siteContent.includeInCollection, createdAt: siteContent.createdAt,
+        mediaUrl: siteContent.mediaUrl, bodyText: siteContent.bodyText, isFeatured: siteContent.isFeatured, downloadable: siteContent.downloadable, createdAt: siteContent.createdAt,
       })
       .from(siteContent)
       .where(and(...conditions))

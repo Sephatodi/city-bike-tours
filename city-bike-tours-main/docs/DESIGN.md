@@ -1,48 +1,42 @@
-# City Bike Tours design and application architecture
+# Design system
 
-## Product structure
+Two looks live side by side. The **rr theme** (reviews and gallery pages, `src/rr-theme.css`) follows the "Rider Reviews & Stories" mobile design. The rest of the site keeps the original palette in `src/index.css` and `src/community.css`. Pages using rr add `class="rr rr-bg"` to their main element.
 
-The repository contains two deployable applications:
+## Colour
 
-- The Vite React website is deployed to Vercel.
-- The Next.js backend and staff dashboard are deployed separately and use Neon Postgres through Drizzle ORM.
+| Token | Value | Use |
+|---|---|---|
+| `--rr-bg` | `#001809` | page background |
+| `--rr-surface` / `-2` / `-3` | `#052011` / `#092515` / `#152f1f` | inputs, plates, chips |
+| `--rr-card` | `#1b4332` | avatars, selected cards |
+| `--rr-gold` | `#e9c46a` | accents, stars, headings in italics |
+| `--rr-orange` | `#f75510` | primary call to action |
+| `--rr-text` / `--rr-muted` | `#cbead1` / `#c1c8c2` | text |
+| `--rr-outline` | `#414844` | quiet borders |
 
-The website uses React Router. Public routes include the home page, ride schedule, booking, heritage trail, gallery, site-specific gallery, reviews/messages, customer login, and customer dashboard. Legal routes are `/privacy`, `/terms`, and `/data-deletion`.
+The older pages use forest green and a gold of `#D4A017`, a cream text colour `#F5EDD9` and the orange Book button. The cursor and the moving background riders are sky blue (`#38BDF8`). The site icon and favicon are gold (`#F5B800`) on dark green (`#1A3A2A`).
 
-## Visual system
+## Type
 
-The website uses a heritage-inspired palette: dark forest greens, warm cream surfaces and gold accents, with rider/bicycle motifs. Shared navigation and footer components provide consistent access to booking, customer account, gallery and legal information. Mobile navigation is rendered separately for small screens.
+- rr theme: **Vollkorn** (serif) for headings, **Plus Jakarta Sans** for body and labels (loaded in `index.html`, `display=swap`).
+- Other pages: Fraunces for display, Outfit for body.
+- Small labels are uppercase with wide letter spacing; headings use a calm serif with the key word in gold italic ("Stories from the *Saddle*").
 
-The reviews and gallery surfaces use the `rr` theme stylesheet. Date/time labels use the Africa/Gaborone timezone helpers in `src/lib/time.js`.
+## Surfaces and components
 
-## Authentication boundaries
+- Background: two radial dot layers on a 24px grid (`.rr-bg`), a quiet echo of the diamond motif.
+- `.rr-plate` (translucent green, blur, 18% gold border) and `.rr-plate-elevated` (35% border, deep shadow).
+- Buttons: `.rr-btn-primary` (orange, white uppercase text, 44px+ high) and `.rr-btn-ghost` (gold outline). Filter pills: `.rr-pill-btn`; toggles: `.rr-toggle`.
+- Icons are inline SVG from `RrIcon.jsx`; no icon font is loaded.
+- Review card: initials avatar, name with optional verified tick, time, stars, tour tag, quote, optional photo with stop label, stop chips, helpful and share actions, and a tinted team-reply block.
+- Site folders (heritage trail) and the showcase carousel with six route buttons (gallery); a per-site photo grid with a fixed 4:3 ratio to avoid layout shift.
+- Phones get a docked bottom bar (Trail, Gallery, Reviews, Book) below 768px.
 
-Customer authentication and staff authentication are separate:
+## Behaviour rules
 
-- Customer email/password and phone OTP use the customer API and customer token.
-- Customer Google OAuth uses Neon Auth through the backend proxy. The completion route maps the Neon identity to a customer record and issues the existing customer token.
-- Facebook and Apple customer OAuth use the backend `/customer-social` page and NextAuth.
-- Staff sign-in remains NextAuth credentials with MFA and database-backed staff roles.
-
-Customer completion handlers reject users whose database role is not `customer`. Do not grant staff permissions from a social-provider claim.
-
-## Data and migrations
-
-Neon Postgres is the source of truth. Drizzle schema definitions live in `backend/db/schema.js`; ordered SQL migrations and their journal live in `backend/db/migrations`. Apply migrations through the backend's `npm run db:migrate` script after reviewing the target database.
-
-## Deployment configuration
-
-The website uses `VITE_API_BASE_URL` to reach the backend. The backend uses `FRONTEND_ORIGIN` and `CORS_ORIGIN_PATTERNS` to control browser origins. Neon Auth requires `AUTH_URL` and `NEON_AUTH_COOKIE_SECRET`. Secrets belong only in deployment environment settings, never in the repository.
-
-
-## Gallery and review presentation
-
-The shared website palette and typography remain authoritative: forest green, gold `#D4A017`, cream `#F5EDD9`, rust `#C1440E`, Fraunces display type and Outfit body type. Gallery/review panels are translucent surfaces over the global `SiteBackdrop`; do not apply an opaque page background. The animated `.header-bike` riders and custom bicycle cursor must remain visible on `/gallery`, `/gallery/:siteId`, and `/connect`.
-
-The gallery uses a three-visible-slide looping heritage carousel (previous, active, next), synced to the six linked site cards below it. The Complete collection includes only published team pictures or approved rider photos explicitly approved both for collection membership and downloads. It uses lazy-loaded 4:3 tiles, a progressive Load more control, and a keyboard-operable lightbox. Site detail pages retain their story, photo collection, videos and nearby food-stop section.
-
-The reviews page uses admin-featured quotes and standard review cards with a restrained staggered layout on desktop and a vertical stack on mobile. Its page background remains transparent over the shared SiteBackdrop, matching the rest of the public website. Featured quotes are never fabricated; admins must explicitly feature an approved review. A profile photo is displayed only when the reviewer explicitly opted in and the account image exists; otherwise a deterministic initials avatar is shown. The customer composer supports an optional 80-character headline and an opt-in avatar checkbox (off by default).
-
-## Cycling-street heritage trail
-
-Only `/heritage-trail` opts into the street-route experience through `HeritageMap trail`. It lazily imports the generated public `src/data/trail-route.json`, draws one continuous blue street route, and moves an SVG bicycle marker along its geometry with Leaflet animation frames. The rider rotates to follow each segment's bearing. Stops pause the rider and highlight the corresponding site button. The standard `HeritageMap` mode remains the original straight-line map used on LandingPage and BookingPage; it must not load route data or create a bicycle marker. Keep the existing Mapbox/OSM tiles, SiteBackdrop riders and bicycle cursor unchanged. Respect reduced motion, pause when the map is off-screen or the tab is hidden, and retain provider attribution.
+- **Real data only.** Never ship placeholder numbers, names or photos. Show real data or an empty state; badges such as "Verified rider" must be backed by a check in the database.
+- **Time** is always shown in Gaborone time through `src/lib/time.js`; use `Stamp` for "29 Oct 2026, 21:28 · 5 min ago".
+- **Freshness:** use `usePolling` for lists that change (messages 20s, reviews and prices 60s).
+- **Motion:** respect `prefers-reduced-motion`; the rr theme switches animation off.
+- **Accessibility:** visible focus rings, 44px touch targets, AA contrast, labels on every control, `aria-pressed` on toggles, `aria-current` on the active navigation item.
+- **Passwords** always have a Show / Hide button.
