@@ -12,6 +12,8 @@ import { getDailyRiderCount } from "@/lib/capacity";
 import { getDailyCapacity } from "@/lib/settings";
 import { createBookingConfirmation } from "@/lib/confirmation";
 import { buildWaLink, logWaMessage } from "@/lib/wa";
+import { getOrCreateBookingCode } from "@/lib/booking-code";
+import { sendBookingNotifications } from "@/lib/booking-notifications";
 
 const MESSAGES = {
   confirmed: "is CONFIRMED. See you at Main Mall!",
@@ -30,13 +32,14 @@ export async function PATCH(request, { params }) {
   const [current] = await db.select().from(bookingRequests).where(eq(bookingRequests.id, params.id));
   if (!current) return NextResponse.json({ error: "Booking request not found." }, { status: 404 });
 
-  const { dateIso, phone, resendConfirmation, ...changes } = parsed.data;
+  const { dateIso, phone, email, resendConfirmation, ...changes } = parsed.data;
   if (resendConfirmation && current.status !== "confirmed") {
     return NextResponse.json({ error: "Only confirmed bookings can have a confirmation resent." }, { status: 409 });
   }
   const updates = {
     ...changes,
     ...(dateIso ? { rideDate: dateIso } : {}),
+    ...(email !== undefined ? { email: email || null } : {}),
     ...(phone ? { phone: normalizePhone(phone) } : {}),
   };
   if (phone && !updates.phone) {
@@ -82,6 +85,8 @@ export async function PATCH(request, { params }) {
     ticketUrl = createRidePassUrl(ridePassToken, request.url);
     const qrImageUrl = createRidePassQrUrl(ridePassToken, request.url);
     const preferredTime = updated.notes?.match(/Preferred start time:\s*(\d{2}:\d{2})/)?.[1] || "09:00";
+    const confirmationCode = await getOrCreateBookingCode(db, updated.id);
+    updated = { ...updated, confirmationCode };
     const confirmation = await createBookingConfirmation({
       name: updated.name,
       date: updated.rideDate,
@@ -89,28 +94,31 @@ export async function PATCH(request, { params }) {
       guests: updated.riders,
       link: ticketUrl,
     });
-    // Build WhatsApp click-to-chat link (free, no Twilio needed)
-    const digits = normalizePhone(updated.phone);
-    const waLink = digits ? `https://wa.me/${digits}?text=${encodeURIComponent(confirmation.body)}` : null;
-    const messageLog = await db.insert(infobipSmsLogs).values({
+    const whatsappMessage = `${confirmation.body}\n\nBooking code: ${confirmationCode}\nYour ride-pass QR code is attached.`;
+    const smsMessage = `City Bike Tours: your booking is confirmed for ${updated.rideDate} at ${preferredTime}. Booking code: ${confirmationCode}. Ride pass: ${ticketUrl}`;
+    notifications = await sendBookingNotifications(db, {
       bookingRequestId: updated.id,
-      provider: "wa.me",
-      channel: "whatsapp",
-      recipient: updated.phone,
-      message: confirmation.body,
-      status: "QUEUED",
-    }).returning({ id: infobipSmsLogs.id });
-    // Mark as SENT since we generated the link (actual sending is manual via click-to-chat)
-    await db.update(infobipSmsLogs)
-      .set({ status: "SENT", statusUpdatedAt: new Date() })
-      .where(eq(infobipSmsLogs.id, messageLog[0].id));
-    notifications = {
-      whatsapp: true,
-      messageId: null,
-      status: "SENT",
-      template: "click-to-chat",
-      waLink,
+      phone: updated.phone,
+      email: updated.email || null,
+      name: updated.name,
+      smsMessage,
+      whatsappMessage,
       qrImageUrl,
+      whatsappContentSid: confirmation.contentSid,
+      whatsappContentVariables: confirmation.whatsappVariables,
+      routeName: route?.routeName ?? updated.routeId,
+      date: updated.rideDate,
+      time: preferredTime,
+      guests: updated.riders,
+      confirmationCode,
+      link: ticketUrl,
+    });
+    notifications = {
+      ...notifications,
+      template: confirmation.templateKey,
+      waLink: buildWaLink(updated.phone, `${whatsappMessage}\nQR code image: ${qrImageUrl}`),
+      qrImageUrl,
+      confirmationCode,
     };
   }
 
@@ -130,9 +138,11 @@ export async function PATCH(request, { params }) {
   if (statusChanged) await fireWebhook(`booking_request.${updated.status}`, { id: updated.id, name: updated.name, rideDate: updated.rideDate, riders: updated.riders });
   await logAudit(staff, resendConfirmation ? "booking.resend" : statusChanged ? `booking.${updated.status}` : "booking.edit",
     resendConfirmation
-      ? `Resent the WhatsApp ride pass to ${updated.name}`
+      ? `Processed confirmation delivery for ${updated.name}`
       : statusChanged
-        ? `Set ${updated.name}'s request for ${updated.rideDate} to ${updated.status}`
+        ? updated.status === "confirmed"
+          ? `Confirmed ${updated.name}'s request for ${updated.rideDate} and processed confirmation delivery`
+          : `Set ${updated.name}'s request for ${updated.rideDate} to ${updated.status}`
         : `Edited ${updated.name}'s request for ${updated.rideDate}`,
     { targetType: "booking_request", targetId: updated.id });
   return NextResponse.json({ request: updated, notifications, ticketUrl });

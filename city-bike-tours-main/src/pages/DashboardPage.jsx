@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import SiteClock from "../components/SiteClock";
 import Stamp from "../components/Stamp";
 import { usePolling } from "../hooks/usePolling";
+import { downloadMedia } from "../utils/download";
 
 const TILES = [
   { to: "/schedule#price-calculator", title: "Book a ride", text: "Pick a ride, a date and your group size.", icon: "🚲" },
@@ -19,9 +20,20 @@ const STATUS = { approved: "Published", pending: "Waiting for approval", rejecte
 export default function DashboardPage() {
   const { ready, isSignedIn, user, api, signOut } = useCustomer();
   const [reviews, setReviews] = useState(null);
+  const [photos, setPhotos] = useState(null);
+  const [photoError, setPhotoError] = useState("");
 
   usePolling(async () => {
     try { setReviews((await api("/api/customer/reviews")).reviews || []); } catch { setReviews((current) => current ?? []); }
+  }, 60000, isSignedIn);
+  usePolling(async () => {
+    try {
+      setPhotos((await api("/api/community/photos")).photos.filter((photo) => photo.mine));
+      setPhotoError("");
+    } catch (error) {
+      setPhotos((current) => current ?? []);
+      setPhotoError(error.message);
+    }
   }, 60000, isSignedIn);
 
   if (!ready) return <main className="legal-page"><p className="dash-loading">Loading your dashboard…</p></main>;
@@ -75,6 +87,38 @@ export default function DashboardPage() {
               {review.adminReply && <p className="dash-reply"><strong>City Bike Tours:</strong> {review.adminReply}</p>}
             </article>
           ))}
+        </section>
+
+        <section className="dash-reviews glass" aria-labelledby="dash-photos-heading">
+          <div className="dash-reviews-head">
+            <h2 id="dash-photos-heading" className="font-display">Your photos &amp; videos</h2>
+            <Link to="/gallery#rider-stories" className="food-directions">Share a photo →</Link>
+          </div>
+          {photos === null && <p className="dash-muted">Loading…</p>}
+          {photoError && <p className="dash-photo-error" role="alert">{photoError}</p>}
+          {photos && photos.length === 0 && !photoError && <p className="dash-muted">You haven’t shared any photos or videos yet.</p>}
+          {photos?.length > 0 && (
+            <div className="dash-photo-grid">
+              {photos.map((photo) => (
+                <article key={photo.id} className="dash-photo-card">
+                  {photo.mediaType === "video"
+                    ? <video src={photo.imageUrl} controls preload="metadata" aria-label={photo.title} />
+                    : <img src={photo.imageUrl} alt={photo.title} loading="lazy" />}
+                  <div className="dash-photo-copy">
+                    <strong>{photo.title}</strong>
+                    {photo.story && <p>{photo.story}</p>}
+                    <p className="dash-muted">{STATUS[photo.status] || photo.status} · <Stamp value={photo.createdAt} /></p>
+                    {photo.status === "approved" && photo.visibility !== "private" && photo.downloadable && (
+                      <button type="button" className="dash-photo-download" onClick={async () => {
+                        try { await downloadMedia({ kind: "community", id: photo.id, name: photo.title }); }
+                        catch (error) { setPhotoError(error.message); }
+                      }}>Download</button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
       <Footer />

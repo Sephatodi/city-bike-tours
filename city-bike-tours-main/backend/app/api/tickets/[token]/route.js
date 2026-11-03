@@ -40,6 +40,7 @@ export async function GET(_request, { params }) {
       rideDate: booking.rideDate,
       riders: booking.riders,
       checkedInAt: booking.checkedInAt,
+      confirmationCode: booking.confirmationCode || null,
     },
   }, { headers: { "Cache-Control": "no-store" } });
 }

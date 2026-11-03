@@ -148,6 +148,13 @@
       "when": 1793701873725,
       "tag": "0022_rider_photo_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793706075288,
+      "tag": "0023_booking_confirmation_codes",
+      "breakpoints": true
     }
   ]
 }

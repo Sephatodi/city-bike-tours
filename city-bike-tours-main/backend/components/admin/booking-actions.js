@@ -3,6 +3,15 @@
 import { api, useDash, useToast } from "./ui";
 import { useState } from "react";
 
+export function notificationSummary(notifications) {
+  const channels = [
+    ["SMS", notifications?.sms],
+    ["WhatsApp", notifications?.whatsapp],
+    ["email", notifications?.email],
+  ];
+  return `Confirmation delivery: ${channels.map(([name, result]) => `${name} ${result?.status || "not reported"}${result?.mode ? ` (${result.mode.replaceAll("_", " ")})` : ""}`).join("; ")}.`;
+}
+
 // One place for every action that changes a booking, so Overview and Bookings behave the same.
 export function useBookingActions() {
   const { refresh } = useDash();
@@ -26,9 +35,8 @@ export function useBookingActions() {
       body: { status, ...(resend ? { resendConfirmation: true } : {}) },
     }, "Could not update the booking request.");
     if (status === "confirmed" && result.notifications) {
-      if (result.notifications.waLink) toast(resend ? "WhatsApp link ready. Click 'Send via WhatsApp' in the ride pass." : `Confirmed. ${row.name}'s ride pass is ready to send via WhatsApp.`);
-      else if (!result.messagingConfigured) toast("Confirmed. Now send the ride pass with the WhatsApp button.");
-      else toast("Confirmed, but the WhatsApp link couldn't be generated. Use the “Send via WhatsApp” button instead.", "error");
+      const failed = [result.notifications.sms, result.notifications.whatsapp].some((channel) => channel?.status === "failed");
+      toast(`${row.name}: ${notificationSummary(result.notifications)}${result.notifications.waLink ? " A manual WhatsApp link is available in the ride pass." : ""}`, failed ? "error" : "ok");
     } else {
       toast({ declined: "Request declined.", cancelled: "Booking cancelled.", confirmed: "Booking confirmed.", pending: "Moved back to pending." }[status] || "Updated.");
     }

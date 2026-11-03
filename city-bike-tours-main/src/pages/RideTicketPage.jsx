@@ -44,6 +44,7 @@ export default function RideTicketPage() {
                 <div><span>Route</span><strong>{ticket.routeName}</strong></div>
                 <div><span>Ride date</span><strong>{ticket.rideDate}</strong></div>
                 <div><span>Group size</span><strong>{ticket.riders} rider{ticket.riders === 1 ? "" : "s"}</strong></div>
+                {ticket.confirmationCode && <div><span>Booking confirmation code</span><strong>{ticket.confirmationCode}</strong></div>}
               </div>
               <div className="ride-ticket-reference">PASS REF <strong>{ticket.reference}</strong></div>
               <div className="ride-ticket-meetup"><strong>Main Mall, Gaborone</strong><span>Meet your guide at the City Bike Tours flag.</span></div>

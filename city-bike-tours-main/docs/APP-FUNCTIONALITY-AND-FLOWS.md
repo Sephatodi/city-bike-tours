@@ -57,7 +57,7 @@ The homepage gallery is built into the website from local/static site data. It i
 ### Gallery — `/gallery`
 
 - "Six sites. One living story.": a 3D roundabout of the six heritage sites (the front slide shows the number and name), details for the site in front, and six route buttons. Each button, and the front photo, opens that site's own page.
-- Rider photo stories and the featured heritage-photo carousel share the top row; the two panels have matching dimensions on desktop. Selecting any site photo in the carousel opens that site's history and photo page. The full-width Gallery follows below with the website photo portfolio, initially showing ten images and a "Load more images" control, plus team-published videos and articles (`GET /api/content`). New rider uploads use the public Vercel Blob store and appear in the gallery after staff approval; download permission remains controlled by moderation. Legacy private-store uploads remain accessible through short-lived signed API links.
+- Rider photo stories and the featured heritage-photo carousel share the top row; the two panels have matching dimensions on desktop. Selecting any site photo in the carousel opens that site's history and photo page. The full-width Gallery follows below with the website photo portfolio, initially showing ten images and a "Load more images" control, plus team-published videos and articles (`GET /api/content`). New rider uploads use the public Vercel Blob store and appear in the Gallery after staff approval; approval enables public downloads. Legacy private-store uploads remain accessible through short-lived signed API links.
 
 ### Site gallery — `/gallery/:siteId`
 
@@ -75,7 +75,7 @@ The homepage gallery is built into the website from local/static site data. It i
 
 ### Customer dashboard — `/dashboard`
 
-- Welcome, profile (name, email, phone, picture), sign-out, quick links (Book a ride, Heritage trail, Messages & reviews, Gallery) and the customer's own reviews with status and replies. Signed-out visitors are sent to `/login?next=/dashboard`.
+- Welcome, profile (name, email, phone, picture), sign-out, quick links (Book a ride, Heritage trail, Messages & reviews, Gallery), the customer's own reviews with status and replies, and their uploaded rider photos/videos with moderation status and download links after approval. Signed-out visitors are sent to `/login?next=/dashboard`.
 
 ### Legal pages — `/privacy`, `/terms`, `/data-deletion`
 
@@ -132,7 +132,7 @@ Server-side session access is checked before rendering. The client dashboard sup
 - **Media upload:** upload accepted image/video formats to Vercel Blob when configured. The API limits uploads to about 4 MB; the dashboard also allows a hosted URL for larger video.
 - **Sign out:** ends the NextAuth session and returns to admin login.
 
-When an admin confirms a website booking request, the backend changes its status to `confirmed`, creates a signed ride-pass URL, and attempts to send the rider confirmation by configured WhatsApp/SMS channels. Declines/cancellations and booking-detail changes also attempt rider notifications.
+When an admin confirms a website booking request, the backend changes its status to `confirmed`, assigns a stable, unique four-digit/two-letter booking code, and creates a signed ride-pass URL. Configured SMS providers receive the code and pass link. Twilio WhatsApp uses an approved confirmation template when one of `TWILIO_WHATSAPP_CONTENT_SID_A/B/C` is configured; its pass link opens the ride-pass page and QR. Otherwise Twilio is sent the confirmation with the QR image attached (subject to WhatsApp's messaging window/policy). Provider acceptance/failure is logged and surfaced in the admin UI; resending keeps the same booking code. Email confirmations are not configured. Declines/cancellations and booking-detail changes also attempt rider notifications.
 
 **Current admin UI boundary:** the Next.js dashboard added for the separate backend deployment covers routes/prices, website requests, and site content. The repository also contains a more extensive frontend-local admin UI (overview charts, registered account bookings, request editing, AI draft controls, and camera scanner), but the website redirects admin users to the backend dashboard in production. Those additional controls are therefore not exposed through the current separate-origin backend dashboard, even where related API endpoints exist.
 

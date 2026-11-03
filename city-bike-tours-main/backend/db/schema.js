@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, numeric, integer, serial, pgEnum, jsonb, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const bookingCategoryEnum = pgEnum("booking_category", ["weekday", "saturday", "holiday", "lesson"]);
 export const timeSlotEnum = pgEnum("time_slot", ["morning", "evening"]);
@@ -46,6 +46,7 @@ export const bookings = pgTable("bookings", {
 export const bookingRequests = pgTable("website_booking_requests", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  email: text("email"),
   phone: text("phone").notNull(),
   routeId: text("route_id").notNull(),
   rideDate: text("ride_date").notNull(),
@@ -53,8 +54,11 @@ export const bookingRequests = pgTable("website_booking_requests", {
   notes: text("notes"),
   status: text("status").notNull().default("pending"),
   checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
+  confirmationCode: text("confirmation_code"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  confirmationCodeUnique: uniqueIndex("website_booking_requests_confirmation_code_unique").on(table.confirmationCode),
+}));
 
 export const companyRoutesConfig = pgTable("company_routes_config", {
   routeId: text("route_id").primaryKey(),

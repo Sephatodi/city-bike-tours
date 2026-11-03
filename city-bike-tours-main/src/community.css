@@ -249,6 +249,15 @@ main, .schedule-page, .gallery-page { min-height: 60vh; }
 .dash-stars { color: #D4A017; letter-spacing: 0.1em; }
 .dash-muted { color: rgba(245, 237, 217, 0.65); font-size: 0.95rem; }
 .dash-reply { margin-top: 0.4rem; padding-left: 0.8rem; border-left: 3px solid #D4A017; }
+.dash-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1rem; }
+.dash-photo-card { overflow: hidden; border: 1px solid rgba(245, 237, 217, 0.18); border-radius: 6px; background: rgba(8, 26, 16, 0.5); }
+.dash-photo-card > img, .dash-photo-card > video { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: rgba(0, 0, 0, 0.3); }
+.dash-photo-copy { display: grid; gap: 0.45rem; padding: 0.8rem; overflow-wrap: anywhere; }
+.dash-photo-copy > strong { color: #F5EDD9; }
+.dash-photo-download { justify-self: start; min-height: 2.5rem; padding: 0.45rem 0.8rem; border: 1px solid #D4A017; border-radius: 4px; background: transparent; color: #D4A017; font-weight: 700; cursor: pointer; }
+.dash-photo-download:hover { background: #D4A017; color: #1A3A2A; }
+.dash-photo-download:focus-visible { outline: 3px solid #D4A017; outline-offset: 3px; }
+.dash-photo-error { color: #F5A58D; }
 .dashboard-page .page-hero { width: min(100% - 3rem, 72rem); margin-inline: auto; padding-inline: 0; }
 .legal-page:not(.dashboard-page) .page-hero { width: min(100% - 3rem, 56rem); margin-inline: auto; padding-inline: 0; }
 

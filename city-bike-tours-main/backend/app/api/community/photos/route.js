@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { del, put } from "@vercel/blob";
 import { db } from "@/db/client";
 import { communityPhotos, communityUploadUsage } from "@/db/schema";
@@ -26,11 +26,15 @@ const columns = {
 // Only approved public media is listed publicly; riders can also see every status of their own uploads.
 export async function GET(request) {
   const { user } = await optionalCustomer(request);
-  const visible = user
-    ? or(and(eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public")), eq(communityPhotos.userId, user.id))
-    : and(eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public"));
   try {
-    const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt)).limit(60);
+    const publicRows = await db.select(columns).from(communityPhotos)
+      .where(and(eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public")))
+      .orderBy(desc(communityPhotos.createdAt)).limit(60);
+    const ownRows = user
+      ? await db.select(columns).from(communityPhotos).where(eq(communityPhotos.userId, user.id)).orderBy(desc(communityPhotos.createdAt))
+      : [];
+    const rows = [...new Map([...publicRows, ...ownRows].map((photo) => [photo.id, photo])).values()]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const [usage] = user
       ? await db.select({ count: communityUploadUsage.count }).from(communityUploadUsage).where(eq(communityUploadUsage.userId, user.id)).limit(1)
       : [];

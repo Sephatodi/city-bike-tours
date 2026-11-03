@@ -31,61 +31,70 @@ export function smsProviders() {
 export function otpChannels() {
   return {
     sms: smsProviders().length > 0,
-    whatsapp: twilioReady() && Boolean(process.env.TWILIO_WHATSAPP_FROM),
+    whatsapp: whatsappReady(),
   };
 }
 
+export const whatsappReady = () => twilioReady() && Boolean(process.env.TWILIO_WHATSAPP_FROM);
+
 const message = (code) => `Your City Bike Tours code is ${code}. It expires in 10 minutes.`;
 
-async function sendTwilio({ phone, channel, code }) {
+async function sendTwilio({ phone, channel, code, body, mediaUrl, contentSid, contentVariables }) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const auth = Buffer.from(`${sid}:${process.env.TWILIO_AUTH_TOKEN}`).toString("base64");
   const params = new URLSearchParams();
   if (channel === "whatsapp") {
     params.set("From", process.env.TWILIO_WHATSAPP_FROM.startsWith("whatsapp:") ? process.env.TWILIO_WHATSAPP_FROM : `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`);
     params.set("To", `whatsapp:${phone}`);
-    if (process.env.TWILIO_WHATSAPP_OTP_CONTENT_SID) {
+    if (contentSid) {
+      params.set("ContentSid", contentSid);
+      params.set("ContentVariables", JSON.stringify(contentVariables || {}));
+    } else if (code && process.env.TWILIO_WHATSAPP_OTP_CONTENT_SID) {
       params.set("ContentSid", process.env.TWILIO_WHATSAPP_OTP_CONTENT_SID);
       params.set("ContentVariables", JSON.stringify({ 1: code }));
     } else {
-      params.set("Body", message(code));
+      params.set("Body", body || message(code));
     }
+    if (mediaUrl && !contentSid) params.set("MediaUrl", mediaUrl);
   } else {
     params.set("From", process.env.TWILIO_PHONE_NUMBER);
     params.set("To", phone);
-    params.set("Body", message(code));
+    params.set("Body", body || message(code));
   }
   const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
     body: params,
   });
+  const result = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = result?.message || "";
     throw new Error(`Twilio rejected the message (${response.status}) ${detail.slice(0, 200)}`);
   }
+  return { messageId: result?.sid || null };
 }
 
 // Infobip group ids that mean the message will not be delivered: 2 UNDELIVERABLE, 4 EXPIRED, 5 REJECTED.
 const INFOBIP_FAILED_GROUPS = new Set([2, 4, 5]);
 
-async function sendInfobip({ phone, code }) {
+async function sendInfobip({ phone, code, body }) {
   const host = process.env.INFOBIP_BASE_URL.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
   const sender = (process.env.INFOBIP_SENDER || "").trim();
   const response = await fetch(`https://${host}/sms/2/text/advanced`, {
     method: "POST",
     headers: { Authorization: `App ${process.env.INFOBIP_API_KEY}`, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ messages: [{ destinations: [{ to: phone.replace(/\D/g, "") }], text: message(code), ...(sender && { from: sender }) }] }),
+    body: JSON.stringify({ messages: [{ destinations: [{ to: phone.replace(/\D/g, "") }], text: body || message(code), ...(sender && { from: sender }) }] }),
   });
-  const body = await response.json().catch(() => null);
+  const responseBody = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = body?.requestError?.serviceException?.text || body?.requestError?.serviceException?.messageId || "";
+    const detail = responseBody?.requestError?.serviceException?.text || responseBody?.requestError?.serviceException?.messageId || "";
     throw new Error(`Infobip rejected the request (${response.status}) ${String(detail).slice(0, 200)}`);
   }
-  const status = body?.messages?.[0]?.status;
+  const status = responseBody?.messages?.[0]?.status;
   if (status && INFOBIP_FAILED_GROUPS.has(Number(status.groupId))) {
     throw new Error(`Infobip could not send the message (${status.groupName}: ${String(status.description || status.name || "").slice(0, 150)})`);
   }
+  return { messageId: responseBody?.messages?.[0]?.messageId || null };
 }
 
 const SENDERS = { twilio: sendTwilio, infobip: sendInfobip };
@@ -111,4 +120,31 @@ export async function sendOtp({ phone, channel, code }) {
     }
   }
   throw new Error(failures.join(" | "));
+}
+
+export async function sendSmsMessage({ phone, body }) {
+  const providers = smsProviders();
+  if (!providers.length) throw new Error("No SMS provider is configured.");
+  const failures = [];
+  for (const name of providers) {
+    try {
+      const result = await SENDERS[name]({ phone, channel: "sms", body });
+      if (failures.length) console.info(`Booking SMS sent through ${name} after ${failures.length} failed attempt(s).`);
+      return { provider: name, messageId: result?.messageId || null };
+    } catch (error) {
+      failures.push(error.message);
+      console.error(`Booking SMS send failed through ${name}:`, error.message);
+    }
+  }
+  throw new Error(failures.join(" | "));
+}
+
+export async function sendWhatsAppMessage({ phone, body, mediaUrl, contentSid, contentVariables }) {
+  if (!whatsappReady()) throw new Error("WhatsApp is not configured.");
+  const result = await sendTwilio({ phone, channel: "whatsapp", body, mediaUrl, contentSid, contentVariables });
+  return {
+    provider: "twilio",
+    messageId: result?.messageId || null,
+    mode: contentSid ? "approved_template" : "qr_media",
+  };
 }
