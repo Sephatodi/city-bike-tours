@@ -8,7 +8,7 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { optionalCustomer, requireCustomer } from "@/lib/customer-auth";
 import { releaseCommunityUpload } from "@/lib/community-upload-usage";
 import { sniffImage, sniffVideo } from "@/lib/blob-url";
-import { communityMediaUrl, PRIVATE_COMMUNITY_PREFIX } from "@/lib/community-media";
+import { communityMediaUrl } from "@/lib/community-media";
 import { fireWebhook } from "@/lib/webhook";
 import { SITE_IDS } from "@/lib/review-meta";
 
@@ -20,15 +20,15 @@ const MAX_UPLOADS_PER_RIDER = 6;
 const columns = {
   id: communityPhotos.id, authorName: communityPhotos.authorName, title: communityPhotos.title, story: communityPhotos.story,
   imageUrl: communityPhotos.imageUrl, mediaType: communityPhotos.mediaType, siteId: communityPhotos.siteId, status: communityPhotos.status,
-  downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
+  visibility: communityPhotos.visibility, downloadable: communityPhotos.downloadable, createdAt: communityPhotos.createdAt, userId: communityPhotos.userId,
 };
 
-// Approved media is public; signed-in riders can also see every status of their own uploads.
+// Only approved public media is listed publicly; riders can also see every status of their own uploads.
 export async function GET(request) {
   const { user } = await optionalCustomer(request);
   const visible = user
-    ? or(eq(communityPhotos.status, "approved"), eq(communityPhotos.userId, user.id))
-    : eq(communityPhotos.status, "approved");
+    ? or(and(eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public")), eq(communityPhotos.userId, user.id))
+    : and(eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public"));
   try {
     const rows = await db.select(columns).from(communityPhotos).where(visible).orderBy(desc(communityPhotos.createdAt)).limit(60);
     const [usage] = user
@@ -52,8 +52,8 @@ export async function GET(request) {
 export async function POST(request) {
   const auth = await requireCustomer(request);
   if (auth.error) return auth.error;
-  const blobToken = process.env.BLOB_PRIVATE_READ_WRITE_TOKEN;
-  if (!blobToken) return NextResponse.json({ error: "Private photo uploads aren't switched on yet." }, { status: 501 });
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!blobToken) return NextResponse.json({ error: "Public photo uploads aren't switched on yet." }, { status: 501 });
   if (!rateLimit(`cust-photo:${auth.user.id}:${clientIp(request)}`, 10, 24 * 60 * 60 * 1000)) return NextResponse.json({ error: "You've shared a lot today. Please try again tomorrow." }, { status: 429 });
 
   const form = await request.formData().catch(() => null);
@@ -62,11 +62,9 @@ export async function POST(request) {
   const story = String(form?.get("story") || "").trim().slice(0, 1500);
   const rawSite = String(form?.get("siteId") || "");
   const siteId = SITE_IDS.includes(rawSite) ? rawSite : null;
-  const rawDownloadable = form?.get("downloadable");
   if (!file || typeof file === "string") return NextResponse.json({ error: "Choose a photo or video to upload." }, { status: 400 });
   if (!title) return NextResponse.json({ error: "Give your media a short title." }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "That file is too large (max 4MB)." }, { status: 400 });
-  if (rawDownloadable !== "true" && rawDownloadable !== "false") return NextResponse.json({ error: "Choose whether public downloads are allowed." }, { status: 400 });
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const type = sniffImage(bytes) || sniffVideo(bytes);
@@ -86,8 +84,8 @@ export async function POST(request) {
 
   let url;
   try {
-    ({ url } = await put(`${PRIVATE_COMMUNITY_PREFIX.slice(1)}${id}.${extension}`, Buffer.from(bytes), {
-      access: "private",
+    ({ url } = await put(`city-tours-community/${id}.${extension}`, Buffer.from(bytes), {
+      access: "public",
       contentType: type,
       token: blobToken,
     }));
@@ -101,7 +99,7 @@ export async function POST(request) {
   try {
     [photo] = await db.insert(communityPhotos).values({
       id, userId: auth.user.id, authorName: auth.user.name, title, story: story || null, imageUrl: url,
-      mediaType: type.startsWith("video/") ? "video" : "image", downloadable: rawDownloadable === "true", siteId,
+      mediaType: type.startsWith("video/") ? "video" : "image", visibility: "public", downloadable: true, siteId,
     }).returning(columns);
   } catch (error) {
     await del(url, { token: blobToken }).catch((deleteError) => console.error("Community upload cleanup failed:", deleteError.message));

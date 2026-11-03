@@ -57,7 +57,7 @@ The homepage gallery is built into the website from local/static site data. It i
 ### Gallery — `/gallery`
 
 - "Six sites. One living story.": a 3D roundabout of the six heritage sites (the front slide shows the number and name), details for the site in front, and six route buttons. Each button, and the front photo, opens that site's own page.
-- Rider photo stories and the featured heritage-photo carousel share the top row; the two panels have matching dimensions on desktop. Selecting any site photo in the carousel opens that site's history and photo page. The full-width Gallery follows below with the website photo portfolio, initially showing ten images and a "Load more images" control, plus team-published videos and articles (`GET /api/content`). New rider uploads are stored in a private Vercel Blob store; owners and staff can view pending media through short-lived signed API links, and approved media is delivered through the API.
+- Rider photo stories and the featured heritage-photo carousel share the top row; the two panels have matching dimensions on desktop. Selecting any site photo in the carousel opens that site's history and photo page. The full-width Gallery follows below with the website photo portfolio, initially showing ten images and a "Load more images" control, plus team-published videos and articles (`GET /api/content`). New rider uploads use the public Vercel Blob store and appear in the gallery after staff approval; download permission remains controlled by moderation. Legacy private-store uploads remain accessible through short-lived signed API links.
 
 ### Site gallery — `/gallery/:siteId`
 

@@ -7,7 +7,7 @@ import { isPrivateCommunityBlob } from "@/lib/community-media";
 
 export const dynamic = "force-dynamic";
 
-// Only published team media and approved rider media with downloads enabled are public.
+// Only published team media and approved, public rider media with downloads enabled are public.
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const kind = searchParams.get("kind");
@@ -15,7 +15,7 @@ export async function GET(request) {
   let photo = null;
   if (kind === "community") {
     [photo] = await db.select({ url: communityPhotos.imageUrl, title: communityPhotos.title, mediaType: communityPhotos.mediaType }).from(communityPhotos)
-      .where(and(eq(communityPhotos.id, id), eq(communityPhotos.status, "approved"), eq(communityPhotos.downloadable, true)));
+      .where(and(eq(communityPhotos.id, id), eq(communityPhotos.status, "approved"), eq(communityPhotos.visibility, "public"), eq(communityPhotos.downloadable, true)));
   } else if (kind === "content" && /^\d+$/.test(id)) {
     [photo] = await db.select({ url: siteContent.mediaUrl, title: siteContent.title, mediaType: siteContent.contentType }).from(siteContent)
       .where(and(eq(siteContent.id, Number(id)), eq(siteContent.contentType, "picture"), eq(siteContent.isPublished, true), eq(siteContent.downloadable, true)));

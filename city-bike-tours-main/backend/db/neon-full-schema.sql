@@ -339,6 +339,20 @@ ALTER TABLE reviews ADD COLUMN IF NOT EXISTS show_avatar boolean NOT NULL DEFAUL
 ALTER TABLE "site_content" ADD COLUMN IF NOT EXISTS "include_in_collection" boolean DEFAULT false NOT NULL;
 ALTER TABLE "community_photos" ADD COLUMN IF NOT EXISTS "include_in_collection" boolean DEFAULT false NOT NULL;
 
+-- Migration 0021: 0021_rider_video_upload_preferences
+ALTER TABLE "community_photos" ADD COLUMN IF NOT EXISTS "media_type" text DEFAULT 'image' NOT NULL;
+CREATE TABLE IF NOT EXISTS "community_upload_usage" (
+	"user_id" text PRIMARY KEY NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+	"upload_count" integer DEFAULT 0 NOT NULL
+);
+INSERT INTO "community_upload_usage" ("user_id", "upload_count")
+SELECT "user_id", count(*)::integer FROM "community_photos"
+GROUP BY "user_id"
+ON CONFLICT ("user_id") DO UPDATE SET "upload_count" = EXCLUDED."upload_count";
+
+-- Migration 0022: 0022_rider_photo_visibility
+ALTER TABLE "community_photos" ADD COLUMN IF NOT EXISTS "visibility" text DEFAULT 'public' NOT NULL;
+
 -- Mark all journaled migrations as applied so the app migrator will not replay them.
 INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('704633beae086a3b62e3c6243702f8a99bf1daa382dab35a63609037915678f0', 1788337777599), -- 0000_stale_felicia_hardy
@@ -361,6 +375,8 @@ INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('308347471e55bfd4a451a773658ca8ebe6cfc5092e240e3a4928db5dbc3d2cec', 1793400001000), -- 0017_community_photo_site
   ('f9e0f2a0c1ef340f915d747aae83ab9676332ee1690c2c0c7b5d06d4c102853e', 1793400002000), -- 0018_review_vote_indexes
   ('ea2adc8bb33682cf1de8d3029a9e75853b802436086c7d48b6bd3fee635f3b47', 1793500000000), -- 0019_review_presentation
-  ('fc19452d5619f167acf24f497ee18eb12a7c17fc6c60f670a311a8c59db803a2', 1793610114829); -- 0020_complete_collection_approvals
+  ('fc19452d5619f167acf24f497ee18eb12a7c17fc6c60f670a311a8c59db803a2', 1793610114829), -- 0020_complete_collection_approvals
+  ('4de3f10c00e4b6cc476ac069bf47043e342ecb01deadb4c48cc3d61883af64f3', 1793687700000), -- 0021_rider_video_upload_preferences
+  ('c8ede44e8c1cc58ccdcfd2d8ab33d7fcaba7038788117d459d9ba665aa909156', 1793701873725); -- 0022_rider_photo_visibility
 
 COMMIT;

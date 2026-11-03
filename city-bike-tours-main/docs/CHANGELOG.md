@@ -23,4 +23,4 @@ SMS sign-in codes can now be sent through Infobip as well as Twilio, with automa
 ## November 2026 update
 
 1. Heritage trail: cycling-street route generation, an animated bicycle with per-stop pauses, accessible playback controls, and a compact rider-photo upload section at the top of the Gallery.
-2. New rider photo and video uploads use a separate private Vercel Blob store; approved gallery media is served through the backend.
+2. New rider photo and video uploads use the public Vercel Blob store and appear in the Gallery after staff approval; download permission remains controlled by moderation.

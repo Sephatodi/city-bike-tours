@@ -32,7 +32,7 @@ export default function SiteGalleryPage() {
   }, [site]);
 
   const load = useCallback(async () => {
-    try { setRiderPhotos(((await api("/api/community/photos")).photos || []).filter((photo) => photo.siteId === siteId && photo.status === "approved")); }
+    try { setRiderPhotos(((await api("/api/community/photos")).photos || []).filter((photo) => photo.siteId === siteId && photo.status === "approved" && photo.visibility !== "private")); }
     catch { /* the section simply stays hidden */ }
   }, [api, siteId]);
   usePolling(load, 120000, Boolean(site));

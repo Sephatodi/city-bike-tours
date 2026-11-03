@@ -156,7 +156,6 @@ function UploadForm({ onUploaded, remainingUploads }) {
       form.append("title", title);
       form.append("story", story);
       if (siteId) form.append("siteId", siteId);
-      form.append("downloadable", "true");
       const result = await api("/api/community/photos", { method: "POST", form });
       setThanks(result.message || "Thank you! Your media will appear once our team has looked at it.");
       setFile(null); setTitle(""); setStory(""); setSiteId("");
@@ -186,7 +185,7 @@ function UploadForm({ onUploaded, remainingUploads }) {
       {error && <p role="alert" className="auth-error">{error}</p>}
       {thanks && <p role="status" className="auth-success">{thanks}</p>}
       <button type="submit" className="auth-primary" disabled={busy || remainingUploads === null || remainingUploads <= 0}>{busy ? "Uploading…" : `Share my ${file?.type.startsWith("video/") ? "video" : "photo"}`}</button>
-      <p className="connect-muted" style={{ fontSize: "0.75rem" }}>Photos and videos are checked by our team before they appear, and are downloadable after approval. Images are resized automatically; videos must be 4MB or smaller. Only share media you took or have permission to share.</p>
+      <p className="connect-muted" style={{ fontSize: "0.75rem" }}>Uploads are public and will appear in the gallery only after our team approves them. Approved media may be downloadable. Images are resized automatically; videos must be 4MB or smaller. Only share media you took or have permission to share.</p>
     </form>
   );
 }
@@ -217,8 +216,8 @@ function RiderStories() {
   }
 
   const items = useMemo(() => (photos || []).map((p) => ({
-    key: p.id, kind: "community", id: p.id, src: p.imageUrl, mediaType: p.mediaType || "image", title: p.title, story: p.story, credit: p.authorName, postedAt: p.createdAt,
-    downloadable: p.status === "approved", status: p.status, mine: p.mine,
+    key: p.id, kind: "community", id: p.id, src: p.imageUrl, mediaType: p.mediaType || "image", title: p.title, story: p.story, credit: p.authorName, postedAt: p.createdAt, visibility: p.visibility || "public",
+    downloadable: p.status === "approved" && p.visibility !== "private" && p.downloadable, status: p.status, mine: p.mine,
   })), [photos]);
 
   return (
@@ -244,6 +243,7 @@ function RiderStories() {
                 {item.story && <p>{item.story}</p>}
                 {item.postedAt && <Stamp value={item.postedAt} className="gallery-stamp" />}
                 <em>— {item.credit}{item.status !== "approved" ? ` · ${item.status === "pending" ? "waiting for approval" : "not approved"}` : ""}</em>
+                {item.mine && <span className="rr-rider-visibility">{item.visibility === "private" ? "Private · only you and the team can see this" : "Public · appears after approval"}</span>}
                 <div className="rr-rider-card-actions">
                   {item.downloadable && <button type="button" className="rr-photo-download" onClick={() => download(item)}>Download</button>}
                   {item.mine && <button type="button" className="auth-link" onClick={() => remove(item.id)}>Remove my upload</button>}

@@ -150,7 +150,7 @@ export default function Inbox({ initialTab = "enquiries" }) {
   return (
     <>
       <PageTop title={initialTab === "photos" ? "Rider photo approvals" : "Inbox & reviews"} actions={can("export:read") && ["enquiries", "reviews", "subscribers"].includes(tab) && <a className="btn" href={`/api/admin/export?type=${tab}`}><Icon name="download" size={16} /> Export {tab} (CSV)</a>}>
-        {initialTab === "photos" ? "Review rider-uploaded photos and videos, decide which media appears in the gallery, and override each rider's public-download preference." : "Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates."}
+        {initialTab === "photos" ? "Review rider-uploaded photos and videos, honor each rider's public/private choice, decide which public media appears in the gallery, and manage download permissions." : "Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates."}
       </PageTop>
       <div className="adm-card">
         <div className="adm-toolbar">
@@ -223,10 +223,10 @@ export default function Inbox({ initialTab = "enquiries" }) {
                       <small>{x.mediaType === "video" ? "Video" : "Photo"}</small>
                     </td>
                     <td style={{ maxWidth: 420 }}><span className="strong">{x.title}</span><small>{x.authorName} · {ago(x.createdAt)}</small>{x.story && <div className="muted" style={{ marginTop: 4 }}>{x.story.length > 160 ? `${x.story.slice(0, 160)}…` : x.story}</div>}</td>
-                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Public downloads enabled" : "Display only"}</small></td>
+                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.visibility === "private" ? "Private · rider and team only" : "Public · appears after approval"}</small><br /><small>{x.visibility === "private" ? "Not downloadable" : x.downloadable ? "Public downloads enabled" : "Display only"}</small></td>
                     {write && <td><div className="row-actions">
-                      <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Public downloads turned off." : "Public downloads enabled.")}>{x.downloadable ? "Disable downloads" : "Allow public downloads"}</button>
-                      {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows in the rider gallery.")}>Approve</button>}
+                      {x.visibility !== "private" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Public downloads turned off." : "Public downloads enabled.")}>{x.downloadable ? "Disable downloads" : "Allow public downloads"}</button>}
+                      {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "approved" }, x.visibility === "private" ? "Approved. It remains visible only to the rider and team." : "Approved. It now shows in the rider gallery.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}
                       <button className="btn btn-sm btn-danger btn-icon" disabled={busy} aria-label={`Delete photo ${x.title}`} onClick={() => window.confirm("Delete this photo for good?") && act(`/api/admin/community/${x.id}`, "DELETE", undefined, "Deleted.")}><Icon name="trash" size={13} /></button>

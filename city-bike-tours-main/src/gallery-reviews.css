@@ -370,6 +370,7 @@
 .rr-gallery-page .rr-rider-masonry-copy strong{font-family:var(--font-display),Fraunces,Georgia,serif;font-size:1.1rem;overflow-wrap:anywhere}
 .rr-gallery-page .rr-rider-masonry-copy p{font-size:.92rem;line-height:1.6;overflow-wrap:anywhere}
 .rr-gallery-page .gallery-stamp,.rr-gallery-page .rr-rider-masonry-copy em{color:rgba(245,237,217,.72);font-size:.78rem;font-style:normal;overflow-wrap:anywhere}
+.rr-gallery-page .rr-rider-visibility{color:#D4A017;font-size:.76rem;line-height:1.5}
 .rr-gallery-page .rr-rider-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
 .rr-gallery-page .rr-rider-card-actions .rr-photo-download{width:auto;margin:0;padding:.5rem .85rem}
 .rr-gallery-page .rr-rider-card-actions .auth-link{min-height:2.5rem;color:#D4A017}

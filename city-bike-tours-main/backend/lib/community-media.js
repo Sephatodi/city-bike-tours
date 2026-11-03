@@ -15,7 +15,7 @@ export function isPrivateCommunityBlob(url) {
 
 export function communityMediaUrl(request, photo) {
   const mediaUrl = new URL(`/api/community/photos/${encodeURIComponent(photo.id)}/media`, request.nextUrl.origin);
-  if (photo.status !== "approved") {
+  if (photo.status !== "approved" || photo.visibility === "private") {
     const secret = signingSecret();
     if (!secret) return "";
     const expires = Math.floor(Date.now() / 1000) + SIGNED_MEDIA_TTL_SECONDS;
