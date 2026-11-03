@@ -3,7 +3,7 @@ import Icon from "./Icon";
 
 // A looping "roundabout" carousel: the photo in front is large and its neighbours sweep round behind it.
 // Arrows, dots, swipe, keyboard and slow auto-rotation (paused on hover) all work; it loops forever.
-export default function RoundaboutCarousel({ items, label, onOpen, onDownload, renderCaption, renderOverlay, onActiveChange, paused = false }) {
+export default function RoundaboutCarousel({ items, label, onOpen, onDownload, renderCaption, renderOverlay, onActiveChange, openOnAnyPhoto = false, paused = false }) {
   const [active, setActive] = useState(0);
   const [hover, setHover] = useState(false);
   const [inView, setInView] = useState(true);
@@ -95,8 +95,8 @@ export default function RoundaboutCarousel({ items, label, onOpen, onDownload, r
                 type="button"
                 className="roundabout-photo"
                 tabIndex={offset === 0 ? 0 : -1}
-                aria-label={offset === 0 ? `Open ${item.title}` : `Show ${item.title}`}
-                onClick={() => (offset === 0 ? onOpen?.(index) : setActive((value) => value + offset))}
+                aria-label={openOnAnyPhoto ? `Read site history: ${item.title}` : offset === 0 ? `Open ${item.title}` : `Show ${item.title}`}
+                onClick={() => (offset === 0 || openOnAnyPhoto ? onOpen?.(index) : setActive((value) => value + offset))}
               >
                 <img src={item.src} alt={item.title} loading="lazy" draggable="false" />
                 {offset === 0 && renderOverlay && <span className="roundabout-overlay">{renderOverlay(item, index)}</span>}
