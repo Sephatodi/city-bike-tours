@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useBookingActions, unifyBookings } from "./booking-actions";
+import { notificationSummary, useBookingActions, unifyBookings } from "./booking-actions";
 import { Badge, DataGate, Empty, Icon, Modal, PageTop, api, niceDate, niceTime, useCopy, useDash, useToast } from "./ui";
 
 const TABS = [
@@ -11,7 +11,7 @@ const TABS = [
   { id: "closed", label: "Declined or cancelled" },
 ];
 
-// QR + link + a free WhatsApp click-to-chat button. Staff press Send in WhatsApp themselves, so no Twilio is needed.
+// QR + ride-pass link + manual WhatsApp fallback.
 function RidePass({ row, onAuto, busy }) {
   const copy = useCopy();
   const [pass, setPass] = useState(null);
@@ -48,8 +48,8 @@ function RidePass({ row, onAuto, busy }) {
     `Hi ${row.name}! 🚲 Your City Bike Tours booking is confirmed.\n\n` +
     `📅 ${niceDate(row.date, { weekday: "long", day: "numeric", month: "long" })}${row.time ? ` at ${row.time}` : ""}\n` +
     `🚴 ${row.route}\n👥 ${row.riders} rider${row.riders === 1 ? "" : "s"}\n\n` +
-    `🎟️ Your ride pass. Show the QR code when you arrive:\n${pass.ticketUrl}\n\n` +
-    `(QR code attached separately)`;
+    `${pass.confirmationCode ? `Booking code: ${pass.confirmationCode}\n` : ""}` +
+    `🎟️ Your ride pass and QR code:\n${pass.ticketUrl}`;
 
   const downloadQr = () => {
     const link = document.createElement("a");
@@ -61,10 +61,10 @@ function RidePass({ row, onAuto, busy }) {
   const resendPass = async () => {
     setResending(true);
     try {
-      await api(`/api/admin/booking-requests/${row.id}`, { method: "PATCH", body: { status: "confirmed", resendConfirmation: true } }, "Could not resend the ride pass.");
-      // Refresh pass data to get updated waLink/QR
+      const result = await api(`/api/admin/booking-requests/${row.id}`, { method: "PATCH", body: { status: "confirmed", resendConfirmation: true } }, "Could not resend the confirmation.");
       await fetchPass();
-      toast("Ride pass refreshed. Use the buttons below to send, copy, or download.");
+      const failed = [result.notifications?.sms, result.notifications?.whatsapp].some((channel) => channel?.status === "failed");
+      toast(notificationSummary(result.notifications), failed ? "error" : "ok");
     } catch (e) {
       toast(e.message, "error");
     } finally {
@@ -83,14 +83,9 @@ function RidePass({ row, onAuto, busy }) {
         <button className="btn btn-sm" onClick={() => copy(pass.ticketUrl, "Pass link copied.")}><Icon name="copy" size={13} /> Copy link</button>
         <button className="btn btn-sm" onClick={downloadQr}><Icon name="download" size={13} /> Download QR</button>
         {row.source === "request" && row.status === "confirmed" && (
-          <>
-            <button className="btn btn-sm" onClick={resendPass} disabled={resending}>
-              {resending ? "Resending…" : "Resend pass"}
-            </button>
-            {pass.messagingConfigured && (
-              <button className="btn btn-sm" disabled={busy} onClick={onAuto}>Send automatically (Twilio)</button>
-            )}
-          </>
+          <button className="btn btn-sm" disabled={busy || resending} onClick={pass.messagingConfigured ? onAuto : resendPass}>
+            {resending || busy ? "Sending…" : pass.messagingConfigured ? "Resend confirmation" : "Refresh ride pass"}
+          </button>
         )}
       </div>
     </div>
@@ -159,7 +154,7 @@ function Body() {
           <a className="btn" href="/api/admin/export?type=account-bookings"><Icon name="download" size={16} /> Account bookings (CSV)</a>
         </>}
       >
-        Website requests and account bookings in one list. Confirming a request sends the rider their ride pass on WhatsApp.
+        Confirmed website requests submit a booking code by configured SMS and the ride-pass QR by configured WhatsApp. Email delivery is not configured.
       </PageTop>
 
       <div className="adm-card">

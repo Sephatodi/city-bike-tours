@@ -36,6 +36,7 @@ export async function POST(request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input." }, { status: 400 });
   }
   const { dateIso, ...rest } = parsed.data;
+  const email = rest.email || "";
   const phone = normalizePhone(rest.phone);
   if (!phone) {
     return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
@@ -60,7 +61,7 @@ export async function POST(request) {
 
     const [created] = await db
       .insert(bookingRequests)
-      .values({ id: newId(), ...rest, phone, rideDate: dateIso, status: "pending" })
+      .values({ id: newId(), ...rest, email: email || null, phone, rideDate: dateIso, status: "pending" })
       .returning({ id: bookingRequests.id, status: bookingRequests.status });
 
     const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, rest.routeId));

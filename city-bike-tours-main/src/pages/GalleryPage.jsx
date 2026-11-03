@@ -8,6 +8,7 @@ import Stamp from "../components/Stamp";
 import { SITES } from "../data";
 import { useCustomer } from "../auth/CustomerAuth";
 import { useLiveData } from "../hooks/LiveDataContext";
+import { usePolling } from "../hooks/usePolling";
 import { downloadMedia } from "../utils/download";
 import { prepareImage } from "../utils/images";
 
@@ -207,7 +208,7 @@ function RiderStories() {
     }
     catch (err) { setFailed(err.message); }
   }, [api]);
-  useEffect(() => { void load(); }, [load, isSignedIn]);
+  usePolling(load, 60000);
 
   async function remove(id) {
     if (!window.confirm("Remove this media from the gallery?")) return;

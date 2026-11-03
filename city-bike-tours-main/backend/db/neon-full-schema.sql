@@ -353,6 +353,11 @@ ON CONFLICT ("user_id") DO UPDATE SET "upload_count" = EXCLUDED."upload_count";
 -- Migration 0022: 0022_rider_photo_visibility
 ALTER TABLE "community_photos" ADD COLUMN IF NOT EXISTS "visibility" text DEFAULT 'public' NOT NULL;
 
+-- Migration 0023: 0023_booking_confirmation_codes
+ALTER TABLE "website_booking_requests" ADD COLUMN IF NOT EXISTS "confirmation_code" text;
+CREATE UNIQUE INDEX IF NOT EXISTS "website_booking_requests_confirmation_code_unique"
+  ON "website_booking_requests" ("confirmation_code");
+
 -- Mark all journaled migrations as applied so the app migrator will not replay them.
 INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('704633beae086a3b62e3c6243702f8a99bf1daa382dab35a63609037915678f0', 1788337777599), -- 0000_stale_felicia_hardy
@@ -377,6 +382,7 @@ INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('ea2adc8bb33682cf1de8d3029a9e75853b802436086c7d48b6bd3fee635f3b47', 1793500000000), -- 0019_review_presentation
   ('fc19452d5619f167acf24f497ee18eb12a7c17fc6c60f670a311a8c59db803a2', 1793610114829), -- 0020_complete_collection_approvals
   ('4de3f10c00e4b6cc476ac069bf47043e342ecb01deadb4c48cc3d61883af64f3', 1793687700000), -- 0021_rider_video_upload_preferences
-  ('c8ede44e8c1cc58ccdcfd2d8ab33d7fcaba7038788117d459d9ba665aa909156', 1793701873725); -- 0022_rider_photo_visibility
+  ('c8ede44e8c1cc58ccdcfd2d8ab33d7fcaba7038788117d459d9ba665aa909156', 1793701873725), -- 0022_rider_photo_visibility
+  ('e966c96ae0b84ed1c3b62e04560b2ddb57a959f71b6f7941feb97ec497f66fd0', 1793706075288); -- 0023_booking_confirmation_codes
 
 COMMIT;
