@@ -19,3 +19,8 @@
 ## SMS codes through Infobip
 
 SMS sign-in codes can now be sent through Infobip as well as Twilio, with automatic fallback to the next configured provider (`SMS_PROVIDER_ORDER`). WhatsApp codes are unchanged. Guide: `docs/SMS-CODES-SETUP.md`.
+
+## November 2026 update
+
+1. Heritage trail: cycling-street route generation, an animated bicycle with per-stop pauses, accessible playback controls, and a compact rider-photo upload section at the top of the Gallery.
+2. New rider photo and video uploads use a separate private Vercel Blob store; approved gallery media is served through the backend.

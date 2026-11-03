@@ -40,3 +40,4 @@ The older pages use forest green and a gold of `#D4A017`, a cream text colour `#
 - **Motion:** respect `prefers-reduced-motion`; the rr theme switches animation off.
 - **Accessibility:** visible focus rings, 44px touch targets, AA contrast, labels on every control, `aria-pressed` on toggles, `aria-current` on the active navigation item.
 - **Passwords** always have a Show / Hide button.
+- **Heritage trail map:** the optional street-route JSON is dynamically loaded only on `/heritage-trail`. A gold bicycle and ridden-progress line animate along the orange route, pausing at each site; the home and booking maps retain their original straight-line route. Playback pauses when the tab or map is out of view, and reduced-motion users must start it manually. Keep route-provider attribution visible beside the map controls.

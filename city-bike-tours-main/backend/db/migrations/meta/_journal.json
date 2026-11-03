@@ -134,6 +134,13 @@
       "when": 1792745600000,
       "tag": "0018_photo_site",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793687700000,
+      "tag": "0021_rider_video_upload_preferences",
+      "breakpoints": true
     }
   ]
 }

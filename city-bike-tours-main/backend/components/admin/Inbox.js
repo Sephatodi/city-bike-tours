@@ -150,7 +150,7 @@ export default function Inbox({ initialTab = "enquiries" }) {
   return (
     <>
       <PageTop title={initialTab === "photos" ? "Rider photo approvals" : "Inbox & reviews"} actions={can("export:read") && ["enquiries", "reviews", "subscribers"].includes(tab) && <a className="btn" href={`/api/admin/export?type=${tab}`}><Icon name="download" size={16} /> Export {tab} (CSV)</a>}>
-        {initialTab === "photos" ? "Review rider-uploaded photos, decide which ones appear in the gallery, and control whether signed-in riders may download each approved photo." : "Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates."}
+        {initialTab === "photos" ? "Review rider-uploaded photos and videos, decide which media appears in the gallery, and override each rider's public-download preference." : "Contact-form questions, rider chats, reviews to approve and answer, rider photos to approve, and people who asked for updates."}
       </PageTop>
       <div className="adm-card">
         <div className="adm-toolbar">
@@ -211,14 +211,21 @@ export default function Inbox({ initialTab = "enquiries" }) {
 
             {tab === "photos" && (data.photoError ? <div className="adm-alert bad" role="alert"><Icon name="alert" /><div>{data.photoError} (If you just updated the site, run the database migration.)</div></div> : data.photos.length ? (
               <div className="adm-table-wrap"><table>
-                <thead><tr><th>Photo</th><th>Rider & story</th><th>Status</th>{write && <th aria-label="Actions" />}</tr></thead>
+                <thead><tr><th>Media</th><th>Rider & story</th><th>Status</th>{write && <th aria-label="Actions" />}</tr></thead>
                 <tbody>{data.photos.map((x) => (
                   <tr key={x.id}>
-                    <td><a href={x.imageUrl} target="_blank" rel="noreferrer"><img src={x.imageUrl} alt={x.title} style={{ width: 96, height: 72, objectFit: "cover", borderRadius: 6 }} /></a></td>
+                    <td>
+                      <a href={x.imageUrl} target="_blank" rel="noreferrer">
+                        {x.mediaType === "video"
+                          ? <video src={x.imageUrl} controls preload="metadata" aria-label={x.title} style={{ width: 120, height: 72, objectFit: "cover", borderRadius: 6 }} />
+                          : <img src={x.imageUrl} alt={x.title} style={{ width: 96, height: 72, objectFit: "cover", borderRadius: 6 }} />}
+                      </a>
+                      <small>{x.mediaType === "video" ? "Video" : "Photo"}</small>
+                    </td>
                     <td style={{ maxWidth: 420 }}><span className="strong">{x.title}</span><small>{x.authorName} · {ago(x.createdAt)}</small>{x.story && <div className="muted" style={{ marginTop: 4 }}>{x.story.length > 160 ? `${x.story.slice(0, 160)}…` : x.story}</div>}</td>
-                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Downloads enabled" : "Downloads disabled"}</small></td>
+                    <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge><br /><small>{x.downloadable ? "Public downloads enabled" : "Display only"}</small></td>
                     {write && <td><div className="row-actions">
-                      <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Downloads turned off." : "Signed-in riders can download it.")}>{x.downloadable ? "Disable downloads" : "Enable downloads"}</button>
+                      <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { downloadable: !x.downloadable }, x.downloadable ? "Public downloads turned off." : "Public downloads enabled.")}>{x.downloadable ? "Disable downloads" : "Allow public downloads"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows in the rider gallery.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/community/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}
@@ -226,7 +233,7 @@ export default function Inbox({ initialTab = "enquiries" }) {
                     </div></td>}
                   </tr>))}</tbody>
               </table></div>
-            ) : <Empty title="No rider photos yet">Photos and stories riders upload to the gallery wait here until you approve them.</Empty>)}
+            ) : <Empty title="No rider media yet">Photos, videos and stories riders upload to the gallery wait here until you approve them.</Empty>)}
 
             {tab === "subscribers" && (data.subscribers.length ? (
               <div className="adm-table-wrap"><table>

@@ -52,11 +52,12 @@ The homepage gallery is built into the website from local/static site data. It i
 ### Heritage trail — `/heritage-trail`
 
 - "Six stops. Six perspectives." Six folders side by side; clicking one opens it (the others fold aside) with a photo roundabout, the story, address and optional videos. Previous, Next, Close and Escape work; each opened folder links to `/gallery/:siteId`.
+- The map dynamically loads the generated cycling-street route, animates a bicycle and ridden-progress line, and pauses at each heritage site. Play/Pause, Restart, speed, Follow, site selection and Reset view are available. Playback pauses when the page is hidden or the map is off-screen; reduced-motion users start playback manually. If route data is unavailable, the map shows its original straight-line route with no moving bicycle. Home and booking maps never enable trail playback.
 
 ### Gallery — `/gallery`
 
 - "Six sites. One living story.": a 3D roundabout of the six heritage sites (the front slide shows the number and name), details for the site in front, and six route buttons. Each button, and the front photo, opens that site's own page.
-- Food stops near the trail, the team's published pictures, videos and articles (`GET /api/content`), and rider photo stories with an upload form (optional "Which stop?").
+- Rider photo stories and the featured heritage-photo carousel share the top row; the two panels have matching dimensions on desktop. Selecting any site photo in the carousel opens that site's history and photo page. The full-width Gallery follows below with the website photo portfolio, initially showing ten images and a "Load more images" control, plus team-published videos and articles (`GET /api/content`). New rider uploads are stored in a private Vercel Blob store; owners and staff can view pending media through short-lived signed API links, and approved media is delivered through the API.
 
 ### Site gallery — `/gallery/:siteId`
 

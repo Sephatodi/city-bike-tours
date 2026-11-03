@@ -6,7 +6,9 @@ import { db } from "@/db/client";
 import { communityPhotos } from "@/db/schema";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { releaseCommunityUpload } from "@/lib/community-upload-usage";
 import { isOurBlob } from "@/lib/blob-url";
+import { isPrivateCommunityBlob } from "@/lib/community-media";
 
 export async function PATCH(request, { params }) {
   const guard = await requirePermission("inbox:write");
@@ -25,7 +27,12 @@ export async function DELETE(_request, { params }) {
   if (guard.error) return guard.error;
   const [removed] = await db.delete(communityPhotos).where(eq(communityPhotos.id, params.id)).returning();
   if (removed) {
-    if (isOurBlob(removed.imageUrl)) await del(removed.imageUrl).catch((error) => console.error("Blob delete failed:", error.message));
+    if (isPrivateCommunityBlob(removed.imageUrl)) {
+      await del(removed.imageUrl, { token: process.env.BLOB_PRIVATE_READ_WRITE_TOKEN }).catch((error) => console.error("Private Blob delete failed:", error.message));
+    } else if (isOurBlob(removed.imageUrl, ["/city-tours-community/"])) {
+      await del(removed.imageUrl).catch((error) => console.error("Blob delete failed:", error.message));
+    }
+    await releaseCommunityUpload(removed.userId);
     await logAudit(guard.staff, "community.photo_delete", `Deleted "${removed.title}" by ${removed.authorName}`, { targetType: "community_photo", targetId: removed.id });
   }
   return NextResponse.json({ success: true });

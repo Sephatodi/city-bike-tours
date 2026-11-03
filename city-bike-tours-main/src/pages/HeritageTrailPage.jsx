@@ -15,7 +15,7 @@ export default function HeritageTrailPage() {
         </p>
         <div className="trail-hero-facts" aria-label="Trail details">
           <span><strong>6</strong> heritage sites</span>
-          <span><strong>~12 km</strong> by bicycle</span>
+          <span><strong>~8.8 km</strong> by bicycle</span>
           <span><strong>Main Mall</strong> start and finish</span>
         </div>
       </header>
@@ -29,7 +29,7 @@ export default function HeritageTrailPage() {
           <p>Explore the six stops on the map. Select a marker or a site name to bring that place into focus.</p>
         </div>
         <div className="trail-map-frame">
-          <HeritageMap height="min(64vh, 600px)" />
+          <HeritageMap height="min(64vh, 600px)" trail />
         </div>
       </section>
 

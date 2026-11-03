@@ -14,7 +14,6 @@ const TOUR_LABELS = { complete: "Heritage City Ride", loop: "Casual Saturday", o
 const HIGHLIGHTS = ["Expert guide", "Civic architecture", "Beginner friendly", "Safety", "Bike quality", "Value for money"];
 const SITE_NAME = Object.fromEntries(SITES.map((site) => [site.id, site.name]));
 const RATING_WORDS = ["", "Poor", "Fair", "Good", "Very good", "Exceptional"];
-const initials = (name = "") => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() || "").join("") || "?";
 
 // ─── Score summary (real numbers only) ───────────────────────────────────────
 function ScoreCard({ summary }) {
@@ -50,7 +49,7 @@ function ScoreCard({ summary }) {
 }
 
 // ─── One review ──────────────────────────────────────────────────────────────
-function ReviewCard({ review, first, isSignedIn, onVote }) {
+function ReviewCard({ review, isSignedIn, onVote }) {
   const [shared, setShared] = useState("");
   const stops = (review.stops || []).filter((id) => SITE_NAME[id]);
 
@@ -64,17 +63,20 @@ function ReviewCard({ review, first, isSignedIn, onVote }) {
   }
 
   return (
-    <article id={`review-${review.id}`} className={`rr-plate rr-pad rr-review ${first ? "rr-review-first" : ""}`}>
+    <article id={`review-${review.id}`} tabIndex={0} className="rr-plate rr-pad rr-review">
       <header className="rr-review-head">
-        <span className="rr-avatar" aria-hidden="true">{initials(review.name)}</span>
         <div className="rr-review-who">
           <h3 className="rr-name">{review.name}{review.verified && <Verified />}</h3>
           <p>{[review.verified && "Verified rider", review.riderOrigin].filter(Boolean).join(" · ") || "Rider"}</p>
         </div>
-        <Stamp value={review.createdAt} compact className="rr-when" />
+        <span className="rr-review-stars" role="img" aria-label={`${review.rating} out of 5 stars`}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <RrIcon key={star} name="star" size={18} className={star <= review.rating ? "on" : "off"} filled={star <= review.rating} />
+          ))}
+        </span>
       </header>
       <div className="rr-review-meta">
-        <StarRow value={review.rating} size={17} />
+        <Stamp value={review.createdAt} compact className="rr-when" />
         {review.tour && <span className="rr-tag">{TOUR_LABELS[review.tour] || review.tour}</span>}
       </div>
       <p className="rr-comment">“{review.comment}”</p>
@@ -153,7 +155,7 @@ function Feed({ reviews, loaded, failed, isSignedIn, onVote }) {
         ))}
       </div>
       <div className="rr-cards" aria-live="polite">
-        {visible.map((review, index) => <ReviewCard key={review.id} review={review} first={index === 0} isSignedIn={isSignedIn} onVote={onVote} />)}
+        {visible.map((review) => <ReviewCard key={review.id} review={review} isSignedIn={isSignedIn} onVote={onVote} />)}
       </div>
     </section>
   );
@@ -388,7 +390,7 @@ export default function ConnectPage() {
   }
 
   return (
-    <main className="rr rr-bg">
+    <main className="rr rr-bg rr-connect-page">
       <div className="rr-wrap rr-grid">
         <div className="rr-col-main">
           <section className="rr-hero">

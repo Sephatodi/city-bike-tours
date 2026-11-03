@@ -18,9 +18,13 @@ export default function Lightbox({ items, index, onChange, onClose, onDownload }
 
   if (!item) return null;
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={item.title} className="lightbox" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-label={item.title} className={`lightbox ${item.mediaType === "video" ? "lightbox-video" : ""}`} onClick={onClose}>
       <figure onClick={(event) => event.stopPropagation()}>
-        <img src={item.src} alt={item.title} />
+        {item.mediaType === "video" ? (
+          <video src={item.src} controls autoPlay playsInline aria-label={item.title} />
+        ) : (
+          <img src={item.src} alt={item.title} />
+        )}
         <figcaption>
           <div>
             <strong>{item.title}</strong>
