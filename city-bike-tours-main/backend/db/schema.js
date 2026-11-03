@@ -230,8 +230,14 @@ export const communityPhotos = pgTable("community_photos", {
   title: text("title").notNull(),
   story: text("story"),
   imageUrl: text("image_url").notNull(),
+  mediaType: text("media_type").notNull().default("image"), // image | video
   status: text("status").notNull().default("pending"), // pending | approved | rejected
-  downloadable: boolean("downloadable").notNull().default(false), // staff allow riders to download it
+  downloadable: boolean("downloadable").notNull().default(false), // rider preference, subject to staff moderation
   siteId: text("site_id"), // which heritage site the photo shows (optional)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const communityUploadUsage = pgTable("community_upload_usage", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  count: integer("upload_count").notNull().default(0),
 });

@@ -23,8 +23,11 @@ export default function PricingSection() {
   return (
     <section id="included" className="pricing-section" aria-labelledby="pricing-heading">
       <div className="schedule-section-heading">
-        <div><p className="schedule-section-kicker">COMPARE THE RIDES</p><h2 id="pricing-heading">What's included</h2></div>
-        <p>Cycling lessons for kids and adults are included with the Casual Saturday ride, with no separate lesson fee.</p>
+        <div>
+          <p className="schedule-section-kicker">COMPARE THE RIDES</p>
+          <h2 id="pricing-heading">What's included</h2>
+          <p className="pricing-section-intro">Cycling lessons for kids and adults are included with the Casual Saturday ride, with no separate lesson fee.</p>
+        </div>
       </div>
       <div>
         {/* Feature comparison table */}

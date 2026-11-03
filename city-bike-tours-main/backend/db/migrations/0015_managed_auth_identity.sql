@@ -1,5 +1,5 @@
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "managed_auth_id" text;
-
+--> statement-breakpoint
 DO $$
 BEGIN
   ALTER TABLE "users"

@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router";
 import Footer from "../components/Footer";
 import HeritageMap from "../components/HeritageMap";
 import RoundaboutCarousel from "../components/RoundaboutCarousel";
-import FoodStops from "../components/FoodStops";
 import Icon from "../components/Icon";
 import { SITES } from "../data";
 import { ROUTES_DATA } from "../data";
@@ -234,7 +233,7 @@ export default function BookingPage() {
             </p>
             <div className="routes-intro-points">
               <span><strong>6</strong> heritage stops</span>
-              <span><strong>12 km</strong> city-centre loop</span>
+              <span><strong>8.8 km</strong> city-centre loop</span>
               <span><strong>All levels</strong> welcome</span>
             </div>
           </div>
@@ -318,12 +317,6 @@ export default function BookingPage() {
             renderCaption={(item) => (<><strong>{item.title}</strong><span>{item.story}</span><em>See the full trail →</em></>)}
           />
         </div>
-
-        <FoodStops
-          kicker="BEFORE OR AFTER YOUR RIDE"
-          title="Food stops & spit-stop spots"
-          intro="Cafés and eateries close to the trail, so you can refuel before, during or after the ride."
-        />
 
       </div>
 

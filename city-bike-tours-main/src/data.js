@@ -131,6 +131,32 @@ export const SITES = [
   },
 ];
 
+export const MAIN_MALL = [-24.6553, 25.9086];
+
+// Visiting order used by the map polyline, from Main Mall and back again.
+export const LOOP_ORDER = ["monument", "parliament", "enclave", "gallery", "museum", "archives"];
+
+const sitesById = Object.fromEntries(SITES.map((site) => [site.id, site]));
+const radians = (degrees) => (degrees * Math.PI) / 180;
+const segmentDistanceKm = ([lat1, lon1], [lat2, lon2]) => {
+  const startLat = radians(lat1);
+  const endLat = radians(lat2);
+  const latitudeDelta = endLat - startLat;
+  const longitudeDelta = radians(lon2) - radians(lon1);
+  const haversine =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(startLat) * Math.cos(endLat) * Math.sin(longitudeDelta / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(haversine));
+};
+
+// Match the map's straight polyline segments; this is not road-routing mileage.
+const mapRoutePoints = [MAIN_MALL, ...LOOP_ORDER.map((id) => sitesById[id].coords), MAIN_MALL];
+const mapRouteDistanceKm = mapRoutePoints.slice(1).reduce(
+  (total, point, index) => total + segmentDistanceKm(mapRoutePoints[index], point),
+  0,
+);
+const mapRouteDistance = `~${mapRouteDistanceKm.toFixed(1)} km`;
+
 export const ROUTES_DATA = [
   {
     id: "complete",
@@ -138,7 +164,7 @@ export const ROUTES_DATA = [
     desc: "A guided ride through Gaborone's heritage sites, with a local guide sharing the stories behind each landmark.",
     price: 250,
     duration: "1 hr – 1 hr 30 min",
-    distance: "~12 km",
+    distance: mapRouteDistance,
     sites: 6,
     badge: "Guided · Max 10",
     badgeColor: "#C1440E",
@@ -151,7 +177,7 @@ export const ROUTES_DATA = [
     desc: "A carefree, social ride for friends, families, and fellow riders. No rigid schedule or pressure—just enjoy the ride together.",
     price: 150,
     duration: "1.5–2 hrs",
-    distance: "~12 km",
+    distance: mapRouteDistance,
     sites: 6,
     badge: "Casual · All welcome",
     badgeColor: "#1A3A2A",
@@ -159,14 +185,6 @@ export const ROUTES_DATA = [
     includes: ["Casual group ride", "Cycling lessons for kids and adults", "Bike provided"],
   },
 ];
-
-export const MAIN_MALL = [-24.6553, 25.9086];
-
-// Nearest-neighbor visiting order from Main Mall, used to draw the Complete
-// Route / Heritage Loop trail on the map. Computed from the real coordinates
-// above rather than guessed — this is the shortest sensible loop through all
-// six sites and back to the start.
-export const LOOP_ORDER = ["monument", "parliament", "enclave", "gallery", "museum", "archives"];
 
 // Cafés and eateries within an easy ride of Main Mall and the heritage sites. Opening hours change,
 // so riders are told to check; edit this list to match the stops you actually use on a ride.

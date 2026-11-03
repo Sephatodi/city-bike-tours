@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import Icon from "../components/Icon";
 import Lightbox from "../components/Lightbox";
 import RrIcon from "../components/RrIcon";
 import SiteVideo from "../components/SiteVideo";
 import Stamp from "../components/Stamp";
 import { useCustomer } from "../auth/CustomerAuth";
-import { FOOD_STOPS, SITES } from "../data";
+import { SITES } from "../data";
 import { usePolling } from "../hooks/usePolling";
 
 const PAGE_SIZE = 24;
@@ -40,12 +39,6 @@ export default function SiteGalleryPage() {
 
   const items = useMemo(() => (site ? site.imgs.filter(Boolean).map((src, i) => ({ key: `${site.id}-${i}`, src, title: `${site.name} — photo ${i + 1}`, story: site.short, downloadable: false })) : []), [site]);
   const riderItems = useMemo(() => riderPhotos.map((photo) => ({ key: photo.id, src: photo.imageUrl, title: photo.title, story: photo.story, credit: photo.authorName, downloadable: false })), [riderPhotos]);
-  const food = useMemo(() => {
-    if (!site) return [];
-    const name = site.name.toLowerCase();
-    return FOOD_STOPS.filter((stop) => stop.near && (stop.near.toLowerCase().includes(name) || name.includes(stop.near.toLowerCase())));
-  }, [site]);
-
   if (!site) return <Navigate to="/gallery" replace />;
   const prev = SITES[(index - 1 + SITES.length) % SITES.length];
   const next = SITES[(index + 1) % SITES.length];
@@ -97,19 +90,19 @@ export default function SiteGalleryPage() {
 
           {riderItems.length > 0 && (
             <section aria-labelledby="riders-heading">
-              <div className="sp-section-head"><h2 id="riders-heading">Photos from riders</h2></div>
+              <div className="sp-section-head"><h2 id="riders-heading">Media from riders</h2></div>
               <div className="sp-grid">
                 {riderPhotos.map((photo) => (
                   <figure key={photo.id} className="sp-rider">
-                    <img src={photo.imageUrl} alt={photo.title} loading="lazy" decoding="async" />
+                    {photo.mediaType === "video"
+                      ? <video src={photo.imageUrl} controls preload="metadata" aria-label={photo.title} />
+                      : <img src={photo.imageUrl} alt={photo.title} loading="lazy" decoding="async" />}
                     <figcaption><strong>{photo.title}</strong><span>{photo.authorName}</span><Stamp value={photo.createdAt} compact /></figcaption>
                   </figure>
                 ))}
               </div>
             </section>
           )}
-
-          {food.length > 0 && <FoodStops stops={food} kicker="NEAR THIS STOP" title="Eat and drink nearby" intro={`Cafés and eateries close to ${site.name}.`} />}
 
           <section className="sp-cta rr-plate-elevated rr-pad">
             <div><h2>Ride this route</h2><p className="rr-muted">See {site.name} and five more heritage sites on one guided ride from Main Mall.</p></div>

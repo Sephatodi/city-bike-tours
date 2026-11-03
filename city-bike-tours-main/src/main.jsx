@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import './community.css'
 import './rr-theme.css'
+import './gallery-reviews.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

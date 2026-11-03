@@ -1,0 +1,97 @@
+.heritage-map-wrapper-trail .heritage-trail-rider-marker {
+  pointer-events: none;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-controls {
+  display: grid;
+  gap: .55rem;
+  margin-top: .8rem;
+  color: #F5EDD9;
+  font-family: Outfit, sans-serif;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-control-buttons button,
+.heritage-map-wrapper-trail .heritage-map-site-buttons button {
+  min-height: 44px;
+  padding: .6rem .85rem;
+  border: 1px solid rgba(245, 237, 217, .58);
+  border-radius: 4px;
+  background: rgba(8, 26, 16, .86);
+  color: #F5EDD9;
+  font: 600 .88rem Outfit, sans-serif;
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-control-buttons button:hover,
+.heritage-map-wrapper-trail .heritage-map-site-buttons button:hover {
+  border-color: #D4A017;
+  background: rgba(212, 160, 23, .16);
+}
+
+.heritage-map-wrapper-trail .heritage-trail-control-buttons button[aria-pressed="true"],
+.heritage-map-wrapper-trail .heritage-map-site-buttons button.is-active-stop {
+  border-color: #D4A017;
+  background: #D4A017;
+  color: #0D0805;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-control-buttons button:focus-visible,
+.heritage-map-wrapper-trail .heritage-map-site-buttons button:focus-visible {
+  outline: 3px solid #D4A017;
+  outline-offset: 3px;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-route-meta,
+.heritage-map-wrapper-trail .heritage-trail-live,
+.heritage-map-wrapper-trail .heritage-trail-motion-note {
+  min-height: 1.35rem;
+  color: rgba(245, 237, 217, .84);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.heritage-map-wrapper-trail .heritage-map-site-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: .5rem;
+  margin-top: .8rem;
+}
+
+.heritage-map-wrapper-trail .heritage-map-site-buttons button {
+  text-align: left;
+}
+
+.heritage-map-wrapper-trail .heritage-map-site-buttons .heritage-map-reset {
+  border-color: #D4A017;
+  background: #D4A017;
+  color: #0D0805;
+  font-weight: 800;
+}
+
+.heritage-map-wrapper-trail .heritage-map-site-buttons .heritage-map-reset:hover {
+  background: #F5EDD9;
+}
+
+.heritage-map-wrapper-trail .heritage-trail-motion-note {
+  margin-top: .5rem;
+}
+
+@media (max-width: 600px) {
+  .heritage-map-wrapper-trail .heritage-trail-control-buttons button {
+    flex: 1 1 calc(50% - .5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heritage-map-wrapper-trail .heritage-trail-control-buttons button,
+  .heritage-map-wrapper-trail .heritage-map-site-buttons button {
+    transition: none;
+  }
+}
