@@ -155,6 +155,13 @@
       "when": 1793706075288,
       "tag": "0023_booking_confirmation_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793706075289,
+      "tag": "0024_booking_request_email",
+      "breakpoints": true
     }
   ]
 }

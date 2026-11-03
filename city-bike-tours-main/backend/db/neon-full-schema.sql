@@ -358,6 +358,9 @@ ALTER TABLE "website_booking_requests" ADD COLUMN IF NOT EXISTS "confirmation_co
 CREATE UNIQUE INDEX IF NOT EXISTS "website_booking_requests_confirmation_code_unique"
   ON "website_booking_requests" ("confirmation_code");
 
+-- Migration 0024: 0024_booking_request_email
+ALTER TABLE "website_booking_requests" ADD COLUMN IF NOT EXISTS "email" text;
+
 -- Mark all journaled migrations as applied so the app migrator will not replay them.
 INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('704633beae086a3b62e3c6243702f8a99bf1daa382dab35a63609037915678f0', 1788337777599), -- 0000_stale_felicia_hardy
@@ -383,6 +386,7 @@ INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES
   ('fc19452d5619f167acf24f497ee18eb12a7c17fc6c60f670a311a8c59db803a2', 1793610114829), -- 0020_complete_collection_approvals
   ('4de3f10c00e4b6cc476ac069bf47043e342ecb01deadb4c48cc3d61883af64f3', 1793687700000), -- 0021_rider_video_upload_preferences
   ('c8ede44e8c1cc58ccdcfd2d8ab33d7fcaba7038788117d459d9ba665aa909156', 1793701873725), -- 0022_rider_photo_visibility
-  ('e966c96ae0b84ed1c3b62e04560b2ddb57a959f71b6f7941feb97ec497f66fd0', 1793706075288); -- 0023_booking_confirmation_codes
+  ('e966c96ae0b84ed1c3b62e04560b2ddb57a959f71b6f7941feb97ec497f66fd0', 1793706075288), -- 0023_booking_confirmation_codes
+  ('c63e6529b03debd8b5506ed6ed1887a5422089d6965babc9b8d5194e1f8d6c31', 1793706075289); -- 0024_booking_request_email
 
 COMMIT;
