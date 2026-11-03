@@ -16,6 +16,11 @@ export async function PATCH(request, { params }) {
   const parsed = z.object({ status: z.enum(["pending", "approved", "rejected"]).optional(), downloadable: z.boolean().optional() })
     .refine((v) => Object.keys(v).length > 0).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Choose approve, reject, pending or a download setting." }, { status: 400 });
+  if (parsed.data.downloadable === true) {
+    const [photo] = await db.select({ visibility: communityPhotos.visibility }).from(communityPhotos).where(eq(communityPhotos.id, params.id)).limit(1);
+    if (!photo) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
+    if (photo.visibility !== "public") return NextResponse.json({ error: "Private uploads can't be made publicly downloadable." }, { status: 400 });
+  }
   const [updated] = await db.update(communityPhotos).set(parsed.data).where(eq(communityPhotos.id, params.id)).returning();
   if (!updated) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
   await logAudit(guard.staff, "community.photo", `${"downloadable" in parsed.data ? (updated.downloadable ? "Allowed downloads of" : "Blocked downloads of") : updated.status === "approved" ? "Approved" : updated.status === "rejected" ? "Rejected" : "Reset"} "${updated.title}" by ${updated.authorName}`, { targetType: "community_photo", targetId: updated.id });

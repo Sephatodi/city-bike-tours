@@ -222,7 +222,7 @@ export const otpCodes = pgTable("otp_codes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Photos and stories uploaded by riders. They show on the gallery once staff approve them.
+// Rider uploads can be public after approval or stay private to their owner and staff.
 export const communityPhotos = pgTable("community_photos", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -232,6 +232,7 @@ export const communityPhotos = pgTable("community_photos", {
   imageUrl: text("image_url").notNull(),
   mediaType: text("media_type").notNull().default("image"), // image | video
   status: text("status").notNull().default("pending"), // pending | approved | rejected
+  visibility: text("visibility").notNull().default("public"), // public | private
   downloadable: boolean("downloadable").notNull().default(false), // rider preference, subject to staff moderation
   siteId: text("site_id"), // which heritage site the photo shows (optional)
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

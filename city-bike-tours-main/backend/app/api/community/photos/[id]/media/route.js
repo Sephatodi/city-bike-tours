@@ -27,6 +27,7 @@ export async function GET(request, { params }) {
     imageUrl: communityPhotos.imageUrl,
     mediaType: communityPhotos.mediaType,
     status: communityPhotos.status,
+    visibility: communityPhotos.visibility,
   }).from(communityPhotos).where(eq(communityPhotos.id, params.id)).limit(1);
   if (!photo) return NextResponse.json({ error: "Media not found." }, { status: 404 });
 
@@ -36,7 +37,7 @@ export async function GET(request, { params }) {
     searchParams.get("expires"),
     searchParams.get("signature"),
   );
-  if (photo.status !== "approved" && !signedAccess) {
+  if ((photo.status !== "approved" || photo.visibility === "private") && !signedAccess) {
     return NextResponse.json({ error: "This media isn't available." }, { status: 404 });
   }
 
@@ -71,7 +72,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "This media format can't be displayed." }, { status: 415 });
   }
 
-  const privateResponse = photo.status !== "approved";
+  const privateResponse = photo.status !== "approved" || photo.visibility === "private";
   return new Response(stream, {
     headers: {
       "Content-Type": contentType,
