@@ -25,6 +25,13 @@
 - Add the exact backend callback URI to each provider's developer console.
 - Configure optional CORS preview patterns narrowly; avoid broad wildcard origins.
 
+### Customer session cookie
+
+- `FRONTEND_ORIGIN` must include the exact Vercel production origin, for example `https://city-bike-tours.vercel.app`.
+- Set `CORS_ORIGIN_PATTERNS` narrowly for approved Vercel preview URLs if preview deployments need customer API access.
+- Set `CUSTOMER_TOKEN_SECRET` to a strong secret distinct from `NEXTAUTH_SECRET`; it signs customer sessions and social handoffs.
+- Existing customers must sign in again once after this migration because the previous browser-stored tokens are no longer accepted.
+
 ## Troubleshooting notes
 
 - The browser origin must exactly match `FRONTEND_ORIGIN`, including the hostname. Vercel preview URLs are different origins from the production domain.

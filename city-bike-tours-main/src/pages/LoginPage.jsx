@@ -1,7 +1,7 @@
 import PasswordInput from "../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import { BACKEND_BASE_URL, backendUrl } from "../api/backend";
+import { BACKEND_BASE_URL } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(backendUrl("/api/customer/providers"), { signal: controller.signal, cache: "no-store" })
+    fetch("/api/customer/providers", { signal: controller.signal, cache: "no-store", credentials: "include" })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load sign-in methods.");
         return response.json();
@@ -71,7 +71,12 @@ export default function LoginPage() {
   const update = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
   async function post(path, body) {
-    const response = await fetch(backendUrl(path), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
     const result = await response.json().catch(() => null);
     if (!response.ok) throw new Error(result?.error || "Something went wrong. Please try again.");
     return result;
@@ -82,7 +87,7 @@ export default function LoginPage() {
     try { await task(); } catch (err) { setError(err.message || "Something went wrong."); } finally { setBusy(false); }
   }
 
-  const finish = (result) => { signIn(result.token, result.user); navigate(next === "/dashboard" ? takeNext(next) : next, { replace: true }); };
+  const finish = (result) => { signIn(result.user); navigate(next === "/dashboard" ? takeNext(next) : next, { replace: true }); };
 
   const submitEmail = (event) => {
     event.preventDefault();

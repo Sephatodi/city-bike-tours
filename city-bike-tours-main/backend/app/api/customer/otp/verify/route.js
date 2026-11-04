@@ -7,7 +7,7 @@ import { newId } from "@/lib/id";
 import { normalizePhone } from "@/lib/phone";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { OTP_MAX_ATTEMPTS, codeMatches } from "@/lib/otp";
-import { issueCustomerToken, publicUser } from "@/lib/customer-auth";
+import { issueCustomerToken, publicUser, setCustomerCookie } from "@/lib/customer-auth";
 
 const schema = z.object({
   phone: z.string().trim().min(7).max(30),
@@ -44,5 +44,5 @@ export async function POST(request) {
       email: `${digits}@phone.citybiketours.invalid`, phone, provider: row.channel, role: "customer",
     }).returning();
   }
-  return NextResponse.json({ token: issueCustomerToken(user.id), user: publicUser(user) });
+  return setCustomerCookie(NextResponse.json({ user: publicUser(user) }), issueCustomerToken(user.id));
 }

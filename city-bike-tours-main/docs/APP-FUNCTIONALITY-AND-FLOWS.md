@@ -72,7 +72,7 @@ The homepage gallery is built into the website from local/static site data. It i
 
 ### Sign in — `/login` and `/login/callback`
 
-- Email and password; phone and WhatsApp one-time codes (a 6-digit code valid for 10 minutes, with rate limits; SMS goes through Twilio and/or Infobip with fallback, WhatsApp through Twilio); Google through Neon Auth; Facebook and Apple through NextAuth. Social buttons open the backend page `/customer-social`, which starts the right flow and returns to `/login/callback#token=...`. After sign-in the customer lands on `/dashboard`.
+- Email and password; phone and WhatsApp one-time codes (a 6-digit code valid for 10 minutes, with rate limits; SMS goes through Twilio and/or Infobip with fallback, WhatsApp through Twilio); Google through Neon Auth; Facebook and Apple through NextAuth. Social buttons open the backend page `/customer-social`, which starts the right flow and returns a short-lived handoff to `/login/callback#handoff=...`; the website exchanges it for an HttpOnly customer session cookie. After sign-in the customer lands on `/dashboard`.
 
 ### Customer dashboard — `/dashboard`
 
@@ -141,7 +141,7 @@ When an admin confirms a website booking request, the backend changes its status
 The backend no longer has public pages of its own (the old customer pages and sign-up form were removed). It serves only:
 
 - **`/`** and **`/register`** — redirect to the website (`PUBLIC_FRONTEND_URL` or the first `FRONTEND_ORIGIN`). NextAuth sends failed or cancelled social sign-ins to `/register`, which returns them to the website's login page.
-- **`/customer-social`** — a short hand-off page that starts Google (Neon Auth), Facebook or Apple sign-in and returns to the website with a token.
+- **`/customer-social`** — a short hand-off page that starts Google (Neon Auth), Facebook or Apple sign-in and returns to the website with a short-lived handoff used to establish a secure customer session cookie.
 - **`/api/...`** and **`/admin/...`** — the API and the admin dashboard.
 
 ## 4. Booking lifecycle and event flow

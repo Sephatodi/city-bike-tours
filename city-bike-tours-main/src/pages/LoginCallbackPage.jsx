@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { backendUrl } from "../api/backend";
 import { takeNext, useCustomer } from "../auth/CustomerAuth";
 
 const ERRORS = {
@@ -9,7 +8,7 @@ const ERRORS = {
   staff_account: "Staff accounts sign in from the admin dashboard.",
 };
 
-// Google / Facebook / Apple send people back here with a one-time token in the URL fragment.
+// Google / Facebook / Apple send people back here with a short-lived handoff in the URL fragment.
 export default function LoginCallbackPage() {
   const { signIn } = useCustomer();
   const navigate = useNavigate();
@@ -17,14 +16,20 @@ export default function LoginCallbackPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    window.history.replaceState(null, "", window.location.pathname);
-    const token = params.get("token");
-    if (!token) { setError(ERRORS[params.get("error")] || "The sign-in didn't finish. Please try again."); return; }
-    fetch(backendUrl("/api/customer/me"), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    const handoff = params.get("handoff");
+    if (!handoff) { setError(ERRORS[params.get("error")] || "The sign-in didn't finish. Please try again."); return; }
+    fetch("/api/customer/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      cache: "no-store",
+      body: JSON.stringify({ handoff }),
+    })
       .then(async (response) => {
         const result = await response.json().catch(() => null);
         if (!response.ok || !result?.user) throw new Error();
-        signIn(token, result.user);
+        signIn(result.user);
         navigate(takeNext(), { replace: true });
       })
       .catch(() => setError("We couldn't finish signing you in. Please try again."));

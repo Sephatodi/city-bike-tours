@@ -100,5 +100,4 @@ Database: run `cd backend && npm run db:migrate` against the production database
 which caused `column "managed_auth_id" of relation "users" does not exist`. The migration is safe to re-run and
 tolerates a column or index that was already added by hand.
 
-Note: `app/api/customer/auth/exchange` and `lib/neon-auth.js` (a token-exchange design) are kept but nothing on the website calls them.
-Google sign-in uses the server-driven flow in `lib/neon-auth-server.js`.
+Google sign-in uses the server-driven flow in `lib/neon-auth-server.js` and returns a short-lived handoff that the website exchanges for an HttpOnly customer session cookie. The separate `app/api/customer/auth/exchange` endpoint is available for exchanging a verified Neon access token and also sets that cookie.

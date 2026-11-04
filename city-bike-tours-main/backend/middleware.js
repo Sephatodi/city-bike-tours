@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAllowedFrontendOrigin } from "@/lib/origins";
+import { allowsProtectedMutationOrigin, isAllowedFrontendOrigin } from "@/lib/origins";
 import { neonAuth } from "@/lib/neon-auth-server";
 
 function corsHeaders(origin) {
@@ -21,8 +21,6 @@ function neonReturn(request) {
 }
 
 export async function middleware(request) {
-  if (neonAuth && request.nextUrl.pathname === "/api/customer/neon/complete") return neonReturn(request);
-
   const origin = request.headers.get("origin");
   const allowed = Boolean(origin && isAllowedFrontendOrigin(origin));
 
@@ -30,6 +28,12 @@ export async function middleware(request) {
     if (!allowed) return new NextResponse(null, { status: 403, headers: { Vary: "Origin" } });
     return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
   }
+
+  if (!allowsProtectedMutationOrigin(request)) {
+    return NextResponse.json({ error: "Origin is not allowed." }, { status: 403 });
+  }
+
+  if (neonAuth && request.nextUrl.pathname === "/api/customer/neon/complete") return neonReturn(request);
 
   const response = NextResponse.next();
   if (allowed) {

@@ -4,12 +4,12 @@ import { eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
-import { frontendOrigins, isAllowedCustomerReturnOrigin, issueCustomerToken } from "@/lib/customer-auth";
+import { frontendOrigins, isAllowedCustomerReturnOrigin, issueCustomerHandoff } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
 
-// NextAuth finishes the Google / Facebook / Apple sign-in here. We swap its cookie session for a
-// token and hand it to the website in the URL fragment (fragments are never sent to servers or logged).
+// NextAuth finishes the Google / Facebook / Apple sign-in here. The short-lived handoff in the URL
+// fragment is redeemed by the website for its HttpOnly customer cookie.
 export async function GET(request) {
   const origins = frontendOrigins();
   const requested = (new URL(request.url).searchParams.get("return") || "").replace(/\/$/, "");
@@ -22,5 +22,5 @@ export async function GET(request) {
   const [user] = await db.select().from(users).where(eq(users.id, session.user.id));
   if (!user || user.status !== "active") return fail("account_unavailable");
   if (user.role !== "customer") return fail("staff_account");
-  return NextResponse.redirect(`${origin}/login/callback#token=${issueCustomerToken(user.id)}`);
+  return NextResponse.redirect(`${origin}/login/callback#handoff=${issueCustomerHandoff(user.id)}`);
 }

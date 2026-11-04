@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { issueCustomerToken, publicUser } from "@/lib/customer-auth";
+import { issueCustomerToken, publicUser, setCustomerCookie } from "@/lib/customer-auth";
 import { recentFailures, recordAttempt } from "@/lib/security";
 
 const schema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1).max(200) });
@@ -26,5 +26,5 @@ export async function POST(request) {
   if (!(await bcrypt.compare(password, user.passwordHash))) return bad("wrong_password");
 
   await recordAttempt({ email, ip, success: true, reason: "site" });
-  return NextResponse.json({ token: issueCustomerToken(user.id), user: publicUser(user) });
+  return setCustomerCookie(NextResponse.json({ user: publicUser(user) }), issueCustomerToken(user.id));
 }
