@@ -1,6 +1,6 @@
 import { infobipSmsLogs } from "@/db/schema";
 import { sendSmsMessage, sendWhatsAppMessage, smsProviders, whatsappReady } from "@/lib/otp";
-import { sendBookingConfirmationEmail } from "@/lib/email";
+import { emailConfigured, sendBookingConfirmationEmail } from "@/lib/email";
 
 async function recordDelivery(db, { bookingRequestId, channel, recipient, message, provider, messageId, status }) {
   try {
@@ -22,6 +22,18 @@ async function recordDelivery(db, { bookingRequestId, channel, recipient, messag
 async function deliver(db, { bookingRequestId, channel, recipient, message, provider, send }) {
   try {
     const result = await send();
+    if (result?.ok === false || result?.status === "failed") {
+      await recordDelivery(db, {
+        bookingRequestId,
+        channel,
+        recipient,
+        message,
+        provider,
+        messageId: null,
+        status: "FAILED",
+      });
+      return { status: "failed" };
+    }
     await recordDelivery(db, {
       bookingRequestId,
       channel,
@@ -66,7 +78,7 @@ export async function sendBookingNotifications(db, {
 }) {
   const smsConfigured = smsProviders().length > 0;
   const whatsappConfigured = whatsappReady();
-  const emailConfigured = Boolean(email && process.env.BOOKING_CONFIRMATION_SMTP_PASS);
+  const canEmail = Boolean(email && emailConfigured());
   const [sms, whatsapp, mail] = await Promise.all([
     smsConfigured
       ? deliver(db, {
@@ -94,7 +106,7 @@ export async function sendBookingNotifications(db, {
         }),
       })
       : { status: "not_configured" },
-    emailConfigured
+    canEmail
       ? deliver(db, {
         bookingRequestId,
         channel: "email",
@@ -110,6 +122,7 @@ export async function sendBookingNotifications(db, {
           routeName,
           confirmationCode,
           link,
+          relatedId: bookingRequestId,
         }),
       })
       : { status: "not_configured" },
@@ -119,6 +132,6 @@ export async function sendBookingNotifications(db, {
     sms,
     whatsapp,
     email: mail,
-    messagingConfigured: smsConfigured || whatsappConfigured || emailConfigured,
+    messagingConfigured: smsConfigured || whatsappConfigured || canEmail,
   };
 }

@@ -65,6 +65,6 @@ CREATE TABLE IF NOT EXISTS "subscribers" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "team" text;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "mfa_secret" text;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "mfa_enabled" boolean DEFAULT false NOT NULL;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "team" text;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "mfa_secret" text;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "mfa_enabled" boolean DEFAULT false NOT NULL;

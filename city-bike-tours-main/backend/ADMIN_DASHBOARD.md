@@ -16,11 +16,10 @@ The public header, footer and global CSS never load on `/admin`.
 | Dashboard | Overview, Website traffic, Bookings, Check-in |
 | Customers | Inbox & reviews (enquiries, rider chats, review approval with the rider's photo, ride, origin and stops, rider photos, subscribers), Messages (riders on a date, or subscribers) |
 | Website | Routes & prices, Content, Media library, Search (SEO) |
-| Administration | Users & roles (+ teams, two-step reset), Site settings, Integrations, Security, System & backups, Audit log |
+| Administration | Users & roles (+ teams, two-step reset and customer-data deletion), Site settings, Integrations, Security, System & backups, Audit log |
 
-## Sending ride passes (no Twilio needed)
-Open a confirmed booking: the window shows the rider's QR code, a Copy link button and **Send via WhatsApp**,
-which opens WhatsApp with the message already written. Staff press Send. All WhatsApp messaging uses free `wa.me` click-to-chat links.
+## Sending ride passes
+Open a confirmed booking to view the rider's QR code, copy the pass link, or resend its confirmation email. Configured SMS and WhatsApp channels can also deliver the pass; provider failures are logged and surfaced rather than changing the booking status.
 
 ## Roles
 Viewer: look only. Editor: bookings, check-in, routes, content, media, SEO, inbox, messages.
@@ -45,5 +44,11 @@ Role and suspension changes apply on the person's next click.
 - Set `FRONTEND_ORIGIN` if your website is on another address.
 
 ## Not included
-Newsletter emails (no email provider is configured; export subscribers or message them by SMS/WhatsApp),
-comment threads, scheduled automatic backups (Neon does these), one-click software updates, firewall/SSL settings.
+Online payment processing (payments are recorded manually), comment threads, scheduled database backups (review retention in the Neon console), one-click software updates, firewall/SSL settings.
+
+## Launch operations
+
+- Transactional email provider and test delivery are configured in Integrations; provider credentials are environment-only.
+- Customer password reset, booking cancellation, payment recording and reminders are supported by the website/backend flow.
+- Run `npm run smoke` from the repository root with `FRONTEND_URL` and `BACKEND_URL` before go-live.
+- See [EMAIL-SETUP.md](../docs/EMAIL-SETUP.md), [PAYMENTS.md](../docs/PAYMENTS.md) and [GO-LIVE-CHECKLIST.md](../docs/GO-LIVE-CHECKLIST.md).

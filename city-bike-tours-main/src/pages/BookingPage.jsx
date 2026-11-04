@@ -28,6 +28,7 @@ export default function BookingPage() {
   const [riders, setRiders] = useState(1);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,6 +50,7 @@ export default function BookingPage() {
     if (!user) return;
     setName((current) => current || user.name || "");
     setPhone((current) => current || user.phone || "");
+    setEmail((current) => current || (user.email && !user.email.toLowerCase().endsWith(".invalid") ? user.email : ""));
   }, [user]);
 
   const selectedRoute = routes.find((r) => r.id === route) || ROUTES_DATA.find((r) => r.id === route);
@@ -123,6 +125,7 @@ export default function BookingPage() {
         body: JSON.stringify({
           name,
           phone,
+          email,
           routeId: route,
           dateIso: date,
           riders,
@@ -382,6 +385,7 @@ export default function BookingPage() {
                 {route === "complete" && <label className="booking-field">Preferred start time<select value={startTime} onChange={(event) => setStartTime(event.target.value)} style={inputStyle}><option value="09:00">9:00 AM</option><option value="14:00">2:00 PM</option></select></label>}
                 <label className="booking-field">Full name<input type="text" required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" style={inputStyle} /></label>
                 <label className="booking-field">Phone / WhatsApp<input type="tel" required autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+267 7X XXX XXX" style={inputStyle} /></label>
+                {!user?.email && <label className="booking-field">Email <span className="booking-optional">Optional</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" style={inputStyle} /><small>We'll email your confirmation and reminder.</small></label>}
                 <label className="booking-field booking-notes-field">Notes <span className="booking-optional">Optional</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Accessibility needs, school group, or other requests" style={{ ...inputStyle, resize: "vertical" }} /></label>
               </div>
             </section>
@@ -395,7 +399,7 @@ export default function BookingPage() {
               {submitError && <p role="alert" className="booking-submit-error">{submitError}</p>}
               {insufficientCapacity && <p role="alert" className="booking-submit-error">Only {availability.remaining} rider{availability.remaining === 1 ? "" : "s"} remain available on this date.</p>}
               <button type="submit" disabled={isSubmitting || checkingAvailability || Boolean(date && (!availability || availability.full || insufficientCapacity || availabilityError))} className="booking-submit-button">{isSubmitting ? "Sending request..." : "Request this ride"}</button>
-              <p className="booking-confirmation-note">We will contact you on WhatsApp to confirm availability.</p>
+              <p className="booking-confirmation-note">We will contact you on WhatsApp to confirm availability{email ? " and email your booking updates." : "."}</p>
             </aside>
           </div>
         </form>

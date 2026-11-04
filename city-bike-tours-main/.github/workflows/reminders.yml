@@ -1,0 +1,22 @@
+name: Booking reminders
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reminder endpoint
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$BACKEND_URL"
+          test -n "$CRON_SECRET"
+          curl --fail --show-error --silent \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$BACKEND_URL/api/cron/reminders"

@@ -9,6 +9,7 @@ import { requireCustomer } from "@/lib/customer-auth";
 import { fireWebhook } from "@/lib/webhook";
 import { HIGHLIGHTS, SITE_IDS, TOURS } from "@/lib/review-meta";
 import { storeReviewPhoto } from "@/lib/review-photo";
+import { notifyAdmins } from "@/lib/admin-email";
 
 export const dynamic = "force-dynamic";
 
@@ -66,5 +67,12 @@ export async function POST(request) {
   };
   await db.insert(reviews).values(values);
   await fireWebhook("review.created", { id: values.id, name: values.name, rating: values.rating, comment: values.comment });
+  await notifyAdmins("newReview", {
+    id: values.id,
+    rider: values.name,
+    rating: String(values.rating),
+    review: values.comment,
+    receivedAt: new Date().toISOString(),
+  }, { relatedType: "review", relatedId: values.id });
   return NextResponse.json({ success: true, message: "Thank you! Your review will appear once our team has read it." }, { status: 201 });
 }

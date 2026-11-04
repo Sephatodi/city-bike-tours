@@ -23,14 +23,14 @@ export const users = pgTable("users", {
   // two-step sign-in (authenticator app)
   mfaSecret: text("mfa_secret"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const bookings = pgTable("bookings", {
   id: text("id").primaryKey(),
   userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "set null" }),
   category: bookingCategoryEnum("category").notNull(),
   rideDate: text("ride_date").notNull(), // stored as 'YYYY-MM-DD' — no timezone ambiguity
   timeSlot: timeSlotEnum("time_slot").notNull(),
@@ -47,10 +47,21 @@ export const bookingRequests = pgTable("website_booking_requests", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
-  phone: text("phone").notNull(),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  phone: text("phone"),
   routeId: text("route_id").notNull(),
   rideDate: text("ride_date").notNull(),
   riders: integer("riders").notNull(),
+  priceTotal: numeric("price_total", { precision: 10, scale: 2 }),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
+  paymentMethod: text("payment_method"),
+  paymentAmount: numeric("payment_amount", { precision: 10, scale: 2 }),
+  paymentReference: text("payment_reference"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancelledBy: text("cancelled_by"),
+  cancelReason: text("cancel_reason"),
   notes: text("notes"),
   status: text("status").notNull().default("pending"),
   checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
@@ -59,6 +70,28 @@ export const bookingRequests = pgTable("website_booking_requests", {
 }, (table) => ({
   confirmationCodeUnique: uniqueIndex("website_booking_requests_confirmation_code_unique").on(table.confirmationCode),
 }));
+
+export const emailLogs = pgTable("email_logs", {
+  id: serial("id").primaryKey(),
+  toAddress: text("to_address").notNull(),
+  subject: text("subject").notNull(),
+  template: text("template"),
+  status: text("status").notNull(),
+  error: text("error"),
+  relatedType: text("related_type"),
+  relatedId: text("related_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  requestIp: text("request_ip"),
+});
 
 export const companyRoutesConfig = pgTable("company_routes_config", {
   routeId: text("route_id").primaryKey(),

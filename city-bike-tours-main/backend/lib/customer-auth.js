@@ -16,7 +16,8 @@ const b64 = (value) => Buffer.from(value).toString("base64url");
 const sign = (body) => createHmac("sha256", secret()).update(body).digest("base64url");
 
 export function issueCustomerToken(userId) {
-  const body = b64(JSON.stringify({ uid: userId, exp: Date.now() + TOKEN_DAYS * 86400000 }));
+  const iat = Date.now();
+  const body = b64(JSON.stringify({ uid: userId, iat, exp: iat + TOKEN_DAYS * 86400000 }));
   return `${body}.${sign(body)}`;
 }
 
@@ -48,7 +49,8 @@ export async function requireCustomer(request) {
   const payload = readToken(header.startsWith("Bearer ") ? header.slice(7) : "");
   if (!payload) return { error: NextResponse.json({ error: "Please sign in to continue." }, { status: 401 }) };
   const [user] = await db.select().from(users).where(eq(users.id, payload.uid));
-  if (!user || user.status !== "active") {
+  const issuedAt = Number(payload.iat) || Number(payload.exp) - TOKEN_DAYS * 86400000;
+  if (!user || user.status !== "active" || (user.passwordChangedAt && issuedAt < new Date(user.passwordChangedAt).getTime())) {
     return { error: NextResponse.json({ error: "Please sign in to continue." }, { status: 401 }) };
   }
   return { user };

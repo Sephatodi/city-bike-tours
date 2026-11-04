@@ -9,17 +9,23 @@ See [the application functionality and user-flow guide](./docs/APP-FUNCTIONALITY
 3. Start the backend in one terminal: `cd backend && npm run dev`.
 4. Start the Vite frontend from the repository root in another terminal: `npm run dev`.
 
-In local development, Vite proxies `/api` requests to `http://localhost:3000`. Check the backend and database with `http://localhost:3000/api/health`, or check the full frontend-to-backend proxy at `http://localhost:5173/api/health`.
+In local development, Vite proxies `/api` requests to `http://localhost:3000`. Check the backend and database with `http://localhost:3000/api/health`, or check the full frontend-to-backend proxy at `http://localhost:5173/api/health`. With both services running, run the HTTP smoke checks using `FRONTEND_URL=http://localhost:5173 BACKEND_URL=http://localhost:3000 npm run smoke`.
 
 To regenerate the cycling-street route used only on `/heritage-trail`, use Node.js 22.9+ and run `npm run trail:build`. Configure one of `MAPBOX_TOKEN` or `VITE_MAPBOX_TOKEN`, or `ORS_API_KEY`; optionally select a provider with `TRAIL_PROVIDER`. See [the trail routing setup](./docs/TRAIL-ROUTING-SETUP.md) for provider setup and via points.
 
-The booking form sends requests to `POST /api/booking-requests`. Requests are validated and stored with `pending` status in Neon. Phone numbers are validated and normalized to E.164, using Botswana as the default region; international numbers can include a `+` country code. Active pending and confirmed reservations share the 12-rider daily capacity across routes and times; full dates are blocked in the booking form and rechecked by the API. Booking confirmations rotate through three WhatsApp messages in order (A, B, C) using a PostgreSQL sequence shared across serverless instances. Each includes the booking-specific ride-pass link that opens the customer's unique QR code. For email confirmations, set `BOOKING_CONFIRMATION_EMAIL`, `BOOKING_CONFIRMATION_SMTP_HOST`, `BOOKING_CONFIRMATION_SMTP_PORT`, `BOOKING_CONFIRMATION_SMTP_USER`, and `BOOKING_CONFIRMATION_SMTP_PASS` in the backend environment. The default Yahoo SMTP host is `smtp.mail.yahoo.com` and the sender defaults to `aobakweramoleko3@yahoo.com` when the environment is not overridden. Set `TWILIO_WHATSAPP_FROM`, Twilio credentials, and `PUBLIC_FRONTEND_URL` in the backend environment; Twilio trial accounts also require the customer's WhatsApp number to be verified and opted into the sandbox. For confirmations outside WhatsApp's customer-service window, create an approved Twilio Content Template for each message using variables `{{1}}` name, `{{2}}` date, `{{3}}` time, `{{4}}` group size, `{{5}}` ride-pass link, then configure `TWILIO_WHATSAPP_CONTENT_SID_A`, `TWILIO_WHATSAPP_CONTENT_SID_B`, and `TWILIO_WHATSAPP_CONTENT_SID_C`. Without the corresponding SID configured, the app sends the message body directly (only permitted inside WhatsApp's 24-hour customer-service window). Option C's expanded message can exceed 160 characters because it includes the unique ride-pass URL. For separate production origins, set `FRONTEND_ORIGIN` in the backend environment and `VITE_API_BASE_URL` in the frontend build environment.
+Run backend tests with `cd backend && npm test`.
+
+Booking requires a signed-in customer. The backend validates and stores each request, snapshots its route price, checks availability, and sends best-effort rider/admin notifications. Customers can review upcoming and past bookings in `/dashboard`, download calendar entries, and cancel eligible rides; staff confirm or cancel requests in Admin → Bookings. Payments are recorded manually and are due on the ride day; the application does not collect card data. Transactional email and reminder setup is documented in [EMAIL-SETUP.md](./docs/EMAIL-SETUP.md) and [PAYMENTS.md](./docs/PAYMENTS.md). For Twilio SMS/WhatsApp notifications, configure the Twilio credentials and sender values in the backend environment; WhatsApp templates may be required outside the customer-service window. See [the go-live checklist](./docs/GO-LIVE-CHECKLIST.md) before deployment.
 
 ## Production deployment
 
-Deploy two Vercel projects from this repository. Set the backend project's Root Directory to `backend` and deploy it as Next.js. Set the website project's Root Directory to the repository root, build with `npm run build`, and publish `dist`. The root `vercel.json` rewrites client-side routes such as `/book` and `/gallery` to the Vite app.
+Deploy the backend to Render using the repository-root `render.yaml` Blueprint. It builds the Next.js app from `city-bike-tours-main/backend`, applies registered database migrations before deployment, starts the web service, and checks `/api/health`. Provide the requested environment values in Render; do not commit production secrets. The Blueprint uses an always-on Starter instance so the backend does not sleep between bookings.
+
+Deploy the website as a Vercel project with Root Directory `city-bike-tours-main`, build command `npm run build`, and output directory `dist`. The `vercel.json` in that directory rewrites client-side routes such as `/book` and `/gallery` to the Vite app. Set `VITE_API_BASE_URL` to the Render backend origin and configure `VITE_MAPBOX_TOKEN` there if the production map uses Mapbox.
 
 Set the backend's `NEXTAUTH_URL` and `PUBLIC_BACKEND_URL` to its public origin, and set `FRONTEND_ORIGIN` (and `PUBLIC_FRONTEND_URL` for ride-pass links) to the website origin, including the scheme (for example, `https://city-bike-tours.vercel.app`) and without a path or trailing slash. For multiple website origins, use a comma-separated list. Set `VITE_API_BASE_URL` to the backend origin in the website project's build environment. The website then loads current route names and prices plus published gallery content from the backend; its Admin link opens the backend sign-in page. Redeploy the backend after changing its environment variables and rebuild the website after changing its build variables.
+
+Run the end-to-end readiness checklist in [docs/GO-LIVE-CHECKLIST.md](./docs/GO-LIVE-CHECKLIST.md). It covers domain and OAuth setup, transactional email DNS, cron/reminder configuration, customer journeys, backups, and rollback.
 
 ## Administrator access
 
@@ -42,7 +48,8 @@ Before enabling check-in, apply migrations from the `backend` directory with `np
 | `/gallery/:siteId` | Every picture, video, rider photo and nearby food stop for one heritage site. Unknown ids redirect to `/gallery`. |
 | `/connect` | Reviews (real score summary, filters, helpful votes, photo) and messages to the team. |
 | `/login`, `/login/callback` | Sign in or create an account; social sign-in returns here with a token. |
-| `/dashboard` | Where customers land after signing in: profile, quick links and their own reviews. |
+| `/dashboard` | Customer profile, own reviews and media, and upcoming/past bookings with cancellation and calendar actions. |
+| `/forgot-password`, `/reset-password` | Request a one-time email reset link and choose a replacement password. |
 | `/book`, `/ticket/:token`, `/messages` | Booking request, ride pass, inbox. `/routes` redirects to `/book`. |
 | `/privacy`, `/terms`, `/data-deletion` | Legal pages (Meta and Google require the privacy and deletion pages). |
 
@@ -59,7 +66,7 @@ The backend serves only the API, the admin dashboard (`/admin`) and the short ha
 
 ## Environment variables (names only, never commit values)
 
-Backend (Render): `DATABASE_URL` or `NEON_DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `FRONTEND_ORIGIN`, `CORS_ORIGIN_PATTERNS`, `PUBLIC_FRONTEND_URL`, `PUBLIC_BACKEND_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (fallback only), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` (a plain `+` number, no `whatsapp:` prefix), `INFOBIP_API_KEY`, `INFOBIP_BASE_URL`, `INFOBIP_SENDER`, `SMS_PROVIDER_ORDER`, `TWILIO_WHATSAPP_FROM` (`whatsapp:+...`), `TWILIO_WHATSAPP_OTP_CONTENT_SID`, `BLOB_READ_WRITE_TOKEN`, `BLOB_PRIVATE_READ_WRITE_TOKEN`, `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD`.
+Backend: `DATABASE_URL` or `NEON_DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `FRONTEND_ORIGIN`, `CORS_ORIGIN_PATTERNS`, `PUBLIC_FRONTEND_URL`, `PUBLIC_BACKEND_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (fallback only), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `INFOBIP_API_KEY`, `INFOBIP_BASE_URL`, `INFOBIP_SENDER`, `SMS_PROVIDER_ORDER`, `TWILIO_WHATSAPP_FROM`, `TWILIO_WHATSAPP_OTP_CONTENT_SID`, `BLOB_READ_WRITE_TOKEN`, `BLOB_PRIVATE_READ_WRITE_TOKEN`, `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `ADMIN_NOTIFY_EMAILS`, `CRON_SECRET`, `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD`.
 
 Website (Vercel build): `VITE_API_BASE_URL` (the backend origin) and optionally `VITE_CONTACT_EMAIL` (shown on the legal pages).
 
@@ -67,7 +74,7 @@ Website (Vercel build): `VITE_API_BASE_URL` (the backend origin) and optionally 
 
 ## Database migrations
 
-Run `cd backend && npm run db:migrate` after every deploy that adds a migration. **Every migration file must also be listed in `backend/db/migrations/meta/_journal.json`; Drizzle silently skips files that are not.** Recent migrations: `0015_managed_auth_identity` (`users.managed_auth_id`), `0016_review_details` (review tour, origin, photo, stops, highlights), `0017_review_votes` (helpful votes), `0018_photo_site` (rider photos can name a heritage site). All are idempotent.
+Run `cd backend && npm run db:migrate` after every deploy that adds a migration. **Every migration file must also be listed in `backend/db/migrations/meta/_journal.json`; Drizzle silently skips files that are not.** Recent migrations: `0015_managed_auth_identity` (`users.managed_auth_id`), `0016_review_details` (review tour, origin, photo, stops, highlights), `0017_review_votes` (helpful votes), `0018_photo_site` (rider photos can name a heritage site), and `0025_launch_features` (customer-linked bookings, email logs, reset tokens, payment/reminder state). Registered migrations are tested for repeatability.
 
 ## Customer accounts, reviews, messages and rider photos
 

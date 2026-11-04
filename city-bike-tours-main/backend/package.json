@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --test test/*.test.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
     "admin:provision": "node scripts/provision-admin.mjs"
@@ -29,6 +30,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.24.2"
   }

@@ -7,9 +7,9 @@ This guide describes the application as it is currently implemented in this repo
 | Application | Location | Purpose |
 | --- | --- | --- |
 | Public website | Repository root (`src/`) | Visitor information, route and price discovery, booking requests, static heritage gallery, and ride-pass display |
-| Backend and admin | `city-tours-backend/` | Next.js API, PostgreSQL persistence, authentication (email, phone and WhatsApp codes, Google through Neon Auth, Facebook and Apple through NextAuth), admin operations, Twilio integration, uploads, reviews and messages. It has no public pages of its own. |
+| Backend and admin | `backend/` | Next.js API, PostgreSQL persistence, authentication (email, phone and WhatsApp codes, Google through Neon Auth, Facebook and Apple through NextAuth), admin operations, email/SMS integrations, uploads, reviews and messages. |
 
-For the planned two-project Vercel deployment, the public website is built from the repository root and the backend from `city-tours-backend/`. The root `vercel.json` rewrites website paths to the Vite app so browser routes can be refreshed directly.
+For the two-project deployment, the public website is built from the repository root and the backend from `backend/`. The root `vercel.json` rewrites website paths to the Vite app so browser routes can be refreshed directly.
 
 ### Public website navigation
 
@@ -19,7 +19,8 @@ For the planned two-project Vercel deployment, the public website is built from 
 - `/gallery` and `/gallery/:siteId` — Heritage roundabout, one page per site with all pictures, team content and rider stories
 - `/connect` — Reviews and messages
 - `/book` — Public booking-request form (`/routes` redirects here)
-- `/login`, `/dashboard` — Sign in, and the customer dashboard
+- `/login`, `/dashboard` — Sign in and the customer dashboard, including bookings
+- `/forgot-password`, `/reset-password` — Request and complete a password reset
 - `/privacy`, `/terms`, `/data-deletion` — Legal pages
 - `/ticket/:token` — Ride pass for a confirmed booking
 - `/admin/login`, `/admin` — Forward to backend admin when `VITE_API_BASE_URL` is configured
@@ -75,7 +76,12 @@ The homepage gallery is built into the website from local/static site data. It i
 
 ### Customer dashboard — `/dashboard`
 
-- Welcome, profile (name, email, phone, picture), sign-out, quick links (Book a ride, Heritage trail, Messages & reviews, Gallery), the customer's own reviews with status and replies, and their uploaded rider photos/videos with moderation status and download links after approval. Signed-out visitors are sent to `/login?next=/dashboard`.
+- Welcome, profile (name, email, phone, picture), sign-out, quick links, the customer's own reviews and media, and upcoming/past bookings with status, Gaborone ride date, price snapshot, payment state, calendar download and cancellation where within the cancellation window. Signed-out visitors are sent to `/login?next=/dashboard`.
+
+### Password reset
+
+- `/forgot-password` requests a one-time reset email without disclosing whether an account exists. Reset tokens are single-use and expire; the token is invalidated on password change.
+- `/reset-password` validates the emailed token and accepts a replacement password.
 
 ### Legal pages — `/privacy`, `/terms`, `/data-deletion`
 
@@ -83,23 +89,16 @@ The homepage gallery is built into the website from local/static site data. It i
 
 ### Booking — `/book`
 
-The primary public booking page accepts a reservation request without requiring the rider to create an account or pay online.
+The booking form requires a signed-in customer. No card details or online payment are collected.
 
 Form content and behavior:
 
-1. The rider selects a route; the page shows its current displayed name, price, description, map, distance, duration, and stops.
-2. The rider chooses a preferred date and the number of riders.
-3. The guided Heritage City Ride allows up to 10 riders and offers a preferred start time of 09:00 or 14:00. Casual Saturday allows up to 20 riders.
-4. The rider enters their name and phone/WhatsApp number and may add notes.
-5. The page checks the day of week in the browser: `complete` must be Wednesday–Friday; `loop` must be Saturday.
-6. On submit, the website sends the details to `POST /api/booking-requests` on the backend.
-7. The backend independently validates the fields/date/day, normalizes the phone number, rate-limits requests per client IP, and stores a `pending` request in PostgreSQL.
-8. The backend attempts a rider receipt and an admin notification using configured messaging channels. Notification failures are best-effort and do not invalidate a successfully stored request.
-9. On success the site displays “Booking Received!”, a request reference, the estimated total, and a “Book Another” action. The amount is payable on the day; this is a request, not a paid or immediately confirmed booking.
+1. The rider selects a route, date, rider count and (where offered) preferred time.
+2. The website displays the configured price and estimated total; the backend independently validates input, ride rules, availability and the authenticated customer.
+3. On submit, the backend stores the request with its customer, price snapshot and pending status, and attempts customer/admin notifications.
+4. On success the site displays a request reference and total. A pending request awaits staff confirmation; payment is due on the day.
 
-The form includes the selected guided start time in the notes. This request endpoint does not perform an availability/capacity reservation; a request remains subject to staff confirmation.
-
-If submission fails, the page displays the backend validation/error message when available or a fallback service-unavailable message.
+Notification failures do not undo a stored booking. The customer can track its status in the dashboard and cancel while the configured cancellation window (24 hours by default) allows it.
 
 ### Ride pass — `/ticket/:token`
 
@@ -127,14 +126,15 @@ When `VITE_API_BASE_URL` is set, these paths redirect the browser to the corresp
 Server-side session access is checked before rendering. The client dashboard supports:
 
 - **Routes & prices:** change route name and BWP price. Saves go to the protected route-configuration API; the public website reads the new name and price when it next loads route data.
-- **Website booking requests:** view rider, route, date, rider count, and status; confirm or decline pending requests and cancel confirmed requests.
+- **Bookings:** view request and account booking details, confirm/decline/cancel, resend confirmation email, record payment/refund/waiver, and inspect reminder status.
+- **Email:** inspect recent delivery attempts and send a test email from Integrations.
 - **Site content:** publish pictures, videos, or articles; hide/publish existing items; delete entries.
 - **Media upload:** upload accepted image/video formats to Vercel Blob when configured. The API limits uploads to about 4 MB; the dashboard also allows a hosted URL for larger video.
 - **Sign out:** ends the NextAuth session and returns to admin login.
 
-When an admin confirms a website booking request, the backend changes its status to `confirmed`, assigns a stable, unique four-digit/two-letter booking code, and creates a signed ride-pass URL. Configured SMS providers receive the code and pass link. Twilio WhatsApp uses an approved confirmation template when one of `TWILIO_WHATSAPP_CONTENT_SID_A/B/C` is configured; its pass link opens the ride-pass page and QR. Otherwise Twilio is sent the confirmation with the QR image attached (subject to WhatsApp's messaging window/policy). Provider acceptance/failure is logged and surfaced in the admin UI; resending keeps the same booking code. Email confirmations are not configured. Declines/cancellations and booking-detail changes also attempt rider notifications.
+When an admin confirms a website booking request, the backend changes its status to `confirmed`, assigns a stable booking code, and creates a signed ride-pass URL. Configured email and messaging providers receive the confirmation; attempts are logged. Admins can resend confirmations without changing the booking code. Payments are recorded manually, not collected online.
 
-**Current admin UI boundary:** the Next.js dashboard added for the separate backend deployment covers routes/prices, website requests, and site content. The repository also contains a more extensive frontend-local admin UI (overview charts, registered account bookings, request editing, AI draft controls, and camera scanner), but the website redirects admin users to the backend dashboard in production. Those additional controls are therefore not exposed through the current separate-origin backend dashboard, even where related API endpoints exist.
+**Admin UI boundary:** the Next.js admin dashboard is the production admin surface. Some tools such as the camera scanner remain in the frontend-local admin UI and may not be exposed in a separate-origin deployment.
 
 ### Other backend pages
 
@@ -151,16 +151,16 @@ The backend no longer has public pages of its own (the old customer pages and si
 ```text
 Visitor opens /book
   → selects route, date, riders, contact details and notes
-  → browser checks permitted weekday for the selected route
+  → browser requires customer sign-in and checks route/date availability
   → POST backend /api/booking-requests
-  → backend validates, rate-limits, normalizes phone and saves status=pending
+  → backend validates customer, route/date, availability and contact; snapshots price and saves status=pending
   → best-effort rider receipt + admin notification
-  → website shows request reference and estimated total
+  → customer sees request and status in /dashboard
   → admin reviews request in backend /admin
       ├─ decline/cancel → update status and attempt notification
       └─ confirm → update status, create signed pass, attempt confirmation message
-                    → rider opens /ticket/:token
-                    → staff checks QR pass in the ride-day scanner, if available
+                    → rider opens /ticket/:token and may add it to calendar
+                    → staff checks QR pass on ride day
 ```
 
 ### Booking-request status values
@@ -170,9 +170,9 @@ Visitor opens /book
 - `declined` — staff cannot accommodate the request.
 - `cancelled` — the request/ride has been cancelled.
 
-The current Next.js backend dashboard exposes confirm, decline, and cancel actions for website requests.
+The customer can cancel a booking within the cancellation window. Staff cancellation records the actor and timestamp; customer cancellation is audited and triggers a best-effort notification. Reminder jobs claim eligible bookings atomically to avoid duplicate sends.
 
-### Separate legacy account-booking path
+### Legacy account-booking API
 
 The Next.js backend also retains an account-based booking API:
 
@@ -182,7 +182,7 @@ The Next.js backend also retains an account-based booking API:
 4. This API checks capacity (12 per date/time slot), calculates the configured category price, saves a confirmed booking, creates a signed pass, and attempts confirmation notifications.
 5. `GET /api/bookings` returns the signed-in user’s bookings.
 
-This is different from the Vite site’s public request flow, which stores a pending request and waits for staff confirmation. The live Vite `/book` page does not use `/api/bookings`.
+The Vite site's `/book` flow uses `/api/booking-requests`; the older `/api/bookings` API remains separate.
 
 ## 5. Backend API and supporting functions
 
@@ -192,6 +192,14 @@ This is different from the Vite site’s public request flow, which stores a pen
 | `GET /api/routes-config` | Public route names, prices, and schedule configuration |
 | `GET /api/content` | Public published gallery content |
 | `POST /api/booking-requests` | Public website booking-request submission |
+| `GET /api/customer/bookings` | List the signed-in customer's bookings |
+| `POST /api/customer/bookings/:id/cancel` | Cancel an eligible customer booking |
+| `POST /api/customer/password/forgot` | Request a password-reset email |
+| `POST /api/customer/password/reset` | Consume a reset token and change password |
+| `POST /api/cron/reminders` | Secret-protected daily reminder job |
+| `POST /api/admin/email/test` | Send a test email to the signed-in staff member |
+| `GET /api/admin/email` | Read provider configuration state and recent email-delivery attempts |
+| `POST /api/admin/booking-requests/:id/payment` | Record, refund or waive a manual payment |
 | `PATCH /api/admin/booking-requests/:id` | Admin update request, status, and rider details; confirmation creates a pass and sends notifications |
 | `GET /api/admin/dashboard-summary` | Admin dashboard summary, request/booking data, routes, content, and monthly statistics |
 | `PUT /api/admin/routes-config/:routeId` | Admin update route configuration |
@@ -208,18 +216,19 @@ This is different from the Vite site’s public request flow, which stores a pen
 | `GET /api/tickets/:token` | Return public details for a confirmed signed pass |
 | `POST /api/webhooks/whatsapp` | Twilio inbound WhatsApp webhook; replies with the sender’s latest request status |
 
-Public website endpoints, including availability, use CORS configured through `FRONTEND_ORIGIN`. Set it to the exact website origin (scheme and hostname, no path or trailing slash); multiple origins can be comma-separated. Admin APIs are session-protected and are not opened to the public website by that CORS middleware.
+Public website endpoints use CORS configured through `FRONTEND_ORIGIN`. Set it to the exact website origin (scheme and hostname, no path or trailing slash); multiple origins can be comma-separated. Admin APIs are session-protected.
 
 ## 6. Data and integrations
 
 - **PostgreSQL / Neon:** stores users, account bookings, public website booking requests, route configuration, and site content.
 - **NextAuth:** credentials-based authentication and JWT sessions; optional OAuth providers depend on deployment configuration.
+- **Email:** Resend or SMTP for account, booking, reset, review, upload and reminder messages; delivery attempts are logged. See [EMAIL-SETUP.md](./EMAIL-SETUP.md).
 - **Twilio:** optional WhatsApp/SMS rider and admin notifications and the inbound WhatsApp status webhook. WhatsApp production use requires an approved sender/templates; a sandbox is for testing.
 - **Vercel Blob:** optional public media storage for admin uploads.
 - **Anthropic API:** optional article drafting from the admin tool/API.
 - **Maps and QR:** the Vite site displays a heritage map; QR passes are generated client-side from signed pass URLs and validated by the backend.
 
-Prices shown on the site are informational estimates. The public request flow does not collect payment. Payment is described as due on the ride day.
+The booking total is snapshotted from the route price at submission. Payment is manual and due on the ride day; no online payment provider is integrated. See [PAYMENTS.md](./PAYMENTS.md).
 
 ## 7. Configuration and operational notes
 
@@ -234,7 +243,6 @@ Prices shown on the site are informational estimates. The public request flow do
 ## 8. Current implementation boundaries
 
 - Booking buttons on `/schedule` open `/book`, which is the functional request path.
-- Booking-request confirmation is staff-mediated; the request endpoint does not reserve capacity or take payment.
-- The new backend admin dashboard does not yet surface the repository’s camera check-in UI or registered-booking management UI.
-- The backend's older account-booking API (`/api/bookings`, `/api/availability`) remains, but its customer pages were removed; the Vite website's request flow is the supported one.
+- Confirmation is staff-mediated. The request reserves availability but does not collect payment.
+- The backend's older account-booking API (`/api/bookings`, `/api/availability`) remains separate from the Vite booking-request flow.
 - Live routes/content require a reachable backend and database; the website starts with local static route data as a fallback and shows a notice if the live fetch fails.

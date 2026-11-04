@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { db } from "@/db/client";
@@ -13,7 +13,7 @@ export async function GET() {
   const rows = await db
     .select({
       id: bookings.id,
-      name: users.name,
+      name: sql`coalesce(${users.name}, 'Deleted customer')`,
       email: users.email,
       phone: users.phone,
       category: bookings.category,
@@ -25,7 +25,7 @@ export async function GET() {
       status: bookings.status,
     })
     .from(bookings)
-    .innerJoin(users, eq(bookings.userId, users.id))
+    .leftJoin(users, eq(bookings.userId, users.id))
     .where(eq(bookings.status, "confirmed"))
     .orderBy(asc(bookings.rideDate), asc(bookings.timeSlot));
 

@@ -11,6 +11,7 @@ import { sniffImage, sniffVideo } from "@/lib/blob-url";
 import { communityMediaUrl } from "@/lib/community-media";
 import { fireWebhook } from "@/lib/webhook";
 import { SITE_IDS } from "@/lib/review-meta";
+import { notifyAdmins } from "@/lib/admin-email";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,12 @@ export async function POST(request) {
   }
 
   await fireWebhook("community_photo.created", { id, name: auth.user.name, title });
+  await notifyAdmins("newRiderUpload", {
+    id,
+    rider: auth.user.name,
+    title,
+    mediaType: photo.mediaType,
+  }, { relatedType: "community_photo", relatedId: id });
   const { userId, ...rest } = photo;
   return NextResponse.json({
     photo: { ...rest, imageUrl: communityMediaUrl(request, rest), mine: true },

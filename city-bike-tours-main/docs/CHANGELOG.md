@@ -24,3 +24,11 @@ SMS sign-in codes can now be sent through Infobip as well as Twilio, with automa
 
 1. Heritage trail: cycling-street route generation, an animated bicycle with per-stop pauses, accessible playback controls, and a compact rider-photo upload section at the top of the Gallery.
 2. New rider photo and video uploads use the public Vercel Blob store and appear in the Gallery after staff approval; download permission remains controlled by moderation.
+
+## Launch readiness
+
+1. Transactional email supports Resend and SMTP, shared escaped HTML/text templates, delivery logs, test delivery, and admin alerts.
+2. Customers can request one-time password-reset links, see their account-linked bookings, and cancel eligible rides; bookings retain a price snapshot and calendar download.
+3. Staff can record manual payments, resend booking confirmations, and review email and reminder state. A secret-protected daily job sends booking reminders.
+4. Customer data deletion anonymizes retained booking/review records and removes associated account data; backup/restore coverage includes customer messages, review votes, community photos and email logs.
+5. Added security headers, CI backend tests, a deployment smoke test, and email, payments and go-live guides.

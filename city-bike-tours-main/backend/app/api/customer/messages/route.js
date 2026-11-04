@@ -7,6 +7,7 @@ import { newId } from "@/lib/id";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { requireCustomer } from "@/lib/customer-auth";
 import { fireWebhook } from "@/lib/webhook";
+import { notifyAdmins } from "@/lib/admin-email";
 
 export const dynamic = "force-dynamic";
 
@@ -35,5 +36,11 @@ export async function POST(request) {
     id: newId(), userId: auth.user.id, sender: "customer", senderName: auth.user.name, body: parsed.data.body,
   }).returning({ id: customerMessages.id, sender: customerMessages.sender, senderName: customerMessages.senderName, body: customerMessages.body, createdAt: customerMessages.createdAt });
   await fireWebhook("customer_message.created", { id: message.id, name: auth.user.name, phone: auth.user.phone, message: parsed.data.body });
+  await notifyAdmins("newMessage", {
+    id: message.id,
+    rider: auth.user.name,
+    message: parsed.data.body,
+    receivedAt: message.createdAt.toISOString(),
+  }, { relatedType: "customer_message", relatedId: message.id });
   return NextResponse.json({ message }, { status: 201 });
 }

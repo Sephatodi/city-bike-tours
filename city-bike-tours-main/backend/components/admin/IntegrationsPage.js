@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Icon, PageTop, Skeleton, api, useCopy, useDash, useRun, useToast } from "./ui";
 
-const FIELDS = ["gaId", "gtmId", "metaPixelId", "webhookUrl", "webhookSecret"];
+const FIELDS = ["gaId", "gtmId", "metaPixelId", "webhookUrl", "webhookSecret", "notifyEmails"];
 const EVENTS = ["booking_request.created", "booking_request.confirmed", "booking_request.declined", "booking_request.cancelled", "enquiry.created", "review.created"];
 
 export default function IntegrationsPage() {
@@ -13,10 +13,21 @@ export default function IntegrationsPage() {
   const [run, busy] = useRun();
   const [saved, setSaved] = useState(null);
   const [form, setForm] = useState(null);
+  const [emailInfo, setEmailInfo] = useState(null);
+  const [testEmailBusy, setTestEmailBusy] = useState(false);
   const [error, setError] = useState("");
   const write = can("settings:write");
 
-  useEffect(() => { api("/api/admin/settings", {}, "Could not load.").then((r) => { setSaved(r.settings); setForm(r.settings); }).catch((e) => setError(e.message)); }, []);
+  useEffect(() => {
+    Promise.all([
+      api("/api/admin/settings", {}, "Could not load."),
+      api("/api/admin/email", {}, "Could not load email status."),
+    ]).then(([settings, email]) => {
+      setSaved(settings.settings);
+      setForm(settings.settings);
+      setEmailInfo(email);
+    }).catch((e) => setError(e.message));
+  }, []);
   if (error) return <div className="adm-alert bad" role="alert"><Icon name="alert" /><div>{error}</div></div>;
   if (!form) return <Skeleton h={320} />;
 
@@ -35,6 +46,18 @@ export default function IntegrationsPage() {
     const res = await run(() => api("/api/admin/integrations/test-webhook", { method: "POST" }, "Could not send the test."));
     if (res) toast(res.ok ? "Test sent. The other system answered OK." : "The other system didn't accept the test. Check the address.", res.ok ? "ok" : "error");
   };
+  const testEmail = async () => {
+    setTestEmailBusy(true);
+    try {
+      const result = await api("/api/admin/email/test", { method: "POST" }, "Could not send the test email.");
+      toast(result.ok ? "Test email sent to your staff account." : "Test email failed.", result.ok ? "ok" : "error");
+      setEmailInfo(await api("/api/admin/email", {}, "Could not refresh email logs."));
+    } catch (e) {
+      toast(e.message, "error");
+    } finally {
+      setTestEmailBusy(false);
+    }
+  };
 
   return (
     <form onSubmit={save}>
@@ -42,6 +65,22 @@ export default function IntegrationsPage() {
         Connect other tools to your website. Paste an ID, never code, so nothing can break your pages.
       </PageTop>
       <fieldset disabled={!write} style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 16, minWidth: 0 }}>
+        <div className="adm-card">
+          <div className="adm-card-head"><div><h2>Transactional email</h2><div className="sub">Provider credentials are read from the backend environment and are never shown here.</div></div></div>
+          <p className="muted">Provider: <strong>{emailInfo?.config.provider || "checking…"}</strong> · {emailInfo?.config.configured ? "Ready" : "Not configured"}</p>
+          <p className="muted">Sender: {emailInfo?.config.fromConfigured ? "Configured" : "Missing"} · Provider credentials: {emailInfo?.config.credentialsConfigured ? "Configured" : "Missing"}</p>
+          <label className="field">Admin alert recipients<input className="input" value={form.notifyEmails} onChange={set("notifyEmails")} placeholder="alerts@example.com, owner@example.com" /><span className="hint">Overrides ADMIN_NOTIFY_EMAILS in the backend environment.</span></label>
+          <button type="button" className="btn" disabled={!write || testEmailBusy || !emailInfo?.config.configured} onClick={testEmail}>{testEmailBusy ? "Sending…" : "Send test email"}</button>
+          <div style={{ overflowX: "auto", marginTop: 16 }}>
+            <table className="adm-table">
+              <thead><tr><th>When</th><th>To</th><th>Subject</th><th>Template</th><th>Status</th><th>Error</th></tr></thead>
+              <tbody>{emailInfo?.logs?.map((row) => (
+                <tr key={row.id}><td>{new Date(row.createdAt).toLocaleString("en-GB", { timeZone: "Africa/Gaborone" })}</td><td>{row.toAddress}</td><td>{row.subject}</td><td>{row.template || "—"}</td><td>{row.status}</td><td>{row.error || "—"}</td></tr>
+              ))}</tbody>
+            </table>
+            {emailInfo?.logs?.length === 0 && <p className="muted">No email attempts yet.</p>}
+          </div>
+        </div>
         <div className="adm-card">
           <div className="adm-card-head"><div><h2>Tracking on your pages</h2><div className="sub">Added automatically to the pages served by this backend. For your separate booking site, add the tags there too.</div></div></div>
           <div className="adm-form-grid">

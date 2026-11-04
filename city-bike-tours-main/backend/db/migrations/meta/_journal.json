@@ -162,6 +162,13 @@
       "when": 1793706075289,
       "tag": "0024_booking_request_email",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793761271510,
+      "tag": "0025_launch_features",
+      "breakpoints": true
     }
   ]
 }

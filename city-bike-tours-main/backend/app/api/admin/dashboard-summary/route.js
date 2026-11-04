@@ -32,7 +32,7 @@ export async function GET() {
     const [confirmedBookings, requestRows, routesConfig, content, messageLogs, capacity, [customerCount], [newEnquiries], [pendingReviews]] = await Promise.all([
       db.select({
         id: bookings.id,
-        name: users.name,
+        name: sql`coalesce(${users.name}, 'Deleted customer')`,
         email: users.email,
         phone: users.phone,
         category: bookings.category,
@@ -45,7 +45,7 @@ export async function GET() {
         checkedInAt: bookings.checkedInAt,
       })
         .from(bookings)
-        .innerJoin(users, sql`${bookings.userId} = ${users.id}`)
+        .leftJoin(users, eq(bookings.userId, users.id))
         .orderBy(asc(bookings.rideDate), asc(bookings.timeSlot)),
       db.select().from(bookingRequests).orderBy(desc(bookingRequests.createdAt)),
       db.select().from(companyRoutesConfig).orderBy(asc(companyRoutesConfig.routeId)),
@@ -64,7 +64,7 @@ export async function GET() {
     // Normalise both booking sources into one list of rides that actually count (confirmed).
     const rides = [
       ...requestRows.filter((r) => r.status === "confirmed").map((r) => ({
-        date: r.rideDate, riders: r.riders, revenue: r.riders * (priceOf[r.routeId] ?? 0), routeId: r.routeId, checkedIn: !!r.checkedInAt,
+        date: r.rideDate, riders: r.riders, revenue: Number(r.priceTotal ?? r.riders * (priceOf[r.routeId] ?? 0)), routeId: r.routeId, checkedIn: !!r.checkedInAt,
       })),
       ...confirmedBookings.filter((b) => b.status === "confirmed").map((b) => ({
         date: b.rideDate, riders: 1, revenue: Number(b.price ?? 0), routeId: b.routeId || b.category, checkedIn: !!b.checkedInAt,
