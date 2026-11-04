@@ -4,7 +4,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { newId } from "@/lib/id";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { issueCustomerToken, publicUser } from "@/lib/customer-auth";
+import { issueCustomerToken, publicUser, setCustomerCookie } from "@/lib/customer-auth";
 import { verifyNeonAuthToken } from "@/lib/neon-auth";
 
 export const runtime = "nodejs";
@@ -75,5 +75,5 @@ export async function POST(request) {
     }
   }
 
-  return NextResponse.json({ token: issueCustomerToken(user.id), user: publicUser(user) });
+  return setCustomerCookie(NextResponse.json({ user: publicUser(user) }), issueCustomerToken(user.id));
 }

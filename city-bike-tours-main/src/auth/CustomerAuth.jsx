@@ -1,60 +1,79 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { backendUrl } from "../api/backend";
 
-const STORAGE_KEY = "cbt-customer-token";
 const CustomerAuthContext = createContext(null);
 
-// Storage can be blocked (private mode, strict settings), so every access is guarded.
-const readToken = () => { try { return window.localStorage.getItem(STORAGE_KEY) || ""; } catch { return ""; } };
-const writeToken = (value) => {
-  try { value ? window.localStorage.setItem(STORAGE_KEY, value) : window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-};
-
 export function CustomerAuthProvider({ children }) {
-  const [token, setToken] = useState(readToken);
   const [user, setUser] = useState(null);
-  const [ready, setReady] = useState(!readToken());
+  const [ready, setReady] = useState(false);
 
-  const signOut = useCallback(() => {
-    writeToken("");
-    setToken("");
-    setUser(null);
+  const signOut = useCallback(async () => {
+    try {
+      const response = await fetch("/api/customer/logout", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Unable to sign out. Please try again.");
+    } finally {
+      setUser(null);
+      setReady(true);
+    }
   }, []);
 
-  const signIn = useCallback((nextToken, nextUser) => {
-    writeToken(nextToken);
-    setToken(nextToken);
+  const signIn = useCallback((nextUser) => {
     setUser(nextUser || null);
     setReady(true);
   }, []);
 
-  // Calls the backend as the signed-in customer. Throws Error(message) on failure.
   const api = useCallback(async (path, { method = "GET", body, form, signal } = {}) => {
     const headers = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    const response = await fetch(backendUrl(path), {
-      method, headers, signal, cache: "no-store",
+    const response = await fetch(path, {
+      method,
+      headers,
+      signal,
+      cache: "no-store",
+      credentials: "include",
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
     });
     const result = await response.json().catch(() => null);
-    if (response.status === 401 && token) signOut();
+    if (response.status === 401) await signOut();
     if (!response.ok) throw new Error(result?.error || "Something went wrong. Please try again.");
     return result ?? {};
-  }, [token, signOut]);
+  }, [signOut]);
 
-  // Confirm a stored token is still valid when the site opens.
   useEffect(() => {
-    if (!token || user) { setReady(true); return undefined; }
-    const controller = new AbortController();
-    api("/api/customer/me", { signal: controller.signal })
-      .then((result) => setUser(result.user))
-      .catch(() => {})
-      .finally(() => { if (!controller.signal.aborted) setReady(true); });
-    return () => controller.abort();
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+    try {
+      window.localStorage.removeItem("cbt-customer-token");
+    } catch {
+      // Storage may be disabled by the browser.
+    }
 
-  const value = useMemo(() => ({ token, user, ready, isSignedIn: Boolean(token && user), signIn, signOut, api }), [token, user, ready, signIn, signOut, api]);
+    const controller = new AbortController();
+    fetch("/api/customer/me", {
+      signal: controller.signal,
+      cache: "no-store",
+      credentials: "include",
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (response.ok && result?.user && !controller.signal.aborted) setUser(result.user);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!controller.signal.aborted) setReady(true);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const value = useMemo(() => ({
+    user,
+    ready,
+    isSignedIn: Boolean(user),
+    signIn,
+    signOut,
+    api,
+  }), [user, ready, signIn, signOut, api]);
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;
 }
 

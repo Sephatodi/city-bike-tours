@@ -24,6 +24,7 @@ SMS sign-in codes can now be sent through Infobip as well as Twilio, with automa
 
 1. Heritage trail: cycling-street route generation, an animated bicycle with per-stop pauses, accessible playback controls, and a compact rider-photo upload section at the top of the Gallery.
 2. New rider photo and video uploads use the public Vercel Blob store and appear in the Gallery after staff approval; download permission remains controlled by moderation.
+3. Customer sign-in now uses an HttpOnly cookie; social sign-in exchanges a short-lived, single-use handoff for that cookie.
 
 ## Launch readiness
 

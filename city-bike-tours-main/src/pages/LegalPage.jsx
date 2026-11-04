@@ -28,7 +28,7 @@ const PAGES = {
           <li><strong>Account details:</strong> your name, email address, profile picture and phone number, when you create an account or sign in with Google, Facebook or Apple, or with a phone number or WhatsApp code.</li>
           <li><strong>Bookings:</strong> the ride, date, group size, and the contact details you give us to confirm it.</li>
           <li><strong>Messages, reviews and photos</strong> you choose to post or send to our team.</li>
-          <li><strong>Technical data</strong> needed to keep the site working and secure, such as a sign-in token stored in your browser.</li>
+          <li><strong>Technical data</strong> needed to keep the site working and secure, such as a secure sign-in cookie stored by your browser.</li>
         </ul>
         <p>When you sign in with Google or Facebook we only receive the basic profile and email address those services share with us. We never receive your password and we never post to your account.</p>
         <h2>How we use it</h2>

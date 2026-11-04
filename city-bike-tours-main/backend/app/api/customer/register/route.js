@@ -7,7 +7,7 @@ import { registerSchema } from "@/lib/validators";
 import { newId } from "@/lib/id";
 import { normalizePhone } from "@/lib/phone";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { issueCustomerToken, publicUser } from "@/lib/customer-auth";
+import { issueCustomerToken, publicUser, setCustomerCookie } from "@/lib/customer-auth";
 import { renderEmailTemplate } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
 
@@ -39,5 +39,8 @@ export async function POST(request) {
     relatedType: "user",
     relatedId: created.id,
   });
-  return NextResponse.json({ token: issueCustomerToken(created.id), user: publicUser(created) }, { status: 201 });
+  return setCustomerCookie(
+    NextResponse.json({ user: publicUser(created) }, { status: 201 }),
+    issueCustomerToken(created.id),
+  );
 }

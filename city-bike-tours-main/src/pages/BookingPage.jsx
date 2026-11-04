@@ -8,7 +8,7 @@ import { useCustomer } from "../auth/CustomerAuth";
 
 export default function BookingPage() {
   const { routes } = useLiveData();
-  const { isSignedIn, ready, user, token, signOut } = useCustomer();
+  const { isSignedIn, ready, user, signOut } = useCustomer();
   const { hash } = useLocation();
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
@@ -102,9 +102,10 @@ export default function BookingPage() {
     setSubmitError("");
 
     try {
-      const response = await fetch(backendUrl("/api/booking-requests"), {
+      const response = await fetch("/api/booking-requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           name,
           phone,

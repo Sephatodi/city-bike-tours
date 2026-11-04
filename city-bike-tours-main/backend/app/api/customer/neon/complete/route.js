@@ -4,13 +4,12 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { newId } from "@/lib/id";
 import { neonAuth } from "@/lib/neon-auth-server";
-import { frontendOrigins, issueCustomerToken } from "@/lib/customer-auth";
+import { frontendOrigins, issueCustomerHandoff } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
 
-// Neon Auth sends the browser here after Google sign-in (middleware.js has already turned Neon's one-time
-// code into a session cookie). We match or create the customer in our own `users` table, then hand the
-// website its token in the URL fragment, exactly like the Facebook / Apple route does.
+// Neon Auth sends the browser here after Google sign-in. We exchange its session for a short-lived
+// handoff which the frontend redeems for its HttpOnly customer cookie.
 export async function GET(request) {
   const origins = frontendOrigins();
   const requested = (new URL(request.url).searchParams.get("return") || "").replace(/\/$/, "");
@@ -36,5 +35,5 @@ export async function GET(request) {
     user = { id: newId(), name: profile.name || email, email, image: profile.image || null, provider: "google", role: "customer" };
     await db.insert(users).values(user);
   }
-  return NextResponse.redirect(`${origin}/login/callback#token=${issueCustomerToken(user.id)}`);
+  return NextResponse.redirect(`${origin}/login/callback#handoff=${issueCustomerHandoff(user.id)}`);
 }
