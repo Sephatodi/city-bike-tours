@@ -14,6 +14,10 @@ import { createBookingConfirmation } from "@/lib/confirmation";
 import { buildWaLink, logWaMessage } from "@/lib/wa";
 import { getOrCreateBookingCode } from "@/lib/booking-code";
 import { sendBookingNotifications } from "@/lib/booking-notifications";
+import { renderEmailTemplate } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
+import { getSettings } from "@/lib/settings";
+import { formatGaboroneDate } from "@/lib/time";
 
 const MESSAGES = {
   confirmed: "is CONFIRMED. See you at Main Mall!",
@@ -41,6 +45,7 @@ export async function PATCH(request, { params }) {
     ...(dateIso ? { rideDate: dateIso } : {}),
     ...(email !== undefined ? { email: email || null } : {}),
     ...(phone ? { phone: normalizePhone(phone) } : {}),
+    ...(changes.status === "cancelled" ? { cancelledAt: new Date(), cancelledBy: "staff" } : {}),
   };
   if (phone && !updates.phone) {
     return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
@@ -89,7 +94,7 @@ export async function PATCH(request, { params }) {
     updated = { ...updated, confirmationCode };
     const confirmation = await createBookingConfirmation({
       name: updated.name,
-      date: updated.rideDate,
+      date: formatGaboroneDate(updated.rideDate),
       time: preferredTime,
       guests: updated.riders,
       link: ticketUrl,
@@ -107,11 +112,12 @@ export async function PATCH(request, { params }) {
       whatsappContentSid: confirmation.contentSid,
       whatsappContentVariables: confirmation.whatsappVariables,
       routeName: route?.routeName ?? updated.routeId,
-      date: updated.rideDate,
+      date: formatGaboroneDate(updated.rideDate),
       time: preferredTime,
       guests: updated.riders,
       confirmationCode,
       link: ticketUrl,
+      total: updated.priceTotal,
     });
     notifications = {
       ...notifications,
@@ -120,6 +126,23 @@ export async function PATCH(request, { params }) {
       qrImageUrl,
       confirmationCode,
     };
+  }
+
+  if (current.status !== updated.status && updated.status === "declined" && updated.email) {
+    const settings = await getSettings();
+    const declined = renderEmailTemplate("bookingDeclined", {
+      name: updated.name,
+      date: formatGaboroneDate(updated.rideDate),
+    }, settings);
+    await sendEmail({ to: updated.email, ...declined, template: "bookingDeclined", relatedType: "booking_request", relatedId: updated.id });
+  }
+  if (current.status !== updated.status && updated.status === "cancelled" && updated.email) {
+    const settings = await getSettings();
+    const cancelled = renderEmailTemplate("bookingCancelled", {
+      name: updated.name,
+      date: formatGaboroneDate(updated.rideDate),
+    }, settings);
+    await sendEmail({ to: updated.email, ...cancelled, template: "bookingCancelled", relatedType: "booking_request", relatedId: updated.id });
   }
 
   // Send operational status changes through WhatsApp click-to-chat links.

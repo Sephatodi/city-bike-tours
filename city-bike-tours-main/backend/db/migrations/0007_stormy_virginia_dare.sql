@@ -1,1 +1,1 @@
-ALTER TABLE "bookings" ADD COLUMN "checked_in_at" timestamp with time zone;
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "checked_in_at" timestamp with time zone;

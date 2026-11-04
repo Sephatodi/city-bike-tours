@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS "site_settings" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "status" text DEFAULT 'active' NOT NULL;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'active' NOT NULL;

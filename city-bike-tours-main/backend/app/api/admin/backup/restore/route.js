@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getTableColumns } from "drizzle-orm";
 import { db } from "@/db/client";
-import { bookingRequests, bookings, companyRoutesConfig, seoPages, siteContent, siteSettings } from "@/db/schema";
+import { bookingRequests, bookings, communityPhotos, companyRoutesConfig, customerMessages, emailLogs, reviewVotes, seoPages, siteContent, siteSettings } from "@/db/schema";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 
@@ -13,6 +13,10 @@ const PLAN = [
   ["siteContent", siteContent, "id", "replace"],
   ["bookingRequests", bookingRequests, "id", "add"],
   ["bookings", bookings, "id", "add"],
+  ["communityPhotos", communityPhotos, "id", "add"],
+  ["customerMessages", customerMessages, "id", "add"],
+  ["reviewVotes", reviewVotes, ["reviewId", "userId"], "add"],
+  ["emailLogs", emailLogs, "id", "add"],
 ];
 
 function clean(table, row) {
@@ -42,9 +46,13 @@ export async function POST(request) {
     for (const raw of rows) {
       try {
         const values = clean(table, raw);
-        if (!values[key]) { skipped++; continue; }
+        const validKey = Array.isArray(key) ? key.every((part) => values[part]) : values[key];
+        if (!validKey) { skipped++; continue; }
         const query = db.insert(table).values(values);
-        if (mode === "replace") await query.onConflictDoUpdate({ target: table[key], set: values });
+        if (mode === "replace") {
+          const target = Array.isArray(key) ? key.map((part) => table[part]) : table[key];
+          await query.onConflictDoUpdate({ target, set: values });
+        }
         else await query.onConflictDoNothing();
         done++;
       } catch {

@@ -8,6 +8,8 @@ import { newId } from "@/lib/id";
 import { normalizePhone } from "@/lib/phone";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { issueCustomerToken, publicUser } from "@/lib/customer-auth";
+import { renderEmailTemplate } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request) {
   if (!rateLimit(`cust-register:${clientIp(request)}`, 6, 60 * 60 * 1000)) {
@@ -26,5 +28,16 @@ export async function POST(request) {
     id: newId(), name, email, phone: normalizedPhone || null,
     passwordHash: await bcrypt.hash(password, 10), provider: "credentials",
   }).returning();
+  const welcome = renderEmailTemplate("welcome", {
+    name: created.name,
+    dashboardUrl: new URL("/dashboard", process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || request.nextUrl.origin).toString(),
+  });
+  await sendEmail({
+    to: created.email,
+    ...welcome,
+    template: "welcome",
+    relatedType: "user",
+    relatedId: created.id,
+  });
   return NextResponse.json({ token: issueCustomerToken(created.id), user: publicUser(created) }, { status: 201 });
 }

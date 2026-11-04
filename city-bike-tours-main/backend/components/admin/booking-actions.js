@@ -58,9 +58,11 @@ export function useBookingActions() {
 export function unifyBookings(data) {
   const routeName = (id) => data.routesConfig.find((r) => r.routeId === id)?.routeName || (id === "lesson" ? "Cycling lesson" : id || "—");
   const requests = data.bookingRequests.map((r) => ({
-    key: `r-${r.id}`, source: "request", id: r.id, name: r.name, phone: r.phone, email: null,
+    key: `r-${r.id}`, source: "request", id: r.id, name: r.name, phone: r.phone, email: r.email,
     route: routeName(r.routeId), date: r.rideDate, time: r.notes?.match(/Preferred start time:\s*(\d{2}:\d{2})/)?.[1] || null,
     riders: r.riders, status: r.status, notes: r.notes, checkedInAt: r.checkedInAt, createdAt: r.createdAt,
+    paymentStatus: r.paymentStatus || "unpaid", paymentAmount: r.paymentAmount, paymentMethod: r.paymentMethod,
+    priceTotal: r.priceTotal, reminderSentAt: r.reminderSentAt, paidAt: r.paidAt,
   }));
   const accounts = data.bookings.map((b) => ({
     key: `b-${b.id}`, source: "account", id: b.id, name: b.name, phone: b.phone, email: b.email,

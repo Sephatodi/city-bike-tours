@@ -47,6 +47,10 @@ export default function SettingsPage() {
             <div><b>Riders per day</b><small>The most riders you take across all routes on one date.</small></div>
             <input className="input num" style={{ width: 100 }} type="number" min="1" max="500" value={form.dailyCapacity} onChange={set("dailyCapacity")} aria-label="Riders per day" />
           </div>
+          <div className="adm-form-grid" style={{ marginTop: 16 }}>
+            <label className="field">Cancellation window (hours)<input className="input" type="number" min="0" max="720" value={form.cancellationHours} onChange={set("cancellationHours")} /></label>
+            <label className="field">Reminder channel<select className="input" value={form.reminderChannel} onChange={set("reminderChannel")}><option value="email">Email</option><option value="sms">SMS</option><option value="both">Email and SMS</option></select></label>
+          </div>
         </div>
 
         <div className="adm-card">

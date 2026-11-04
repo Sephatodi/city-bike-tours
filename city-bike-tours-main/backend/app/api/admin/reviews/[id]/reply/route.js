@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { reviews } from "@/db/schema";
+import { reviews, users } from "@/db/schema";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { renderEmailTemplate } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
+import { getSettings } from "@/lib/settings";
 
 const schema = z.object({ reply: z.string().trim().max(600, "Keep the reply under 600 characters.") });
 
@@ -22,5 +25,23 @@ export async function POST(request, { params }) {
     .where(eq(reviews.id, params.id)).returning();
   if (!updated) return NextResponse.json({ error: "Review not found." }, { status: 404 });
   await logAudit(guard.staff, "inbox.review_reply", `${reply ? "Replied to" : "Removed reply to"} ${updated.name}'s review`, { targetType: "review", targetId: updated.id });
+  if (reply && updated.userId) {
+    const [customer] = await db.select({ email: users.email }).from(users).where(eq(users.id, updated.userId));
+    if (customer?.email) {
+      const rendered = renderEmailTemplate("reviewReplied", {
+        name: updated.name,
+        comment: updated.comment,
+        reply,
+        reviewsUrl: process.env.PUBLIC_FRONTEND_URL ? new URL("/connect", process.env.PUBLIC_FRONTEND_URL).toString() : "/connect",
+      }, await getSettings());
+      await sendEmail({
+        to: customer.email,
+        ...rendered,
+        template: "reviewReplied",
+        relatedType: "review",
+        relatedId: updated.id,
+      });
+    }
+  }
   return NextResponse.json({ review: updated });
 }

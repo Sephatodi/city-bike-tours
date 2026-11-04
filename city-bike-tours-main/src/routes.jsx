@@ -13,6 +13,8 @@ import MessageInboxPage from "./pages/MessageInboxPage";
 import LegalPage from "./pages/LegalPage";
 import DashboardPage from "./pages/DashboardPage";
 import SiteGalleryPage from "./pages/SiteGalleryPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +26,8 @@ export const router = createBrowserRouter([
       { path: "routes", element: <Navigate to="/book" replace /> },
       { path: "pricing", element: <Navigate to="/schedule#pricing" replace /> },
       { path: "login", Component: LoginPage },
+      { path: "forgot-password", Component: ForgotPasswordPage },
+      { path: "reset-password", Component: ResetPasswordPage },
       { path: "login/callback", Component: LoginCallbackPage },
       { path: "dashboard", Component: DashboardPage },
       { path: "connect", Component: ConnectPage },

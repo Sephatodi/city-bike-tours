@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import Footer from "../components/Footer";
+import { useLiveData } from "../hooks/LiveDataContext";
 
 // Set VITE_CONTACT_EMAIL in .env to show an email address on these pages. Without it, people are pointed to
 // the site's message form and WhatsApp, which already exist.
@@ -90,7 +91,8 @@ const PAGES = {
         </ol>
         <h2>What happens next</h2>
         <ul>
-          <li>We delete your profile, contact details, messages, reviews and uploaded photos within 30 days.</li>
+          <li>After verifying your request, we delete your profile, contact details, messages, votes and uploaded photos. Booking records are retained for accounting with your name and contact details anonymized.</li>
+          <li>Reviews are anonymized by changing the display name to “Former rider”; the rating and text remain unless you ask us to delete reviews too.</li>
           <li>If you signed in with Facebook, you can also remove City Bike Tours in Facebook under Settings, then Apps and Websites. That stops Facebook sharing anything further with us.</li>
           <li>We may keep a record of past bookings for as long as the law requires for accounting.</li>
         </ul>
@@ -101,6 +103,7 @@ const PAGES = {
 };
 
 export default function LegalPage({ page }) {
+  const { settings } = useLiveData();
   const { kicker, title, body } = PAGES[page];
   return (
     <main className="legal-page">
@@ -108,7 +111,15 @@ export default function LegalPage({ page }) {
         <p className="schedule-section-kicker">{kicker}</p>
         <h1 className="font-display font-bold" style={{ color: "#F5EDD9", fontSize: "clamp(2.4rem, 5vw, 3.6rem)" }}>{title}</h1>
       </header>
-      <article className="legal-body glass">{body}</article>
+      <article className="legal-body glass">
+        {body}
+        {page === "terms" && (
+          <>
+            <h2>Cancellation and payment</h2>
+            <p>You may cancel a booking more than {Number(settings?.cancellationHours ?? 24)} hours before the ride starts. After that window, cancellation is no longer available. Payment is made on the day of the ride.</p>
+          </>
+        )}
+      </article>
       <Footer />
     </main>
   );

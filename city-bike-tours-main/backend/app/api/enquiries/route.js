@@ -6,6 +6,7 @@ import { newId } from "@/lib/id";
 import { normalizePhone } from "@/lib/phone";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { fireWebhook } from "@/lib/webhook";
+import { notifyAdmins } from "@/lib/admin-email";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Please tell us your name.").max(120),
@@ -32,5 +33,12 @@ export async function POST(request) {
   const id = newId();
   await db.insert(enquiries).values({ id, name, phone: normalized, email: email || null, subject: subject || null, message });
   await fireWebhook("enquiry.created", { id, name, phone: normalized, email: email || null, subject, message });
+  await notifyAdmins("newEnquiry", {
+    id,
+    name,
+    email: email || "",
+    subject: subject || "",
+    message,
+  }, { relatedType: "enquiry", relatedId: id });
   return NextResponse.json({ success: true }, { status: 201 });
 }

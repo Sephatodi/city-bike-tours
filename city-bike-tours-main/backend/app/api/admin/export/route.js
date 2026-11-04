@@ -20,7 +20,7 @@ const toCsv = (columns, rows) =>
 const EXPORTS = {
   "booking-requests": {
     load: () => db.select().from(bookingRequests).orderBy(desc(bookingRequests.createdAt)),
-    columns: [["id", "Reference"], ["name", "Name"], ["phone", "Phone"], ["routeId", "Route"], ["rideDate", "Ride date"], ["riders", "Riders"], ["status", "Status"], ["notes", "Notes"], ["checkedInAt", "Checked in"], ["createdAt", "Requested"]],
+    columns: [["id", "Reference"], ["name", "Name"], ["email", "Email"], ["phone", "Phone"], ["routeId", "Route"], ["rideDate", "Ride date"], ["riders", "Riders"], ["priceTotal", "Price total"], ["status", "Status"], ["paymentStatus", "Payment status"], ["paymentMethod", "Payment method"], ["paymentAmount", "Payment amount"], ["paymentReference", "Payment reference"], ["paidAt", "Paid at"], ["reminderSentAt", "Reminder sent at"], ["cancelledAt", "Cancelled at"], ["cancelledBy", "Cancelled by"], ["cancelReason", "Cancel reason"], ["notes", "Notes"], ["checkedInAt", "Checked in"], ["createdAt", "Requested"]],
   },
   "account-bookings": {
     load: () => db.select().from(bookings).orderBy(desc(bookings.createdAt)),

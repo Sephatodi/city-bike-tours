@@ -1,4 +1,4 @@
-ALTER TABLE "site_content" ADD COLUMN "is_published" boolean DEFAULT true NOT NULL;
+ALTER TABLE "site_content" ADD COLUMN IF NOT EXISTS "is_published" boolean DEFAULT true NOT NULL;
 --> statement-breakpoint
 -- The Vite site books these three route ids (src/data.js ROUTES_DATA). Prices/names/times mirror what
 -- the site currently shows; edit them any time in Admin > Routes, prices & schedules.

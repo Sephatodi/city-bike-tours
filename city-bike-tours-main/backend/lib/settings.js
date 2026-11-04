@@ -13,6 +13,9 @@ export const SETTING_DEFS = {
   arriveEarlyNote: { default: MEETUP.instruction, public: true, max: 200 },
   dailyCapacity: { default: String(RIDE_CAPACITY), public: false, max: 4 },
   bookingsOpen: { default: "true", public: true, max: 5 },
+  cancellationHours: { default: "24", public: true, max: 3 },
+  reminderChannel: { default: "email", public: false, max: 10 },
+  notifyEmails: { default: "", public: false, max: 1000 },
   announcement: { default: "", public: true, max: 300 },
   seoTitle: { default: "City Bike Tours — Gaborone Cycle Tours", public: true, max: 70 },
   seoDescription: {

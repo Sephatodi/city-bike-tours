@@ -8,6 +8,7 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { fireWebhook } from "@/lib/webhook";
 import { HIGHLIGHTS } from "@/lib/review-meta";
 import { optionalCustomer } from "@/lib/customer-auth";
+import { notifyAdmins } from "@/lib/admin-email";
 
 export const dynamic = "force-dynamic";
 
@@ -76,5 +77,12 @@ export async function POST(request) {
   const { website, ...values } = parsed.data;
   await db.insert(reviews).values({ id, ...values });
   await fireWebhook("review.created", { id, ...values });
+  await notifyAdmins("newReview", {
+    id,
+    rider: values.name,
+    rating: String(values.rating),
+    review: values.comment,
+    receivedAt: new Date().toISOString(),
+  }, { relatedType: "review", relatedId: id });
   return NextResponse.json({ success: true, message: "Thank you! Your review will appear once we've read it." }, { status: 201 });
 }

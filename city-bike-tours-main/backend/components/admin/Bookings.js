@@ -92,13 +92,59 @@ function RidePass({ row, onAuto, busy }) {
   );
 }
 
+function PaymentEditor({ row, onRefresh }) {
+  const [method, setMethod] = useState("cash");
+  const [amount, setAmount] = useState(String(row.priceTotal || ""));
+  const [reference, setReference] = useState("");
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+
+  async function submit(action, event) {
+    event?.preventDefault();
+    setBusy(true);
+    try {
+      await api(`/api/admin/booking-requests/${row.id}/payment`, {
+        method: "POST",
+        body: action === "record"
+          ? { action, method, amount: amount === "" ? undefined : Number(amount), reference }
+          : { action },
+      }, "Could not update payment.");
+      toast(action === "record" ? "Payment recorded." : action === "refund" ? "Payment marked refunded." : "Payment waived.");
+      await onRefresh();
+    } catch (error) {
+      toast(error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="adm-card" style={{ marginTop: 16 }}>
+      <div className="adm-card-head"><h3>Payment · {row.paymentStatus || "unpaid"}</h3></div>
+      <form className="adm-form-grid" onSubmit={(event) => submit("record", event)}>
+        <label className="field">Method<select className="select" value={method} onChange={(event) => setMethod(event.target.value)}><option value="cash">Cash</option><option value="card">Card</option><option value="eft">EFT</option><option value="mobile_money">Mobile money</option><option value="other">Other</option></select></label>
+        <label className="field">Amount (BWP)<input className="input" type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+        <label className="field wide">Reference<input className="input" maxLength={160} value={reference} onChange={(event) => setReference(event.target.value)} /></label>
+        <div className="row-actions wide">
+          <button type="submit" className="btn btn-primary" disabled={busy || !amount}>{busy ? "Saving…" : "Record payment"}</button>
+          {row.paymentStatus === "paid" && <button type="button" className="btn" disabled={busy} onClick={() => submit("refund")}>Mark refunded</button>}
+          {row.paymentStatus !== "waived" && <button type="button" className="btn" disabled={busy} onClick={() => submit("waive")}>Waive</button>}
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function Body() {
-  const { data, can } = useDash();
+  const { data, can, refresh } = useDash();
   const { setStatus, checkIn, busy } = useBookingActions();
   const [tab, setTab] = useState("all");
   const [when, setWhen] = useState("upcoming");
   const [q, setQ] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("all");
   const [open, setOpen] = useState(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -120,14 +166,30 @@ function Body() {
       if (tab === "closed" ? !["declined", "cancelled"].includes(b.status) : tab !== "all" && b.status !== tab) return false;
       if (when === "upcoming" && b.date < data.today) return false;
       if (when === "past" && b.date >= data.today) return false;
+      if (paymentFilter !== "all" && (b.source !== "request" || b.paymentStatus !== paymentFilter)) return false;
       if (term && ![b.name, b.phone, b.email, b.id, b.route].some((v) => String(v || "").toLowerCase().includes(term))) return false;
       return true;
     });
     return filtered.sort((a, b) => (when === "past" ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)) || (a.status === "pending" ? -1 : 1));
-  }, [all, tab, when, q, data.today]);
+  }, [all, tab, when, q, paymentFilter, data.today]);
 
   const current = open && all.find((b) => b.key === open);
   const write = can("bookings:write");
+  async function resendEmail(row) {
+    setEmailBusy(true);
+    try {
+      await api(`/api/admin/booking-requests/${row.id}/email`, { method: "POST" }, "Could not resend the email.");
+      toast("Confirmation email sent.");
+      await refreshBookings();
+    } catch (error) {
+      toast(error.message, "error");
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+  async function refreshBookings() {
+    await refresh();
+  }
 
   function Actions({ b, compact }) {
     const sz = compact ? "btn btn-sm" : "btn";
@@ -154,7 +216,7 @@ function Body() {
           <a className="btn" href="/api/admin/export?type=account-bookings"><Icon name="download" size={16} /> Account bookings (CSV)</a>
         </>}
       >
-        Confirmed website requests submit a booking code by configured SMS and the ride-pass QR by configured WhatsApp. Email delivery is not configured.
+        Manage booking requests, ride-pass delivery and pay-on-the-day records.
       </PageTop>
 
       <div className="adm-card">
@@ -170,6 +232,9 @@ function Body() {
               <option value="past">Past rides</option>
               <option value="all">Any date</option>
             </select>
+            <select className="select" style={{ width: 176 }} value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} aria-label="Payment status">
+              <option value="all">Any payment status</option><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="refunded">Refunded</option><option value="waived">Waived</option>
+            </select>
             <input className="input" placeholder="Search name, phone or ref" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search bookings" />
           </div>
         </div>
@@ -177,15 +242,18 @@ function Body() {
         {rows.length ? (
           <div className="adm-table-wrap">
             <table>
-              <thead><tr><th>Rider</th><th>Ride</th><th>Date</th><th>Riders</th><th>Status</th>{write && <th aria-label="Actions" />}</tr></thead>
+              <thead><tr><th>Rider</th><th>Email</th><th>Ride</th><th>Date</th><th>Riders</th><th>Status</th><th>Payment</th><th>Reminder sent</th>{write && <th aria-label="Actions" />}</tr></thead>
               <tbody>
                 {rows.map((b) => (
                   <tr key={b.key} className="click" onClick={() => setOpen(b.key)}>
-                    <td><span className="strong">{b.name}</span><small>{b.phone || b.email || "No contact"}</small></td>
+                    <td><span className="strong">{b.name}</span><small>{b.phone || "No phone"}</small></td>
+                    <td>{b.email || "—"}</td>
                     <td>{b.route}<small>{b.source === "account" ? "Account booking" : "Website request"}</small></td>
                     <td className="num">{niceDate(b.date)}{b.time && <small>{b.time}</small>}</td>
                     <td className="num">{b.riders}</td>
                     <td><Badge status={b.status}>{b.status}</Badge>{b.checkedInAt && <small>Checked in</small>}</td>
+                    <td>{b.source === "request" ? b.paymentStatus || "unpaid" : "—"}</td>
+                    <td>{b.reminderSentAt ? niceTime(b.reminderSentAt) : "—"}</td>
                     {write && <td><Actions b={b} compact /></td>}
                   </tr>
                 ))}
@@ -214,12 +282,15 @@ function Body() {
             </> : "—"}</dd>
             {current.email && <><dt>Email</dt><dd>{current.email}</dd></>}
             {current.price != null && <><dt>Price</dt><dd className="num">P{Number(current.price)}</dd></>}
+            {current.source === "request" && <><dt>Total</dt><dd className="num">P{Number(current.priceTotal || 0).toFixed(2)}</dd><dt>Payment status</dt><dd>{current.paymentStatus || "unpaid"}</dd><dt>Payment method</dt><dd>{current.paymentMethod || "—"}</dd><dt>Amount paid</dt><dd>{current.paymentAmount ? `P${current.paymentAmount}` : "—"}</dd><dt>Reminder sent</dt><dd>{current.reminderSentAt ? niceTime(current.reminderSentAt) : "Not sent"}</dd></>}
             <dt>Notes</dt><dd>{current.notes || "—"}</dd>
             <dt>Reference</dt><dd className="num">{current.id.slice(0, 8).toUpperCase()}</dd>
             {current.createdAt && <><dt>Requested</dt><dd>{niceTime(current.createdAt)}</dd></>}
             <dt>Checked in</dt><dd>{current.checkedInAt ? niceTime(current.checkedInAt) : "Not yet"}</dd>
           </dl>
           {current.status === "confirmed" && <RidePass row={current} busy={busy} onAuto={() => setStatus(current, "confirmed", true)} />}
+          {write && current.source === "request" && current.status === "confirmed" && <button className="btn" style={{ marginTop: 12 }} disabled={emailBusy || !current.email} onClick={() => resendEmail(current)}>{emailBusy ? "Sending…" : "Resend confirmation by email"}</button>}
+          {write && current.source === "request" && <PaymentEditor row={current} onRefresh={refreshBookings} />}
           {write && current.status === "pending" && <div style={{ marginTop: 18 }}><Actions b={current} /></div>}
         </Modal>
       )}

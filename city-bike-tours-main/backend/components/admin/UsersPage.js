@@ -91,6 +91,8 @@ export default function UsersPage() {
   const [adding, setAdding] = useState(false);
   const [secret, setSecret] = useState(null);
   const [editingPass, setEditingPass] = useState(null);
+  const [deletingCustomer, setDeletingCustomer] = useState(null);
+  const [deleteReviews, setDeleteReviews] = useState(false);
   const [run, busy] = useRun();
   const copy = useCopy();
   const write = can("users:write");
@@ -129,10 +131,22 @@ export default function UsersPage() {
     const res = await patch(u, { resetPassword: true });
     if (res?.tempPassword) setSecret({ name: u.name, value: res.tempPassword });
   }
-  const remove = (u) => {
+  const removeStaff = (u) => {
     if (!window.confirm(`Delete ${u.name}'s account? This can't be undone.`)) return;
     run(async () => { await api(`/api/admin/users/${u.id}`, { method: "DELETE" }, "Could not delete the account."); await load(); }, "Account deleted.");
   };
+  async function deleteCustomerData() {
+    if (!deletingCustomer) return;
+    const result = await run(async () => {
+      await api(`/api/admin/users/${deletingCustomer.id}`, {
+        method: "DELETE",
+        body: { deleteReviews },
+      }, "Could not delete customer data.");
+      await load();
+      setDeletingCustomer(null);
+    }, "Customer data deleted.");
+    if (result !== null) setDeleteReviews(false);
+  }
 
   return (
     <>
@@ -202,7 +216,9 @@ export default function UsersPage() {
                                 {u.mfaEnabled && <button className="btn btn-sm" disabled={busy} onClick={() => window.confirm(`Reset two-step sign-in for ${u.name}? They'll need to set it up again.`) && patch(u, { resetMfa: true }, "Two-step sign-in reset.")}>Reset 2-step</button>}
                                 {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => resetPassword(u)}><Icon name="key" size={13} /> Reset password</button>}
                                 {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => setEditingPass(u)}><Icon name="edit" size={13} /> Edit password</button>}
-                                {u.bookingCount === 0 && <button className="btn btn-sm btn-danger btn-icon" disabled={busy} onClick={() => remove(u)} aria-label={`Delete ${u.name}`}><Icon name="trash" size={13} /></button>}
+                                {u.role === "customer"
+                                  ? <button className="btn btn-sm btn-danger" disabled={busy} onClick={() => { setDeleteReviews(false); setDeletingCustomer(u); }}>Delete customer data</button>
+                                  : u.bookingCount === 0 && <button className="btn btn-sm btn-danger btn-icon" disabled={busy} onClick={() => removeStaff(u)} aria-label={`Delete ${u.name}`}><Icon name="trash" size={13} /></button>}
                               </div>
                             )}
                           </td>
@@ -223,6 +239,17 @@ export default function UsersPage() {
         </Modal>
       )}
       {editingPass && <EditPassword user={editingPass} onClose={() => setEditingPass(null)} onDone={load} />}
+      {deletingCustomer && (
+        <Modal title={`Delete ${deletingCustomer.name}'s data?`} lead="This permanently removes the customer account and uploaded media." onClose={() => !busy && setDeletingCustomer(null)}
+          footer={<><button className="btn" type="button" disabled={busy} onClick={() => setDeletingCustomer(null)}>Keep data</button><button className="btn btn-danger" type="button" disabled={busy} onClick={deleteCustomerData}>{busy ? "Deleting…" : "Delete customer data"}</button></>}>
+          <p>Messages, account details, votes and uploaded photos are deleted. Booking records remain for accounting with the name, phone and email anonymized.</p>
+          <p>Reviews are anonymized by default; their rating and text stay public.</p>
+          <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 16 }}>
+            <input type="checkbox" checked={deleteReviews} onChange={(event) => setDeleteReviews(event.target.checked)} />
+            <span>Delete this customer's reviews too, including their text and rating.</span>
+          </label>
+        </Modal>
+      )}
     </>
   );
 }

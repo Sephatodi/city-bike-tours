@@ -258,6 +258,24 @@ main, .schedule-page, .gallery-page { min-height: 60vh; }
 .dash-photo-download:hover { background: #D4A017; color: #1A3A2A; }
 .dash-photo-download:focus-visible { outline: 3px solid #D4A017; outline-offset: 3px; }
 .dash-photo-error { color: #F5A58D; }
+.dash-booking-group-title { margin: 1.2rem 0 0.35rem; color: #D4A017; font-family: var(--font-display); font-size: 1.15rem; }
+.dash-booking { min-width: 0; padding: 1rem 0; border-top: 1px solid rgba(245, 237, 217, 0.15); overflow-wrap: anywhere; }
+.dash-booking-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+.dash-booking-heading h3 { color: #F5EDD9; font-size: 1.15rem; }
+.dash-booking-heading p { color: rgba(245, 237, 217, 0.72); }
+.dash-booking-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.75rem; }
+.dash-status { display: inline-flex; padding: 0.2rem 0.55rem; border: 1px solid rgba(212, 160, 23, 0.5); border-radius: 999px; color: #F5EDD9; font-size: 0.78rem; text-transform: capitalize; }
+.dash-status-confirmed { color: #b7e7bd; border-color: #5da968; }
+.dash-status-pending { color: #f0d477; }
+.dash-status-cancelled, .dash-status-declined { color: #f5a58d; border-color: #c1440e; }
+.dash-cancel-button { min-height: 2.5rem; padding: 0.45rem 0.8rem; border: 1px solid rgba(245, 237, 217, 0.55); border-radius: 4px; background: transparent; color: #F5EDD9; font-weight: 700; cursor: pointer; }
+.dash-cancel-button:disabled, .dash-photo-download:disabled { opacity: 0.6; cursor: wait; }
+.dash-dialog-backdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(5, 14, 9, 0.82); }
+.dash-cancel-dialog { width: min(100%, 34rem); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.4rem; border: 1px solid rgba(212, 160, 23, 0.55); border-radius: 8px; color: #F5EDD9; }
+.dash-cancel-dialog h2 { margin-bottom: 0.7rem; color: #D4A017; font-size: 1.5rem; }
+.dash-cancel-dialog p { margin: 0.6rem 0; }
+.dash-cancel-dialog label { display: grid; gap: 0.4rem; margin-top: 1rem; }
+.dash-cancel-dialog textarea { width: 100%; padding: 0.65rem; border: 1px solid rgba(245, 237, 217, 0.25); border-radius: 4px; background: rgba(245, 237, 217, 0.07); color: #F5EDD9; resize: vertical; }
 .dashboard-page .page-hero { width: min(100% - 3rem, 72rem); margin-inline: auto; padding-inline: 0; }
 .legal-page:not(.dashboard-page) .page-hero { width: min(100% - 3rem, 56rem); margin-inline: auto; padding-inline: 0; }
 

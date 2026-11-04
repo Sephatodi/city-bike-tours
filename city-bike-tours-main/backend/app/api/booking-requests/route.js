@@ -13,6 +13,11 @@ import { fireWebhook } from "@/lib/webhook";
 import { isIpBlocked } from "@/lib/security";
 import { requireCustomer } from "@/lib/customer-auth";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
+import { renderEmailTemplate } from "@/lib/email-templates";
+import { sendEmail } from "@/lib/email";
+import { notifyAdmins } from "@/lib/admin-email";
+import { formatGaboroneDate } from "@/lib/time";
+import { bookingPriceTotal } from "@/lib/booking-lifecycle";
 
 export async function POST(request) {
   // Riders must have an account before they can book.
@@ -36,7 +41,8 @@ export async function POST(request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input." }, { status: 400 });
   }
   const { dateIso, ...rest } = parsed.data;
-  const email = rest.email || "";
+  const accountEmail = auth.user.email && !auth.user.email.toLowerCase().endsWith(".invalid") ? auth.user.email : "";
+  const email = accountEmail || rest.email || "";
   const phone = normalizePhone(rest.phone);
   if (!phone) {
     return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
@@ -59,18 +65,52 @@ export async function POST(request) {
       }, { status: 409 });
     }
 
+    const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, rest.routeId));
     const [created] = await db
       .insert(bookingRequests)
-      .values({ id: newId(), ...rest, email: email || null, phone, rideDate: dateIso, status: "pending" })
+      .values({
+        id: newId(),
+        ...rest,
+        email: email || null,
+        userId: auth.user.id,
+        priceTotal: route ? bookingPriceTotal(route.priceBwp, rest.riders) : null,
+        phone,
+        rideDate: dateIso,
+        status: "pending",
+      })
       .returning({ id: bookingRequests.id, status: bookingRequests.status });
 
-    const [route] = await db.select().from(companyRoutesConfig).where(eq(companyRoutesConfig.routeId, rest.routeId));
     const total = route ? ` Total: P${(Number(route.priceBwp) * rest.riders).toFixed(2).replace(/\.00$/, "")}, payable on the day.` : "";
     const ref = created.id.slice(0, 8);
 
     await fireWebhook("booking_request.created", { id: created.id, name: rest.name, phone, routeId: rest.routeId, rideDate: dateIso, riders: rest.riders });
     // The pass link works once staff confirm the booking; the site can show its QR now and say so.
     const ridePassUrl = createRidePassUrl(createRidePassToken(created.id), request.url);
+    const settings = await getSettings();
+    if (email) {
+      const received = renderEmailTemplate("bookingReceived", {
+        name: rest.name,
+        routeName: route?.routeName ?? rest.routeId,
+        date: formatGaboroneDate(dateIso),
+        guests: rest.riders,
+      }, settings);
+      await sendEmail({
+        to: email,
+        ...received,
+        template: "bookingReceived",
+        relatedType: "booking_request",
+        relatedId: created.id,
+      });
+    }
+    await notifyAdmins("newBooking", {
+      id: created.id,
+      rider: rest.name,
+      date: formatGaboroneDate(dateIso),
+      route: route?.routeName ?? rest.routeId,
+      riders: String(rest.riders),
+      email,
+      phone,
+    }, { relatedType: "booking_request", relatedId: created.id });
 
     // Build WhatsApp click-to-chat link for the rider (non-blocking, best-effort)
     const riderMsg = `Dumela ${rest.name}! We received your City Bike Tours request (${route?.routeName ?? rest.routeId}) for ${dateIso}, ${rest.riders} rider${rest.riders > 1 ? "s" : ""}.${total} We'll confirm shortly. Ref: ${ref}`;

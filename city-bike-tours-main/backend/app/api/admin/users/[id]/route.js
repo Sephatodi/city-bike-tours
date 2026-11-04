@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { db } from "@/db/client";
-import { bookings, users } from "@/db/schema";
+import { bookingRequests, bookings, communityPhotos, emailLogs, infobipSmsLogs, loginAttempts, otpCodes, reviews, users } from "@/db/schema";
+import { del } from "@vercel/blob";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { userUpdateSchema } from "@/lib/validators";
 import { normalizePhone } from "@/lib/phone";
+import { isOurBlob } from "@/lib/blob-url";
+import { isPrivateCommunityBlob } from "@/lib/community-media";
 
 async function otherActiveAdmins(excludeId) {
   const [row] = await db.select({ n: sql`COUNT(*)::int` }).from(users)
@@ -53,12 +56,14 @@ export async function PATCH(request, { params }) {
     }
     plain = randomBytes(9).toString("base64url");
     updates.passwordHash = await bcrypt.hash(plain, 10);
+    updates.passwordChangedAt = new Date();
   }
   if (changePassword) {
     if (target.provider !== "credentials") {
       return NextResponse.json({ error: `This account signs in with ${target.provider}, so it has no password to change.` }, { status: 409 });
     }
     updates.passwordHash = await bcrypt.hash(changePassword, 10);
+    updates.passwordChangedAt = new Date();
   }
   if (!Object.keys(updates).length) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
 
@@ -83,7 +88,7 @@ export async function PATCH(request, { params }) {
   return NextResponse.json({ user: updated, tempPassword: plain });
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   const guard = await requirePermission("users:write");
   if (guard.error) return guard.error;
   const staff = guard.staff;
@@ -95,7 +100,60 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ error: "This is the last active admin. Make another admin first." }, { status: 409 });
   }
 
-  // Deleting a user cascades to their bookings, so only accounts with no bookings can be removed.
+  if (target.role === "customer") {
+    const body = await request.json().catch(() => ({}));
+    const deleteReviews = body?.deleteReviews === true;
+    const [uploads, customerReviews, requestRows, accountRows] = await Promise.all([
+      db.select({ imageUrl: communityPhotos.imageUrl }).from(communityPhotos).where(eq(communityPhotos.userId, target.id)),
+      db.select({ photoUrl: reviews.photoUrl }).from(reviews).where(eq(reviews.userId, target.id)),
+      db.select({ id: bookingRequests.id }).from(bookingRequests).where(eq(bookingRequests.userId, target.id)),
+      db.select({ id: bookings.id }).from(bookings).where(eq(bookings.userId, target.id)),
+    ]);
+    const blobUrls = [...new Set([
+      ...uploads.map((row) => row.imageUrl),
+      ...customerReviews.map((row) => row.photoUrl),
+    ].filter(Boolean))];
+    try {
+      for (const url of blobUrls) {
+        if (isPrivateCommunityBlob(url)) {
+          await del(url, { token: process.env.BLOB_PRIVATE_READ_WRITE_TOKEN });
+        } else if (isOurBlob(url)) {
+          await del(url);
+        }
+      }
+    } catch {
+      console.error("Could not remove all customer media from Blob storage.");
+      return NextResponse.json({ error: "Customer media could not be fully deleted. No account data was changed; retry the request." }, { status: 502 });
+    }
+
+    await db.update(bookingRequests).set({
+      name: "Deleted customer",
+      phone: null,
+      email: null,
+      userId: null,
+    }).where(eq(bookingRequests.userId, target.id));
+    const requestIds = requestRows.map((row) => row.id);
+    const accountIds = accountRows.map((row) => row.id);
+    if (requestIds.length) await db.delete(infobipSmsLogs).where(inArray(infobipSmsLogs.bookingRequestId, requestIds));
+    if (accountIds.length) await db.delete(infobipSmsLogs).where(inArray(infobipSmsLogs.bookingId, accountIds));
+    if (deleteReviews) {
+      await db.delete(reviews).where(eq(reviews.userId, target.id));
+    } else {
+      await db.update(reviews).set({ name: "Former rider", userId: null, photoUrl: null })
+        .where(eq(reviews.userId, target.id));
+    }
+    await db.delete(emailLogs).where(eq(emailLogs.toAddress, target.email));
+    await db.delete(loginAttempts).where(eq(loginAttempts.email, target.email));
+    if (target.phone) await db.delete(otpCodes).where(eq(otpCodes.phone, target.phone));
+    await db.delete(users).where(eq(users.id, target.id));
+    await logAudit(staff, "user.delete_customer_data", `Deleted customer account data for ${target.id}; anonymized booking records${deleteReviews ? " and deleted reviews" : " while retaining anonymized reviews"}.`, {
+      targetType: "user",
+      targetId: target.id,
+    });
+    return NextResponse.json({ success: true });
+  }
+
+  // Staff accounts with booking records are retained to preserve their history.
   const [{ n }] = await db.select({ n: sql`COUNT(*)::int` }).from(bookings).where(eq(bookings.userId, target.id));
   if (Number(n) > 0) {
     return NextResponse.json({ error: `${target.name} has ${n} booking${n === 1 ? "" : "s"} on record. Suspend the account instead of deleting it.` }, { status: 409 });
