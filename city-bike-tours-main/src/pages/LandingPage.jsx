@@ -188,7 +188,7 @@ function MapSection() {
           ))}
         </div>
         <div className="reveal">
-          <HeritageMap height="clamp(390px, 42vw, 680px)" />
+          <HeritageMap height="min(64vh, 600px)" trail />
         </div>
         <div className="mt-8 text-center reveal">
           <Link
