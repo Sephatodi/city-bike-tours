@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import Footer from "../components/Footer";
 import { ROUTES_DATA } from "../data";
 import { backendUrl } from "../api/backend";
@@ -10,8 +10,11 @@ export default function BookingPage() {
   const { routes } = useLiveData();
   const { isSignedIn, ready, user, signOut } = useCustomer();
   const { hash } = useLocation();
-  const [route, setRoute] = useState("complete");
-  const [date, setDate] = useState("");
+  const [searchParams] = useSearchParams();
+  const requestedRoute = searchParams.get("ride");
+  const requestedDate = searchParams.get("date");
+  const [route, setRoute] = useState(() => ROUTES_DATA.some((ride) => ride.id === requestedRoute) ? requestedRoute : "complete");
+  const [date, setDate] = useState(() => /^\d{4}-\d{2}-\d{2}$/.test(requestedDate || "") ? requestedDate : "");
   const [startTime, setStartTime] = useState("09:00");
   const [riders, setRiders] = useState(1);
   const [name, setName] = useState("");
@@ -207,12 +210,11 @@ export default function BookingPage() {
 
         {!isSignedIn ? (
           <div className="booking-gate glass">
-            <h3 className="font-display">Create an account to book</h3>
-            <p>{ready ? "Booking is for riders with an account, so we can reach you about your ride. It only takes a minute, and you can use Google, Facebook, your phone number or WhatsApp." : "Checking your account…"}</p>
+            <h3 className="font-display">Sign in to book your ride</h3>
+            <p>We ask you to sign in only when you book, so we can send your booking confirmation and your booking code. You can use Google, Facebook, your phone number or WhatsApp.</p>
             {ready && (
               <div className="booking-gate-actions">
-                <Link to="/login?next=/book%23book-form" className="auth-primary">Create an account</Link>
-                <Link to="/login?mode=signin&next=/book%23book-form" className="auth-link">I already have an account</Link>
+                <Link to={`/login?next=${encodeURIComponent(`/book?${searchParams.toString()}#book-form`)}`} className="auth-primary">Sign in or create an account</Link>
               </div>
             )}
           </div>

@@ -1,8 +1,12 @@
-import { useEffect } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import { useCustomer } from "../auth/CustomerAuth";
+import { fetchBackendJson } from "../api/backend";
+import { useLiveData } from "../hooks/LiveDataContext";
+import "../landing.css";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
 
@@ -204,19 +208,176 @@ function MapSection() {
   );
 }
 
+function QuickBook({ routes }) {
+  const navigate = useNavigate();
+  const [ride, setRide] = useState(routes[0]?.id || "complete");
+  const [date, setDate] = useState("");
+  const today = new Date().toISOString().slice(0, 10);
+
+  function submit(event) {
+    event.preventDefault();
+    navigate(`/book?ride=${encodeURIComponent(ride)}&date=${encodeURIComponent(date)}#book-form`);
+  }
+
+  return (
+    <form className="lp-quick" onSubmit={submit}>
+      <h2>Choose your ride</h2>
+      <label>Ride
+        <select required value={ride} onChange={(event) => setRide(event.target.value)}>
+          {routes.map((route) => <option key={route.id} value={route.id}>{route.name}, P{route.price}</option>)}
+        </select>
+      </label>
+      <label>Date
+        <input required type="date" min={today} value={date} onChange={(event) => setDate(event.target.value)} />
+      </label>
+      <button type="submit">Check availability</button>
+      <p>No payment now. You pay on the day of the ride.</p>
+    </form>
+  );
+}
+
+function RiderProof() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let active = true;
+    fetchBackendJson("/api/reviews", { cache: "no-store" }, "Reviews are unavailable.")
+      .then((result) => { if (active) setData(result); })
+      .catch(() => { if (active) setData({ reviews: [], summary: { average: 0, count: 0 } }); });
+    return () => { active = false; };
+  }, []);
+
+  const reviews = (data?.reviews || []).filter((review) => review.rating >= 4).slice(0, 3);
+  const hasReviews = reviews.length > 0;
+  const facts = [
+    "A local guide on every Wednesday to Friday ride",
+    "Guided rides capped at 10 riders",
+    "Bikes provided",
+    "Booking confirmation sent to you",
+    "No card details taken; pay on the day",
+  ];
+
+  return (
+    <section className="lp-section lp-proof" aria-labelledby="lp-proof-heading">
+      <div className="lp-wrap">
+        <div className="lp-section-heading">
+          <p className="lp-kicker">A ride worth remembering</p>
+          <h2 id="lp-proof-heading">{hasReviews ? "What riders say" : "Why riders trust us"}</h2>
+        </div>
+        {hasReviews && (
+          <>
+            <p className="lp-review-summary"><strong>{data.summary.average}</strong> average from {data.summary.count} rider {data.summary.count === 1 ? "review" : "reviews"}</p>
+            <div className="lp-review-grid">
+              {reviews.map((review) => {
+                const comment = review.comment || "";
+                const quote = comment.length > 230 ? `${comment.slice(0, 227).trimEnd()}...` : comment;
+                return (
+                  <blockquote className="lp-review" key={review.id}>
+                    <p>“{quote}”</p>
+                    <footer>{review.name}{review.verified && <span>Verified rider</span>}</footer>
+                  </blockquote>
+                );
+              })}
+            </div>
+          </>
+        )}
+        <ul className="lp-facts">{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+      </div>
+    </section>
+  );
+}
+
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  useScrollReveal();
+  const { routes } = useLiveData();
+  const { isSignedIn } = useCustomer();
+  const minPrice = Math.min(...routes.map((route) => route.price));
 
   return (
-    <div className="relative">
-      <Hero />
-      <div className="home-explore-shell glass">
-        <AboutStrip />
-        <MapSection />
-      </div>
-      <Footer />
-    </div>
+    <main className="lp">
+      <header className="lp-header">
+        <Link className="lp-brand" to="/" aria-label="City Bike Tours home">
+          <strong>City Bike Tours</strong>
+          <span>Gaborone heritage rides</span>
+        </Link>
+        <nav aria-label="Booking">
+          {isSignedIn && <Link className="lp-bookings" to="/dashboard">My bookings</Link>}
+          <Link className="lp-header-cta" to="/book#book-form">Book a ride</Link>
+        </nav>
+      </header>
+
+      <section className="lp-hero" aria-labelledby="lp-title">
+        <div className="lp-wrap lp-hero-grid">
+          <div className="lp-hero-copy">
+            <p className="lp-kicker">Gaborone, Botswana · Meet at Main Mall</p>
+            <h1 id="lp-title">See Gaborone&apos;s history from a bicycle seat</h1>
+            <p className="lp-hero-lede">A local guide takes you to six landmark sites in small groups. Bikes are provided, every level is welcome, and we start at Main Mall.</p>
+            <p className="lp-price">Rides from <strong>P{Number.isFinite(minPrice) ? minPrice : 0}</strong> per rider</p>
+          </div>
+          <div className="lp-hero-media">
+            <img src="/government%20enclave.jfif" alt="Government Enclave in Gaborone" />
+            <QuickBook routes={routes} />
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-section lp-benefits" aria-label="What to expect">
+        <div className="lp-wrap lp-benefit-grid">
+          {[
+            ["01", "You learn what you ride past"],
+            ["02", "You don’t need a bike or experience"],
+            ["03", "You can hear the guide", "Guided rides are capped at 10 riders."],
+            ["04", "The whole family can come", "Cycling lessons are included on Casual Saturday."],
+          ].map(([number, title, detail]) => (
+            <article className="lp-benefit" key={number}>
+              <span>{number}</span><h2>{title}</h2>{detail && <p>{detail}</p>}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-section lp-rides" aria-labelledby="lp-rides-heading">
+        <div className="lp-wrap">
+          <div className="lp-section-heading"><p className="lp-kicker">Two ways to ride</p><h2 id="lp-rides-heading">Find your pace</h2></div>
+          <div className="lp-ride-grid">
+            {routes.map((route) => (
+              <article className="lp-ride" key={route.id}>
+                <img src={route.id === "complete" ? "/experience.png" : "/bike4.jfif"} alt={route.id === "complete" ? "Guided heritage ride" : "Casual Saturday bicycle ride"} loading="lazy" />
+                <div className="lp-ride-copy">
+                  <p className="lp-kicker">{route.when}</p><h3>{route.name}</h3>
+                  <p className="lp-ride-price">P{route.price} <span>per rider</span></p>
+                  <ul>{route.includes.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <Link to={`/book?ride=${encodeURIComponent(route.id)}#book-form`}>Book the {route.name}</Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-section lp-steps" aria-labelledby="lp-steps-heading">
+        <div className="lp-wrap">
+          <div className="lp-section-heading"><p className="lp-kicker">Simple from start to finish</p><h2 id="lp-steps-heading">How booking works</h2></div>
+          <ol className="lp-step-grid">
+            <li><span>1</span><h3>Choose a ride and date</h3><p>Sign in or create an account to send your request.</p></li>
+            <li><span>2</span><h3>We confirm your place</h3><p>Your ride pass is sent after your booking is confirmed.</p></li>
+            <li><span>3</span><h3>Meet us at Main Mall</h3><p>Pay on the day of the ride.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <RiderProof />
+
+      <section className="lp-final-cta" aria-labelledby="lp-final-heading">
+        <div className="lp-wrap lp-final-grid">
+          <div><p className="lp-kicker">Main Mall, Gaborone</p><h2 id="lp-final-heading">Pick a date and we&apos;ll save your place</h2></div>
+          <QuickBook routes={routes} />
+        </div>
+      </section>
+
+      <footer className="lp-footer">
+        <div className="lp-wrap"><span>City Bike Tours · Main Mall, Gaborone</span><nav aria-label="Legal"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></nav></div>
+      </footer>
+    </main>
   );
 }
