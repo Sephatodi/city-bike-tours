@@ -1,0 +1,108 @@
+--- a/src/components/RouteExplorerMap.jsx
++++ b/src/components/RouteExplorerMap.jsx
+@@ -3,8 +3,6 @@
+ import L from "leaflet";
+ import { SITES, MAIN_MALL, LOOP_ORDER } from "../data";
+ import Icon, { iconSvgMarkup } from "./Icon";
+-
+-const STORAGE_KEY = "cbt_custom_routes";
+ 
+ // ─── ICONS ────────────────────────────────────────────────────────────────────
+ 
+@@ -161,22 +159,10 @@
+   const [surfaceType, setSurfaceType] = useState("Unspecified");
+   const [importError, setImportError] = useState("");
+ 
+-  useEffect(() => {
+-    try {
+-      const raw = localStorage.getItem(STORAGE_KEY);
+-      if (raw) setSavedRoutes(JSON.parse(raw));
+-    } catch {
+-      // ignore corrupt storage
+-    }
+-  }, []);
+-
++  // Saved routes are intentionally in-memory only. They remain available while
++  // this map is mounted and are cleared when the visitor leaves the page.
+   function persist(routes) {
+     setSavedRoutes(routes);
+-    try {
+-      localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
+-    } catch {
+-      // storage unavailable — route still works for this session
+-    }
+   }
+ 
+   const sitesById = useMemo(() => Object.fromEntries(SITES.map((s) => [s.id, s])), []);
+--- a/src/pages/MessageInboxPage.jsx
++++ b/src/pages/MessageInboxPage.jsx
+@@ -1,5 +1,5 @@
+ import Stamp from "../components/Stamp";
+-import { useEffect, useState } from "react";
++import { useState } from "react";
+ import { Link } from "react-router";
+ import { backendUrl } from "../api/backend";
+ import Footer from "../components/Footer";
+@@ -9,11 +9,6 @@
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState("");
+   const [phone, setPhone] = useState("");
+-
+-  useEffect(() => {
+-    const savedPhone = localStorage.getItem("cb_phone");
+-    if (savedPhone) setPhone(savedPhone);
+-  }, []);
+ 
+   const normalizePhone = (raw) => {
+     let digits = (raw || "").replace(/\D/g, "");
+@@ -41,11 +36,7 @@
+     }
+   };
+ 
+-  const handlePhoneChange = (e) => {
+-    const value = e.target.value;
+-    setPhone(value);
+-    localStorage.setItem("cb_phone", value);
+-  };
++  const handlePhoneChange = (e) => setPhone(e.target.value);
+ 
+   return (
+     <main className="rr rr-bg message-inbox-page">
+--- a/src/auth/CustomerAuth.jsx
++++ b/src/auth/CustomerAuth.jsx
+@@ -43,12 +43,6 @@
+   }, [signOut]);
+ 
+   useEffect(() => {
+-    try {
+-      window.localStorage.removeItem("cbt-customer-token");
+-    } catch {
+-      // Storage may be disabled by the browser.
+-    }
+-
+     const controller = new AbortController();
+     fetch("/api/customer/me", {
+       signal: controller.signal,
+@@ -83,13 +77,14 @@
+   return value;
+ }
+ 
+-// Where to send people after they sign in.
+-export const NEXT_KEY = "cbt-after-login";
+-export function rememberNext(path) { try { window.sessionStorage.setItem(NEXT_KEY, path); } catch { /* ignore */ } }
++// Where to send people after they sign in. This is deliberately in-memory only:
++// it survives a client-side auth handoff but is not persisted by the browser.
++let nextPath = null;
++export function rememberNext(path) {
++  nextPath = typeof path === "string" && path.startsWith("/") && !path.startsWith("//") ? path : null;
++}
+ export function takeNext(fallback = "/dashboard") {
+-  try {
+-    const value = window.sessionStorage.getItem(NEXT_KEY);
+-    window.sessionStorage.removeItem(NEXT_KEY);
+-    return value && value.startsWith("/") && !value.startsWith("//") ? value : fallback;
+-  } catch { return fallback; }
++  const value = nextPath;
++  nextPath = null;
++  return value || fallback;
+ }
