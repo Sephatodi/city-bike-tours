@@ -10,7 +10,6 @@ import { downloadMedia } from "../utils/download";
 const TILES = [
   { to: "/schedule#price-calculator", title: "Book a ride", text: "Pick a ride, a date and your group size.", icon: "🚲" },
   { to: "/heritage-trail", title: "Heritage trail", text: "The six sites, photos and food stops along the way.", icon: "🏛️" },
-  { to: "/connect", title: "Messages & reviews", text: "Talk to our team and share how your ride went.", icon: "💬" },
   { to: "/gallery", title: "Gallery", text: "Photos from rides around Gaborone.", icon: "📷" },
 ];
 
@@ -166,23 +165,6 @@ export default function DashboardPage() {
             <h3 className="dash-booking-group-title">Past</h3>
             {past.length ? past.map(renderBooking) : <p className="dash-muted">No past rides.</p>}
           </>}
-        </section>
-
-        <section className="dash-reviews glass" aria-labelledby="dash-reviews-heading">
-          <div className="dash-reviews-head">
-            <h2 id="dash-reviews-heading" className="font-display">Your reviews</h2>
-            <Link to="/connect" className="food-directions">Write a review →</Link>
-          </div>
-          {reviews === null && <p className="dash-muted">Loading…</p>}
-          {reviews && reviews.length === 0 && <p className="dash-muted">You haven’t written a review yet. After your ride, tell other riders what it was like.</p>}
-          {reviews && reviews.slice(0, 3).map((review) => (
-            <article key={review.id} className="dash-review">
-              <p className="dash-stars" aria-label={`${review.rating} out of 5 stars`}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p>
-              <p>{review.comment}</p>
-              <p className="dash-muted">{STATUS[review.status] || review.status} · <Stamp value={review.createdAt} /></p>
-              {review.adminReply && <p className="dash-reply"><strong>City Bike Tours:</strong> {review.adminReply}</p>}
-            </article>
-          ))}
         </section>
 
         <section className="dash-reviews glass" aria-labelledby="dash-photos-heading">

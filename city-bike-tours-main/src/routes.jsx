@@ -4,7 +4,6 @@ import LandingPage from "./pages/LandingPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
 import LoginCallbackPage from "./pages/LoginCallbackPage";
-import ConnectPage from "./pages/ConnectPage";
 import BookingPage from "./pages/BookingPage";
 import GalleryPage from "./pages/GalleryPage";
 import HeritageTrailPage from "./pages/HeritageTrailPage";
@@ -30,7 +29,7 @@ export const router = createBrowserRouter([
       { path: "reset-password", Component: ResetPasswordPage },
       { path: "login/callback", Component: LoginCallbackPage },
       { path: "dashboard", Component: DashboardPage },
-      { path: "connect", Component: ConnectPage },
+      { path: "connect", element: <Navigate to="/" replace /> },
       { path: "book", Component: BookingPage },
       { path: "gallery", Component: GalleryPage },
       { path: "gallery/:siteId", Component: SiteGalleryPage },

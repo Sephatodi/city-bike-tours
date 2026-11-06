@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router";
 import { useEffect } from "react";
 import Nav from "./components/Nav";
 import BikeCursor from "./components/BikeCursor";
-import SiteBackdrop from "./components/SiteBackdrop";
 import MobileBottomNav from "./components/MobileBottomNav";
 import { LiveDataProvider } from "./hooks/LiveDataContext";
 import { CustomerAuthProvider } from "./auth/CustomerAuth";
@@ -18,7 +17,6 @@ export default function Root() {
   return (
     <LiveDataProvider>
       <CustomerAuthProvider>
-        {!isAdminArea && <SiteBackdrop />}
         {!isAdminArea && <Nav />}
         {!isAdminArea && <BikeCursor />}
         {isAdminArea ? <Outlet /> : <div className="shine-wrap"><Outlet /></div>}
