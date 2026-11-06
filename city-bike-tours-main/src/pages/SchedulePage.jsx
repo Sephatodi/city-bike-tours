@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import { useNow } from "../hooks/useNow";
 import { siteClock } from "../lib/time";
 
@@ -23,7 +22,6 @@ export default function SchedulePage() {
   const today = siteClock(useNow(60000)).weekday; // 0 = Sunday, in Gaborone time
   const DAY_INDEX = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
 
-  // Router navigation and direct visits do not reliably scroll to anchors.
   useEffect(() => {
     if (!hash) return undefined;
     const timer = setTimeout(() => {
@@ -75,10 +73,6 @@ export default function SchedulePage() {
             <p>Look for the orange City Bike Tours flag at the main entrance.</p>
           </div>
         </div>
-
-        <section className="reveal" style={{ marginTop: "2.5rem" }}>
-          <FoodStops />
-        </section>
 
         <div className="trail-booking-cta reveal" style={{ marginTop: "2.5rem" }}>
           <div>

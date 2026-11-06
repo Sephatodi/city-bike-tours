@@ -1,6 +1,4 @@
-import { Link } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
 import PricingSection from "../components/PricingSection";
 import SiteFolders from "../components/SiteFolders";
@@ -72,9 +70,6 @@ export default function HeritageTrailPage() {
         <BookingSection />
       </section>
 
-      <div className="trail-food-wrap">
-        <FoodStops />
-      </div>
       <Footer />
     </main>
   );
