@@ -164,14 +164,6 @@
 .roundabout-caption em { color: #D4A017; font-size: 1rem; font-style: normal; }
 
 /* ── Food stops, booking gate ──────────────────────────────────────────────── */
-.food-stops { margin-top: 4.5rem; }
-.food-grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); margin-top: 1.4rem; }
-.food-card { padding: 1.2rem 1.3rem; border-radius: 4px; color: #F5EDD9; }
-.food-card h3 { margin-top: 0.6rem; font-size: 1.15rem; font-weight: 700; line-height: 1.25; }
-.food-card p { margin-top: 0.5rem; color: rgba(245, 237, 217, 0.82); font-size: 1rem; line-height: 1.6; }
-.food-card .food-area { margin-top: 0.2rem; color: #D4A017; font-size: 1rem; font-weight: 600; }
-.food-tag { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 99px; color: #0D0805; background: #D4A017; font-size: 0.88rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.food-note { margin-top: 1rem; color: rgba(245, 237, 217, 0.7); font-size: 1rem; }
 .booking-gate { display: grid; justify-items: start; gap: 0.8rem; max-width: 40rem; padding: clamp(1.3rem, 3vw, 2rem); border-radius: 5px; color: #F5EDD9; }
 .booking-gate h3 { font-size: 1.7rem; font-weight: 700; }
 .booking-gate p { color: rgba(245, 237, 217, 0.85); font-size: 1rem; line-height: 1.65; }
@@ -199,17 +191,6 @@ main, .schedule-page, .gallery-page { min-height: 60vh; }
   .site-feature-media .roundabout { --stage-h: clamp(300px, 28vw, 520px); }
 }
 .roundabout-caption { font-size: 1.05rem; }
-.food-card { padding: 1.5rem 1.6rem; }
-.food-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.4rem; }
-.food-near { margin-top: 0.4rem; color: rgba(245, 237, 217, 0.7); font-size: 0.9rem; font-style: italic; }
-.food-directions { display: inline-block; margin-top: 0.9rem; color: #19C3FF; font-size: 0.9rem; font-weight: 700; text-decoration: none; }
-.food-directions:hover { color: #FFFFFF; text-shadow: 0 0 10px #19C3FF; }
-.food-stops .schedule-section-heading h2 { color: #F5EDD9; }
-.food-stops .schedule-section-heading > p { color: rgba(245, 237, 217, 0.75); }
-.food-stops .schedule-section-kicker { color: #D4A017; }
-.food-stops .schedule-section-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
-.heritage-trail-page .trail-food-wrap .food-card { display: flex; flex-direction: column; align-items: center; padding: 2rem clamp(2rem, 4vw, 3.5rem); border-radius: 999px; text-align: center; }
-.heritage-trail-page .trail-food-wrap .food-card .food-directions { align-self: center; }
 .pricing-section .pricing-section-intro { max-width: 46rem; margin-top: 0.65rem; color: rgba(245, 237, 217, 0.75); font-size: 1rem; line-height: 1.65; }
 
 /* Legal pages */
