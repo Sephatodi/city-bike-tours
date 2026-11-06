@@ -3,10 +3,10 @@ import RiderIcon from "./RiderIcon";
 const LANES = 4;
 // One duration per lane (seconds). Two bicycles share a lane, half a trip apart, and lanes are spaced
 // further apart than a bicycle is tall, so no two bicycles ever overlap.
-const DURATIONS = [42, 50, 38, 46];
+const DURATIONS = [52, 64, 48, 58];
 const BIKES_PER_LANE = 2;
 
-// Rows of cyclists (the same rider as the cursor) drifting across the screen. Each row is spread over the height of
+// Rows of cyclists drifting across the screen. Each row is spread over the height of
 // its container and nothing is clipped vertically, so every bicycle is drawn in full.
 export default function HeaderBike() {
   return (
@@ -21,7 +21,7 @@ export default function HeaderBike() {
             <div
               key={bikeIndex}
               className="header-bike-rider"
-              style={{ animationDelay: `${-(bikeIndex * (DURATIONS[layerIndex] / BIKES_PER_LANE) + layerIndex * 3.1)}s` }}
+              style={{ animationDelay: `${-(bikeIndex * (DURATIONS[layerIndex] / BIKES_PER_LANE) + layerIndex * 5.5)}s` }}
             >
               <RiderIcon responsive color="#38BDF8" />
             </div>

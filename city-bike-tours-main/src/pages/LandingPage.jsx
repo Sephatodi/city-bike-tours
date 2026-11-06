@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
+import HeritageMap from "../components/HeritageMap";
 import Icon from "../components/Icon";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
@@ -173,6 +174,20 @@ export default function LandingPage() {
       <div className="home-explore-shell glass">
         <AboutStrip />
       </div>
+      <section id="map" className="py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-8 reveal">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— Where We Ride</p>
+            <h2 className="font-display font-bold mb-3" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#F5EDD9" }}>Heritage Route Map</h2>
+            <p className="max-w-xl mx-auto text-sm" style={{ color: "rgba(245,237,217,0.65)" }}>
+              All 6 sites within cycling distance of Main Mall
+            </p>
+          </div>
+          <div className="reveal">
+            <HeritageMap height="min(56vh, 520px)" trail />
+          </div>
+        </div>
+      </section>
       <Footer />
     </div>
   );
