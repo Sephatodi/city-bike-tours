@@ -1,0 +1,130 @@
+Bicycle-related CSS rules extracted from src/index.css, src/community.css, src/rr-theme.css.
+
+:root { --cursor-direction: 1; }  /* index.css */
+body.bike-cursor-enabled, body.bike-cursor-enabled button, body.bike-cursor-enabled a, body.bike-cursor-enabled input, body.bike-cursor-enabled select { cursor: none; }  /* index.css */
+.custom-cursor-follower, .touch-bicycle-pointer { position: fixed;
+  pointer-events: none;
+  z-index: 10050;
+  line-height: 0;
+  will-change: transform;
+  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }  /* index.css */
+.tyre-tracks { position: fixed; inset: 0; z-index: 10049; width: 100vw; height: 100vh; pointer-events: none; }  /* index.css */
+.custom-cursor-follower { top: 0;
+  left: 0;
+  transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+  transition: opacity 0.15s ease; }  /* index.css */
+.touch-bicycle-pointer { transform: translate(-50%, -55%); }  /* index.css */
+.header-bike { --bike-w: clamp(110px, 11vw, 170px);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden; /* sideways only matters: lanes are spaced so nothing is cut off vertically */
+  pointer-events: none;
+  opacity: 0.3; }  /* index.css */
+.header-bike-layer { position: absolute;
+  left: 0;
+  right: 0;
+  /* spread the lanes over the container, leaving room for a whole bicycle at the bottom */
+  top: calc((100% - var(--bike-w) * 0.77) * var(--layer-index) / (var(--lanes) - 1));
+  height: calc(var(--bike-w) * 0.77);
+  overflow: visible; }  /* index.css */
+.header-bike-rider { position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--bike-w);
+  height: calc(var(--bike-w) * 0.77);
+  animation-duration: var(--dur, 30s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform; }  /* index.css */
+.header-bike-layer-forward .header-bike-rider { animation-name: header-bike-drift-forward; }  /* index.css */
+.header-bike-layer-backward .header-bike-rider { animation-name: header-bike-drift-backward; }  /* index.css */
+.header-bike-rider { animation: none !important; left: calc(50% - var(--bike-w) / 2); }  /* index.css */
+.header-bike-rider:nth-child(2) { display: none; }  /* index.css */
+/* one per lane so none overlap */ .header-bike-layer:nth-child(odd) .header-bike-rider { left: 12%; }  /* index.css */
+.header-bike-layer:nth-child(even) .header-bike-rider { left: auto; right: 12%; }  /* index.css */
+.header-bike { --bike-w: clamp(90px, 24vw, 130px); opacity: 0.2; }  /* index.css */
+input[type='range']::-webkit-slider-thumb { -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #C1440E;
+  border-radius: 50%;
+  cursor: pointer; }  /* index.css */
+/* Bicycle cursor trail */ .bike-cursor { position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: left 0.15s ease, top 0.15s ease; }  /* index.css */
+.wheel-anim { animation: wheel-spin 0.6s linear infinite;
+  transform-origin: center; }  /* index.css */
+.hill-bike-3d { width: 260px;
+  height: 180px;
+  transform-origin: center center;
+  will-change: left, top, transform;
+  pointer-events: none; }  /* index.css */
+.hill-climb-3d { position: relative;
+  width: 100%;
+  height: clamp(220px, 32vw, 300px);
+  min-height: 220px;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint; }  /* index.css */
+.hill-climb-3d canvas { display: block;
+  width: 100% !important;
+  height: 100% !important; }  /* index.css */
+.hill-bike-image { display: block;
+  width: 260px;
+  height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.35)); }  /* index.css */
+.admin-shell .btn { display: inline-block;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(245, 237, 217, 0.35);
+  border-radius: 2px;
+  color: #F5EDD9;
+  background: transparent;
+  cursor: pointer;
+  font: 600 1rem var(--font-body), sans-serif;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease; }  /* index.css */
+.admin-shell .btn:disabled { cursor: not-allowed; opacity: 0.55; }  /* index.css */
+.admin-side-nav button { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.76rem 0.65rem; border: 0; border-radius: 4px; color: rgba(245, 237, 217, 0.65); background: transparent; cursor: pointer; font: 500 0.82rem var(--font-body), sans-serif; text-align: left; }  /* index.css */
+.admin-dashboard .admin-primary-button, .admin-dashboard .admin-secondary-button { min-height: 2.4rem; padding: 0.55rem 0.9rem; border: 1px solid #17231D; border-radius: 4px; color: #FFF; background: #17231D; cursor: pointer; font: 600 0.75rem var(--font-body), sans-serif; }  /* index.css */
+.admin-dashboard button:disabled { cursor: not-allowed; opacity: 0.55; }  /* index.css */
+.admin-text-button { border: 0; color: #A36D00; background: transparent; cursor: pointer; font: 600 0.72rem var(--font-body), sans-serif; }  /* index.css */
+.admin-action-button, .admin-content-actions button { padding: 0.45rem 0.65rem; border: 1px solid #DCE3DE; border-radius: 4px; color: #3F5147; background: #FFF; cursor: pointer; font: 600 0.68rem var(--font-body), sans-serif; }  /* index.css */
+.admin-modal-close { display: grid; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; border: 1px solid #E1E6EA; border-radius: 50%; color: #52606E; background: #FFF; cursor: pointer; font-size: 1.3rem; line-height: 1; }  /* index.css */
+.ride-ticket-print { width: 100%; margin-top: 1rem; padding: 0.75rem; border: 0; border-radius: 4px; color: #FFF; background: #5367B8; cursor: pointer; font: 600 0.75rem var(--font-body), sans-serif; }  /* index.css */
+.route-gpx-import { display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; margin-top: 0.8rem; padding: 0.65rem; border: 1px dashed rgba(212, 160, 23, 0.45); color: #D4A017; cursor: pointer; font-size: 0.67rem; font-weight: 700; }  /* index.css */
+.booking-route-table tbody tr { cursor: pointer; transition: background 0.15s ease; }  /* index.css */
+.booking-route-choice { display: grid; width: 1.15rem; height: 1.15rem; place-items: center; cursor: pointer; }  /* index.css */
+.booking-submit-button { width: 100%; margin: 1rem 0 0.7rem; padding: 0.9rem 1rem; border: 1px solid #C1440E; border-radius: 3px; color: #F5EDD9; background: #C1440E; cursor: pointer; font: 700 0.98rem var(--font-body), sans-serif; text-transform: uppercase; }  /* index.css */
+.booking-submit-button:disabled { cursor: wait; opacity: 0.6; }  /* index.css */
+/* The roaming bicycles share the cursor rider's filled-line artwork and a calmer, wider rhythm. Separate lanes keep the silhouettes from crossing one another. */ .header-bike { --bike-w: clamp(140px, 13vw, 190px);
+  opacity: 0.18; }  /* index.css */
+.header-bike-layer { top: calc((100% - var(--bike-w) * 0.77) * var(--layer-index) / (var(--lanes) - 1));
+  height: calc(var(--bike-w) * 0.77); }  /* index.css */
+.header-bike-rider { height: calc(var(--bike-w) * 0.77); }  /* index.css */
+.header-bike-rider svg { display: block; width: 100%; height: auto; }  /* index.css */
+.header-bike { --bike-w: 140px; opacity: 0.15; }  /* index.css */
+.photo-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }  /* community.css */
+.photo-download { position: absolute; right: 0.55rem; bottom: 0.55rem; display: grid; width: 2.3rem; height: 2.3rem; place-items: center; border: 0; border-radius: 50%; color: #F5EDD9; background: rgba(13, 8, 5, 0.75); cursor: pointer; transition: background 0.15s ease, transform 0.15s ease; }  /* community.css */
+.gallery-download-btn { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 1rem; border: 0; border-radius: 2px; color: #F5EDD9; background: #C1440E; font-size: 1rem; font-weight: 700; cursor: pointer; white-space: nowrap; }  /* community.css */
+.lightbox-close, .lightbox-nav { position: absolute; display: grid; place-items: center; border: 0; border-radius: 50%; color: #F5EDD9; background: #C1440E; cursor: pointer; font-size: 1.4rem; line-height: 1; }  /* community.css */
+.upload-drop { position: relative; display: grid; min-height: 9rem; place-items: center; overflow: hidden; border: 2px dashed rgba(212, 160, 23, 0.5); border-radius: 4px; color: rgba(245, 237, 217, 0.8); text-align: center; cursor: pointer; background: rgba(13, 8, 5, 0.3); }  /* community.css */
+.upload-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }  /* community.css */
+.auth-tabs button { padding: 0.65rem; border: 0; color: rgba(245, 237, 217, 0.8); background: transparent; font-size: 1rem; font-weight: 700; cursor: pointer; }  /* community.css */
+.auth-social { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.6rem; padding: 0.7rem 1rem; border: 1px solid rgba(245, 237, 217, 0.3); border-radius: 3px; color: #F5EDD9; background: rgba(13, 8, 5, 0.35); font-size: 1rem; font-weight: 600; cursor: pointer; }  /* community.css */
+.auth-social:disabled { cursor: not-allowed; opacity: 0.5; }  /* community.css */
+.auth-primary { display: inline-block; padding: 0.8rem 1.2rem; border: 0; border-radius: 3px; color: #F5EDD9; background: #C1440E; font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-align: center; text-decoration: none; text-transform: uppercase; cursor: pointer; }  /* community.css */
+.auth-primary:disabled { cursor: not-allowed; opacity: 0.6; }  /* community.css */
+.auth-link { justify-self: start; padding: 0; border: 0; color: #D4A017; background: none; font-size: 1rem; text-decoration: underline; cursor: pointer; }  /* community.css */
+.connect-signed button { padding: 0; border: 0; color: #D4A017; background: none; text-decoration: underline; cursor: pointer; }  /* community.css */
+.star-picker button { padding: 0; border: 0; color: rgba(245, 237, 217, 0.3); background: none; font-size: 2rem; line-height: 1; cursor: pointer; }  /* community.css */
+.roundabout-photo { display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 2px solid rgba(212, 160, 23, 0.55); border-radius: 6px; background: rgba(13, 8, 5, 0.5); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); cursor: pointer; }  /* community.css */
+.roundabout-arrow { position: absolute; top: calc(var(--stage-h) / 2 - 1.4rem); z-index: 30; display: grid; width: 2.8rem; height: 2.8rem; place-items: center; border: 0; border-radius: 50%; color: #F5EDD9; background: #C1440E; font-size: 1.6rem; line-height: 1; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }  /* community.css */
+.roundabout-dots button { width: 0.65rem; height: 0.65rem; padding: 0; border: 0; border-radius: 50%; background: rgba(245, 237, 217, 0.35); cursor: pointer; }  /* community.css */
+.dash-photo-download { justify-self: start; min-height: 2.5rem; padding: 0.45rem 0.8rem; border: 1px solid #D4A017; border-radius: 4px; background: transparent; color: #D4A017; font-weight: 700; cursor: pointer; }  /* community.css */
+.dash-cancel-button { min-height: 2.5rem; padding: 0.45rem 0.8rem; border: 1px solid rgba(245, 237, 217, 0.55); border-radius: 4px; background: transparent; color: #F5EDD9; font-weight: 700; cursor: pointer; }  /* community.css */
+.dash-cancel-button:disabled, .dash-photo-download:disabled { opacity: 0.6; cursor: wait; }  /* community.css */
+.rr-sort select { border: 0; background: transparent; color: var(--rr-gold); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }  /* rr-theme.css */
+.message-inbox-phone-input .btn { min-height: 2.8rem; padding: .65rem 1.1rem; border: 0; border-radius: 8px; color: #fff; background: var(--rr-orange); font: inherit; font-weight: 800; cursor: pointer; }  /* rr-theme.css */

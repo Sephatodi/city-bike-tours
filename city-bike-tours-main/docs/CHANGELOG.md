@@ -1,35 +1,11 @@
 # Changelog
 
-## October 2026 update
-
-1. Google sign-in through Neon Auth; Facebook and Apple stay on NextAuth; social buttons start at the backend `/customer-social` page.
-2. The old customer pages and components of a previous site were removed from the backend; the backend `/` and `/register` redirect to the website.
-3. Migration `0015` is now registered in the Drizzle journal (it was being skipped); new migrations `0016` (review details), `0017` (helpful votes) and `0018` (rider photos name a site).
-4. Customer dashboard at `/dashboard`, the default page after sign-in.
-5. Legal pages: `/privacy`, `/terms`, `/data-deletion`.
-6. Reserve page: ride cards with price, rider count, total and Book button in one section; next ride and today marker.
-7. Heritage trail: six folders that open one at a time.
-8. Gallery: roundabout with six route buttons; a page per site with all pictures; rider photos can name a stop.
-9. Reviews page redesigned in the rr theme with a real score summary, filters, helpful votes, verified-rider rule and optional photo.
-10. Gaborone-time dates everywhere, live refresh through polling, `Stamp` and `SiteClock`.
-11. Show / hide password buttons on the website and in the admin dashboard.
-12. Branding: rider favicon and app icons, sky-blue cursor and riders, new fonts, mobile bottom navigation.
-13. CORS: `FRONTEND_ORIGIN` plus anchored `CORS_ORIGIN_PATTERNS` for preview deployments.
-
-## SMS codes through Infobip
-
-SMS sign-in codes can now be sent through Infobip as well as Twilio, with automatic fallback to the next configured provider (`SMS_PROVIDER_ORDER`). WhatsApp codes are unchanged. Guide: `docs/SMS-CODES-SETUP.md`.
-
-## November 2026 update
-
-1. Heritage trail: cycling-street route generation, an animated bicycle with per-stop pauses, accessible playback controls, and a compact rider-photo upload section at the top of the Gallery.
-2. New rider photo and video uploads use the public Vercel Blob store and appear in the Gallery after staff approval; download permission remains controlled by moderation.
-3. Customer sign-in now uses an HttpOnly cookie; social sign-in exchanges a short-lived, single-use handoff for that cookie.
-
-## Launch readiness
-
-1. Transactional email supports Resend and SMTP, shared escaped HTML/text templates, delivery logs, test delivery, and admin alerts.
-2. Customers can request one-time password-reset links, see their account-linked bookings, and cancel eligible rides; bookings retain a price snapshot and calendar download.
-3. Staff can record manual payments, resend booking confirmations, and review email and reminder state. A secret-protected daily job sends booking reminders.
-4. Customer data deletion anonymizes retained booking/review records and removes associated account data; backup/restore coverage includes customer messages, review votes, community photos and email logs.
-5. Added security headers, CI backend tests, a deployment smoke test, and email, payments and go-live guides.
+## 2026-11-06
+- Remove site backdrop rendering; change body background to #123222
+- Remove RiderIcon logo from Nav/Footer; clean up navigation
+- Remove /connect route and related nav/bottom nav/dashboard links
+- Remove map section from home page
+- Add booking code generation on success (4 digits + 2 letters), stored in localStorage, shown on success screen
+- Add booking code utilities and scaffold component
+- Remove src/data .js if present
+- Add docs (LIVESTREET-SETUP, STYLES, bicycle.txt) and extraction script

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
-import HeritageMap from "../components/HeritageMap";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 
@@ -163,47 +162,6 @@ function AboutStrip() {
   );
 }
 
-// ─── MAP SECTION ──────────────────────────────────────────────────────────────
-
-function MapSection() {
-  return (
-    <section id="map" className="py-24">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-10 reveal">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— Where We Ride</p>
-          <h2 className="font-display font-bold mb-3" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#F5EDD9" }}>Heritage Route Map</h2>
-          <p className="max-w-xl mx-auto text-sm" style={{ color: "rgba(245,237,217,0.65)" }}>
-            All 6 sites within cycling distance of Main Mall · Click any marker for details
-          </p>
-        </div>
-        <div className="reveal mb-4 flex flex-wrap gap-4 justify-center text-xs">
-          {[
-            { color: "#D4A017", label: "Main Mall (start/end)" },
-            { color: "#C1440E", label: "Heritage sites" },
-          ].map(({ color, label }) => (
-            <span key={label} className="flex items-center gap-2" style={{ color: "rgba(245,237,217,0.7)" }}>
-              <span style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: color, display: "inline-block" }} />
-              {label}
-            </span>
-          ))}
-        </div>
-        <div className="reveal">
-          <HeritageMap height="min(64vh, 600px)" trail />
-        </div>
-        <div className="mt-8 text-center reveal">
-          <Link
-            to="/heritage-trail"
-            className="inline-block px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
-          >
-            Heritage Trail →
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -214,7 +172,6 @@ export default function LandingPage() {
       <Hero />
       <div className="home-explore-shell glass">
         <AboutStrip />
-        <MapSection />
       </div>
       <Footer />
     </div>

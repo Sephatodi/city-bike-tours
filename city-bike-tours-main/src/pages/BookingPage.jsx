@@ -5,6 +5,7 @@ import { ROUTES_DATA } from "../data";
 import { backendUrl } from "../api/backend";
 import { useLiveData } from "../hooks/LiveDataContext";
 import { useCustomer } from "../auth/CustomerAuth";
+import { generateBookingCode, saveBookingCode } from "../lib/bookingCode";
 
 export default function BookingPage() {
   const { routes } = useLiveData();
@@ -22,6 +23,7 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [requestId, setRequestId] = useState("");
+  const [bookingCode, setBookingCode] = useState("");
   const [availability, setAvailability] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
@@ -131,6 +133,9 @@ export default function BookingPage() {
       if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
 
       setRequestId(result.request.id);
+      const code = generateBookingCode();
+      saveBookingCode(code);
+      setBookingCode(code);
       setSubmitted(true);
     } catch (error) {
       setSubmitError(error.message || "The booking service is unavailable. Please try again later.");
@@ -170,6 +175,15 @@ export default function BookingPage() {
             <p className="text-xs mb-2" style={{ color: "rgba(245,237,217,0.45)" }}>
               Request reference: {requestId}
             </p>
+            {bookingCode && (
+              <div className="booking-code-box glass-soft" style={{ padding: "1rem 1.25rem", borderRadius: 6, marginTop: "1rem", marginBottom: "1rem", textAlign: "left" }}>
+                <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "#D4A017" }}>Your booking code</p>
+                <p className="font-display font-bold" style={{ fontSize: "2rem", letterSpacing: "0.15em", color: "#F5EDD9" }}>{bookingCode}</p>
+                <p className="text-xs mt-2" style={{ color: "rgba(245,237,217,0.6)" }}>
+                  Save this code — you'll need it to upload rider photos. It is only stored on this device, so keep it safe.
+                </p>
+              </div>
+            )}
             <p className="text-base mb-10" style={{ color: "rgba(245,237,217,0.7)" }}>
               Total of <strong style={{ color: "#C1440E" }}>P{total}</strong> is payable on the day at Main Mall.
             </p>

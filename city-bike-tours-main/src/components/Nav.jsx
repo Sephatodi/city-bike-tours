@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import RiderIcon from "./RiderIcon";
 import { useCustomer } from "../auth/CustomerAuth";
 
 const NAV_LINKS = [
@@ -8,7 +7,6 @@ const NAV_LINKS = [
   { label: "Reserve", to: "/schedule" },
   { label: "Heritage Trail", to: "/heritage-trail" },
   { label: "Gallery", to: "/gallery" },
-  { label: "Connect", to: "/connect" },
 ];
 
 export default function Nav() {
@@ -35,7 +33,6 @@ export default function Nav() {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <RiderIcon size={44} color="#D4A017" />
           <div>
             <div className="font-display font-bold text-lg leading-tight" style={{ color: "#F5EDD9" }}>
               City Bike Tours

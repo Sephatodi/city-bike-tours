@@ -4,7 +4,6 @@ import RrIcon from "./RrIcon";
 const ITEMS = [
   { to: "/heritage-trail", label: "Trail", icon: "route" },
   { to: "/gallery", label: "Gallery", icon: "photos" },
-  { to: "/connect", label: "Reviews", icon: "chat" },
   { to: "/schedule", label: "Book", icon: "book" },
 ];
 
