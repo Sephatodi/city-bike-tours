@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-07
+- Add review presentation fields: `headline` (review title), `featured` (staff-picked quote card), `show_avatar` (rider profile picture choice) on the reviews table via migration `0019_review_presentation`
+- `GET /api/reviews` returns `headline`, `featured`, and `avatarUrl` (from `users.image` when `show_avatar`)
+- `POST /api/customer/reviews` accepts `headline` (max 80) and `showAvatar`
+- `PATCH /api/admin/reviews/[id]` accepts `featured` boolean; admin dashboard Inbox gains a "Feature this review" toggle
+- `/connect` composer gains "Review title" input and "Show my profile picture" toggle; featured reviews render as up to three quote cards at the top of the feed
+
 ## 2026-11-06
 - Remove site backdrop rendering; change body background to #123222
 - Remove RiderIcon logo from Nav/Footer; clean up navigation

@@ -207,6 +207,9 @@ export const reviews = pgTable("reviews", {
   photoUrl: text("photo_url"), // optional photo attached by the rider; only shown once the review is approved
   stops: jsonb("stops"), // heritage site ids the review talks about
   highlights: jsonb("highlights"), // short tags the rider picked ("Expert guide", ...)
+  headline: text("headline"), // short review title chosen by the rider
+  featured: boolean("featured").notNull().default(false), // staff-picked, shown as a quote card at the top
+  showAvatar: boolean("show_avatar").notNull().default(false), // rider wants their profile picture shown
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -28,6 +28,7 @@ export async function GET(request) {
     id: reviews.id, name: reviews.name, rating: reviews.rating, comment: reviews.comment, rideDate: reviews.rideDate,
     adminReply: reviews.adminReply, adminReplyAt: reviews.adminReplyAt, createdAt: reviews.createdAt, userId: reviews.userId,
     tour: reviews.tour, riderOrigin: reviews.riderOrigin, photoUrl: reviews.photoUrl, stops: reviews.stops, highlights: reviews.highlights,
+    headline: reviews.headline, featured: reviews.featured, showAvatar: reviews.showAvatar,
   }).from(reviews).where(eq(reviews.status, "approved")).orderBy(desc(reviews.createdAt)).limit(200);
 
   // Helpful votes per review.
@@ -38,13 +39,14 @@ export async function GET(request) {
 
   // "Verified rider" = the author's phone number matches a booking that staff checked in on the day.
   const userIds = [...new Set(rows.map((row) => row.userId).filter(Boolean))];
-  const phones = userIds.length ? await db.select({ id: users.id, phone: users.phone }).from(users).where(inArray(users.id, userIds)) : [];
+  const phones = userIds.length ? await db.select({ id: users.id, phone: users.phone, image: users.image }).from(users).where(inArray(users.id, userIds)) : [];
   const phoneOf = new Map(phones.filter((row) => row.phone).map((row) => [row.id, row.phone]));
+  const avatarOf = new Map(phones.filter((row) => row.image).map((row) => [row.id, row.image]));
   const ridden = phoneOf.size
     ? new Set((await db.selectDistinct({ phone: bookingRequests.phone }).from(bookingRequests).where(and(isNotNull(bookingRequests.checkedInAt), inArray(bookingRequests.phone, [...new Set(phoneOf.values())])))).map((row) => row.phone))
     : new Set();
 
-  const list = rows.map(({ userId, ...row }) => ({ ...row, verified: Boolean(userId && ridden.has(phoneOf.get(userId))), helpfulCount: helpful.get(row.id) || 0, voted: mine.has(row.id), mine: Boolean(user && userId === user.id) }));
+  const list = rows.map(({ userId, ...row }) => ({ ...row, verified: Boolean(userId && ridden.has(phoneOf.get(userId))), avatarUrl: row.showAvatar && userId ? avatarOf.get(userId) : undefined, helpfulCount: helpful.get(row.id) || 0, voted: mine.has(row.id), mine: Boolean(user && userId === user.id) }));
 
   // Summary over every approved review (not just the page).
   const [totals] = await db.select({
