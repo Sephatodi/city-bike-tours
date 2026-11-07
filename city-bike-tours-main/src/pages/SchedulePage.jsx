@@ -82,6 +82,17 @@ export default function SchedulePage() {
         </div>
 
         <PricingSection />
+
+        <section className="reveal" style={{ padding: "3rem 0", textAlign: "center" }}>
+          <Link
+            to="/book"
+            className="px-10 py-4 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "#D4A017", color: "#0D0805", display: "inline-block" }}
+          >
+            Check Availability
+          </Link>
+        </section>
+
       </main>
 
       <Footer />

@@ -38,9 +38,18 @@ html {
 
 body {
   font-family: var(--font-body);
+  background: radial-gradient(circle at center, #1A3A2A 0%, #0D0805 100%);
   background-color: #123222;
   color: #F5EDD9;
   overflow-x: hidden;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(26, 58, 42, 0.4) 0%, transparent 70%);
+  z-index: -1;
 }
 
 :root {
