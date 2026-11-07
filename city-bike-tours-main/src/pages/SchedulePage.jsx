@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import Footer from "../components/Footer";
-import PricingSection from "../components/PricingSection";
-import RidePlanner from "../components/RidePlanner";
 import { useNow } from "../hooks/useNow";
 import { siteClock } from "../lib/time";
 
@@ -24,7 +22,6 @@ export default function SchedulePage() {
   const today = siteClock(useNow(60000)).weekday; // 0 = Sunday, in Gaborone time
   const DAY_INDEX = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
 
-  // Router navigation and direct visits do not reliably scroll to anchors.
   useEffect(() => {
     if (!hash) return undefined;
     const timer = setTimeout(() => {
@@ -39,13 +36,11 @@ export default function SchedulePage() {
         <div className="schedule-hero-inner">
           <p className="schedule-eyebrow">GABORONE · BOTSWANA</p>
           <h1>Ride Outs</h1>
-          <p>Choose your ride, find a time that works, see what it costs, and meet us at Main Mall.</p>
+          <p>Choose your ride, find a time that works, and meet us at Main Mall.</p>
         </div>
       </header>
 
       <main className="schedule-content">
-        <RidePlanner />
-
         <section className="schedule-week reveal">
           <div className="schedule-section-heading"><div><p className="schedule-section-kicker">PLAN AHEAD</p><h2>Our week, at a glance.</h2></div></div>
           <div className="schedule-week-grid">
@@ -62,9 +57,7 @@ export default function SchedulePage() {
                 key={day}
                 className={`schedule-day ${active ? "schedule-day-active" : ""} ${DAY_INDEX[day] === today ? "schedule-day-today" : ""}`}
                 aria-current={DAY_INDEX[day] === today ? "date" : undefined}
-                style={{
-                  "--day-accent": active ? color : "#A7A99F",
-                }}
+                style={{ "--day-accent": active ? color : "#A7A99F" }}
               >
                 <div>{day}{DAY_INDEX[day] === today && <em className="schedule-today-tag">Today</em>}</div><span>{label}</span>
               </div>
@@ -81,7 +74,16 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        <PricingSection />
+        <div className="trail-booking-cta reveal" style={{ marginTop: "2.5rem" }}>
+          <div>
+            <p className="trail-eyebrow">READY TO RIDE</p>
+            <h2>Book your ride</h2>
+            <p>See routes, pricing, and book on the Heritage Trail page.</p>
+          </div>
+          <Link to="/heritage-trail#trail-book" className="trail-booking-button">
+            Book now <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
       </main>
 
       <Footer />

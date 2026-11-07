@@ -11,18 +11,18 @@ import { getDailyRiderCount } from "@/lib/capacity";
 import { getDailyCapacity, getSettings } from "@/lib/settings";
 import { fireWebhook } from "@/lib/webhook";
 import { isIpBlocked } from "@/lib/security";
-import { requireCustomer } from "@/lib/customer-auth";
+import { optionalCustomer } from "@/lib/customer-auth";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { renderEmailTemplate } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
 import { notifyAdmins } from "@/lib/admin-email";
 import { formatGaboroneDate } from "@/lib/time";
 import { bookingPriceTotal } from "@/lib/booking-lifecycle";
+import { getOrCreateBookingCode } from "@/lib/booking-code";
 
 export async function POST(request) {
-  // Riders must have an account before they can book.
-  const auth = await requireCustomer(request);
-  if (auth.error) return NextResponse.json({ error: "Please create an account or sign in before booking." }, { status: 401 });
+  // Guest booking is allowed; if signed in, link the request to the account.
+  const { user } = await optionalCustomer(request);
   if (await isIpBlocked(clientIp(request))) return NextResponse.json({ error: "Booking from this address is blocked. Please contact us." }, { status: 403 });
   // Each request can trigger WhatsApp/SMS messages that cost money, so throttle per IP.
   if (!rateLimit(`booking-request:${clientIp(request)}`, 5, 10 * 60 * 1000)) {
@@ -72,7 +72,7 @@ export async function POST(request) {
         id: newId(),
         ...rest,
         email: email || null,
-        userId: auth.user.id,
+        userId: user?.id || null,
         priceTotal: route ? bookingPriceTotal(route.priceBwp, rest.riders) : null,
         phone,
         rideDate: dateIso,
@@ -80,12 +80,14 @@ export async function POST(request) {
       })
       .returning({ id: bookingRequests.id, status: bookingRequests.status });
 
+    const confirmationCode = await getOrCreateBookingCode(db, created.id);
     const total = route ? ` Total: P${(Number(route.priceBwp) * rest.riders).toFixed(2).replace(/\.00$/, "")}, payable on the day.` : "";
-    const ref = created.id.slice(0, 8);
+    const ref = confirmationCode || created.id.slice(0, 8);
 
-    await fireWebhook("booking_request.created", { id: created.id, name: rest.name, phone, routeId: rest.routeId, rideDate: dateIso, riders: rest.riders });
+    await fireWebhook("booking_request.created", { id: created.id, name: rest.name, phone, routeId: rest.routeId, rideDate: dateIso, riders: rest.riders, confirmationCode });
     // The pass link works once staff confirm the booking; the site can show its QR now and say so.
     const ridePassUrl = createRidePassUrl(createRidePassToken(created.id), request.url);
+    const shareUrl = new URL("/share", (process.env.FRONTEND_ORIGIN || process.env.PUBLIC_FRONTEND_URL || request.url).split(",")[0].trim()).toString();
     const settings = await getSettings();
     if (email) {
       const received = renderEmailTemplate("bookingReceived", {
@@ -93,6 +95,8 @@ export async function POST(request) {
         routeName: route?.routeName ?? rest.routeId,
         date: formatGaboroneDate(dateIso),
         guests: rest.riders,
+        confirmationCode,
+        shareUrl,
       }, settings);
       await sendEmail({
         to: email,
@@ -110,10 +114,11 @@ export async function POST(request) {
       riders: String(rest.riders),
       email,
       phone,
+      code: confirmationCode,
     }, { relatedType: "booking_request", relatedId: created.id });
 
     // Build WhatsApp click-to-chat link for the rider (non-blocking, best-effort)
-    const riderMsg = `Dumela ${rest.name}! We received your City Bike Tours request (${route?.routeName ?? rest.routeId}) for ${dateIso}, ${rest.riders} rider${rest.riders > 1 ? "s" : ""}.${total} We'll confirm shortly. Ref: ${ref}`;
+    const riderMsg = `Dumela ${rest.name}! We received your City Bike Tours request (${route?.routeName ?? rest.routeId}) for ${dateIso}, ${rest.riders} rider${rest.riders > 1 ? "s" : ""}.${total} Booking code: ${confirmationCode}. After your ride, share your photos at ${shareUrl} with this code. We'll confirm shortly. Ref: ${confirmationCode}`;
     const waLink = buildWaLink(phone, riderMsg);
     if (waLink) {
       const { infobipSmsLogs } = await import("@/db/schema");
@@ -124,7 +129,7 @@ export async function POST(request) {
       });
     }
 
-    return NextResponse.json({ request: created, ridePassUrl, ridePassActive: false }, { status: 201 });
+    return NextResponse.json({ request: { ...created, confirmationCode }, confirmationCode, ridePassUrl, ridePassActive: false }, { status: 201 });
   } catch (error) {
     console.error("Failed to save booking request:", error);
     return NextResponse.json({ error: "We couldn't save your request. Please try again." }, { status: 503 });

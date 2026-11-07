@@ -52,7 +52,7 @@ function RideCard({ card, route, riders, onRiders }) {
         {total !== null && <div className="ride-total">Total <strong>P{total}</strong></div>}
       </div>
 
-      <Link to="/book#book-form" className="ride-book">{card.cta}{total !== null ? ` — P${total}` : ""} <span aria-hidden="true">↗</span></Link>
+      <Link to="/heritage-trail#trail-book" className="ride-book">{card.cta}{total !== null ? ` — P${total}` : ""} <span aria-hidden="true">↗</span></Link>
       <div className="schedule-option-bottom"><span>{card.footer}</span><span>No deposit · pay on the day</span></div>
     </article>
   );

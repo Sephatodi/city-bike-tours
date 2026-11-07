@@ -43,12 +43,6 @@ export function CustomerAuthProvider({ children }) {
   }, [signOut]);
 
   useEffect(() => {
-    try {
-      window.localStorage.removeItem("cbt-customer-token");
-    } catch {
-      // Storage may be disabled by the browser.
-    }
-
     const controller = new AbortController();
     fetch("/api/customer/me", {
       signal: controller.signal,

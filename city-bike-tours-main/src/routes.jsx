@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage";
 import SiteGalleryPage from "./pages/SiteGalleryPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ShareRidePage from "./pages/ShareRidePage";
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "login/callback", Component: LoginCallbackPage },
       { path: "dashboard", Component: DashboardPage },
       { path: "connect", element: <Navigate to="/" replace /> },
+      { path: "share", Component: ShareRidePage },
       { path: "book", Component: BookingPage },
       { path: "gallery", Component: GalleryPage },
       { path: "gallery/:siteId", Component: SiteGalleryPage },

@@ -1,8 +1,10 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import Icon from "./Icon";
 import { BACKEND_BASE_URL, ADMIN_BASE_URL } from "../api/backend";
 
 export default function Footer() {
+  const { pathname } = useLocation();
+  if (pathname === "/") return null;
   return (
     <footer style={{ backgroundColor: "rgba(13,8,5,0.5)", backdropFilter: "blur(8px)" }}>
       <div className="max-w-7xl mx-auto px-6 py-12">
@@ -27,7 +29,6 @@ export default function Footer() {
                 { label: "Reserve", to: "/schedule" },
                 { label: "Heritage Trail", to: "/heritage-trail" },
                 { label: "Gallery", to: "/gallery" },
-                { label: "Sign in", to: "/login" },
               ].map(({ label, to }) => (
                 <Link key={to} to={to} className="text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(245,237,217,0.6)" }}>
                   {label}
@@ -49,8 +50,8 @@ export default function Footer() {
             <div className="space-y-2 text-sm" style={{ color: "rgba(245,237,217,0.6)" }}>
               <div className="flex items-center gap-2"><Icon name="mapPin" size={15} /> Main Mall, Gaborone</div>
               <div className="flex items-center gap-2"><Icon name="phone" size={15} /> WhatsApp bookings welcome</div>
-              <div className="flex items-center gap-2"><Icon name="bicycle" size={15} /> Bikes provided · All levels</div>
-              <div className="flex items-center gap-2"><Icon name="flag" size={15} /> Botswana, since independence</div>
+              <div className="flex items-center gap-2">Bikes provided · All levels</div>
+              <div className="flex items-center gap-2">Botswana, since independence</div>
             </div>
           </div>
         </div>

@@ -1,15 +1,15 @@
-import { Link } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
+import PricingSection from "../components/PricingSection";
 import SiteFolders from "../components/SiteFolders";
+import BookingSection from "../components/BookingSection";
 
 export default function HeritageTrailPage() {
   return (
     <main className="heritage-trail-page">
       <header className="trail-hero">
         <p className="trail-eyebrow">GABORONE · SIX LANDMARKS · ONE SHARED STORY</p>
-        <h1>Ride through<br /><span>living history.</span></h1>
+        <h1>Choose an authentic<br /><span>heritage experience.</span></h1>
         <p className="trail-hero-lede">
           From the civic heart of the city to the places that hold Botswana’s memory, take the long way through stories worth knowing.
         </p>
@@ -33,6 +33,10 @@ export default function HeritageTrailPage() {
         </div>
       </section>
 
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <PricingSection />
+      </div>
+
       <section className="trail-sites-section" aria-labelledby="trail-sites-heading">
         <div className="trail-section-heading trail-sites-heading">
           <div>
@@ -50,14 +54,22 @@ export default function HeritageTrailPage() {
           <h2 id="trail-booking-heading">Let’s go find a story.</h2>
           <p>Choose your pace, see the live price, and meet us at Main Mall. Pay on the day; no deposit is needed.</p>
         </div>
-        <Link to="/schedule#price-calculator" className="trail-booking-button">
+        <a href="#trail-book" className="trail-booking-button">
           Choose your ride <span aria-hidden="true">↗</span>
-        </Link>
+        </a>
       </section>
 
-      <div className="trail-food-wrap">
-        <FoodStops />
-      </div>
+      <section id="trail-book" className="max-w-7xl mx-auto px-6 py-14">
+        <div className="trail-section-heading">
+          <div>
+            <p className="trail-eyebrow">BOOK YOUR RIDE</p>
+            <h2>Reserve your place</h2>
+          </div>
+          <p>Create an account to book, leave a review, comment, and upload or download photos (with admin approval).</p>
+        </div>
+        <BookingSection />
+      </section>
+
       <Footer />
     </main>
   );

@@ -162,21 +162,11 @@ export default function RouteExplorerMap({ height = "520px" }) {
   const [importError, setImportError] = useState("");
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSavedRoutes(JSON.parse(raw));
-    } catch {
-      // ignore corrupt storage
-    }
+    // Saved custom routes are session-only; do not persist in browser storage.
   }, []);
 
   function persist(routes) {
     setSavedRoutes(routes);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
-    } catch {
-      // storage unavailable — route still works for this session
-    }
   }
 
   const sitesById = useMemo(() => Object.fromEntries(SITES.map((s) => [s.id, s])), []);
