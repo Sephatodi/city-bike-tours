@@ -28,9 +28,10 @@ The older pages use forest green and a gold of `#D4A017`, a cream text colour `#
 - `.rr-plate` (translucent green, blur, 18% gold border) and `.rr-plate-elevated` (35% border, deep shadow).
 - Buttons: `.rr-btn-primary` (orange, white uppercase text, 44px+ high) and `.rr-btn-ghost` (gold outline). Filter pills: `.rr-pill-btn`; toggles: `.rr-toggle`.
 - Icons are inline SVG from `RrIcon.jsx`; no icon font is loaded.
-- Review card: initials avatar, name with optional verified tick, time, stars, tour tag, quote, optional photo with stop label, stop chips, helpful and share actions, and a tinted team-reply block.
+- Review card: initials avatar, name with optional verified tick, time, stars, tour tag, quote, optional photo with stop label, stop chips, helpful and share actions, and a tinted team-reply block. Optional review headline shows above the name; when the rider chose to show their profile picture, `avatarUrl` from their user record is rendered instead of initials.
 - Site folders (heritage trail) and the showcase carousel with six route buttons (gallery); a per-site photo grid with a fixed 4:3 ratio to avoid layout shift.
 - Phones get a docked bottom bar (Trail, Gallery, Reviews, Book) below 768px.
+- Featured reviews (`featured = true`, set by staff in the admin dashboard) render as up to three quote cards at the top of `/connect`, above the regular feed and score summary.
 
 ## Behaviour rules
 
@@ -39,5 +40,4 @@ The older pages use forest green and a gold of `#D4A017`, a cream text colour `#
 - **Freshness:** use `usePolling` for lists that change (messages 20s, reviews and prices 60s).
 - **Motion:** respect `prefers-reduced-motion`; the rr theme switches animation off.
 - **Accessibility:** visible focus rings, 44px touch targets, AA contrast, labels on every control, `aria-pressed` on toggles, `aria-current` on the active navigation item.
-- **Passwords** always have a Show / Hide button.
-- **Heritage trail map:** the optional street-route JSON is dynamically loaded only on `/heritage-trail`. A gold bicycle and ridden-progress line animate along the orange route, pausing at each site; the home and booking maps retain their original straight-line route. Playback pauses when the tab or map is out of view, and reduced-motion users must start it manually. Keep route-provider attribution visible beside the map controls.
+- **Passwords** always have a Show / Hide button.- **Heritage trail map:** the optional street-route JSON is dynamically loaded only on `/heritage-trail`. A gold bicycle and ridden-progress line animate along the orange route, pausing at each site; the home and booking maps retain their original straight-line route. Playback pauses when the tab or map is out of view, and reduced-motion users must start it manually. Keep route-provider attribution visible beside the map controls.

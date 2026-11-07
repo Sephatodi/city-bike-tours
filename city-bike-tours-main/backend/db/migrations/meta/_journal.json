@@ -138,33 +138,40 @@
     {
       "idx": 19,
       "version": "7",
+      "when": 1793000000000,
+      "tag": "0019_review_presentation",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
       "when": 1793687700000,
       "tag": "0021_rider_video_upload_preferences",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 21,
       "version": "7",
       "when": 1793701873725,
       "tag": "0022_rider_photo_visibility",
       "breakpoints": true
     },
     {
-      "idx": 21,
+      "idx": 22,
       "version": "7",
       "when": 1793706075288,
       "tag": "0023_booking_confirmation_codes",
       "breakpoints": true
     },
     {
-      "idx": 22,
+      "idx": 23,
       "version": "7",
       "when": 1793706075289,
       "tag": "0024_booking_request_email",
       "breakpoints": true
     },
     {
-      "idx": 23,
+      "idx": 24,
       "version": "7",
       "when": 1793761271510,
       "tag": "0025_launch_features",

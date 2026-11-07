@@ -49,6 +49,8 @@
 .rr-hero p { max-width: 42rem; font-size: 1.02rem; line-height: 1.7; }
 .rr-inline { color: var(--rr-gold); text-decoration: underline; }
 .rr-label { display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; color: #a5d0b9; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.rr-headline { display: block; color: var(--rr-gold); font-size: 1.1rem; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.rr-featured { color: #e9c46a; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; display: inline-block; margin-left: 6px; }
 .rr-score { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 1rem 1.2rem; align-items: center; }
 .rr-score-main { display: grid; gap: 0.3rem; padding-right: 0.8rem; border-right: 1px solid rgba(233, 196, 106, 0.2); }
 .rr-score-number { display: flex; align-items: baseline; gap: 0.3rem; }

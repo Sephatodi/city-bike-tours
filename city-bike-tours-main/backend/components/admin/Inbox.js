@@ -183,13 +183,22 @@ export default function Inbox({ initialTab = "enquiries" }) {
                 <tbody>{data.reviews.map((x) => (
                   <tr key={x.id}>
                     <td><span className="strong">{x.name}</span><small>{ago(x.createdAt)}</small></td>
-                    <td style={{ maxWidth: 420 }}><Stars n={x.rating} /><br /><span className="muted">{x.comment}</span>{(x.tour || x.riderOrigin || x.stops?.length) && <small style={{ display: "block", marginTop: 6 }}>{[x.tour && `Tour: ${x.tour}`, x.riderOrigin, x.stops?.length && `Stops: ${x.stops.join(", ")}`].filter(Boolean).join(" · ")}</small>}{x.photoUrl && <a href={x.photoUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8 }}><img src={x.photoUrl} alt="Photo attached to this review" style={{ maxWidth: 160, maxHeight: 110, borderRadius: 6, objectFit: "cover" }} /></a>}{x.adminReply && <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid rgba(76,201,176,.6)" }}><small>Your reply · {x.adminReplyBy}</small><br /><span>{x.adminReply}</span></div>}</td>
+                    <td style={{ maxWidth: 420 }}>
+                      {x.headline && <div className="rr-headline">{x.headline}</div>}
+                      <Stars n={x.rating} /><br />
+                      <span className="muted">{x.comment}</span>
+                      {x.featured && <span className="rr-featured">[Featured]</span>}
+                      {(x.tour || x.riderOrigin || x.stops?.length) && <small style={{ display: "block", marginTop: 6 }}>{[x.tour && `Tour: ${x.tour}`, x.riderOrigin, x.stops?.length && `Stops: ${x.stops.join(", ")}`].filter(Boolean).join(" · ")}</small>}
+                      {x.photoUrl && <a href={x.photoUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8 }}><img src={x.photoUrl} alt="Photo attached to this review" style={{ maxWidth: 160, maxHeight: 110, borderRadius: 6, objectFit: "cover" }} /></a>}
+                      {x.adminReply && <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid rgba(76,201,176,.6)" }}><small>Your reply · {x.adminReplyBy}</small><br /><span>{x.adminReply}</span></div>}
+                    </td>
                     <td><Badge tone={TONE[x.status]}>{LABEL[x.status]}</Badge></td>
                     {write && <td><div className="row-actions">
                       <button className="btn btn-sm" disabled={busy} onClick={() => setReplyTo(x.id)}>{x.adminReply ? "Edit reply" : "Reply"}</button>
                       {x.status !== "approved" && <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "approved" }, "Approved. It now shows on your website.")}>Approve</button>}
                       {x.status === "pending" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "rejected" }, "Rejected.")}>Reject</button>}
                       {x.status === "approved" && <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { status: "pending" }, "Hidden from the website.")}>Hide</button>}
+                      {x.featured ? <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { featured: false }, "Unfeatured.")}>Unfeature</button> : <button className="btn btn-sm" disabled={busy} onClick={() => act(`/api/admin/reviews/${x.id}`, "PATCH", { featured: true }, "Featured. It shows as a quote card on the website.")}>Feature</button>}
                       <button className="btn btn-sm btn-danger btn-icon" disabled={busy} aria-label={`Delete review by ${x.name}`} onClick={() => window.confirm("Delete this review for good?") && act(`/api/admin/reviews/${x.id}`, "DELETE", undefined, "Deleted.")}><Icon name="trash" size={13} /></button>
                     </div></td>}
                   </tr>))}</tbody>

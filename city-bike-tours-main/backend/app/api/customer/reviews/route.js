@@ -19,6 +19,8 @@ const schema = z.object({
   rideDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   tour: z.enum(TOURS).optional().or(z.literal("")),
   riderOrigin: z.string().trim().max(80).optional(),
+  headline: z.string().trim().max(80).optional(),
+  showAvatar: z.boolean().optional(),
   stops: z.array(z.enum(SITE_IDS)).max(6).optional(),
   highlights: z.array(z.enum(HIGHLIGHTS)).max(6).optional(),
 });
@@ -60,10 +62,10 @@ export async function POST(request) {
     if (stored.error) return NextResponse.json({ error: stored.error }, { status: stored.status });
     photoUrl = stored.url;
   }
-  const { rating, comment, rideDate, tour, riderOrigin, stops, highlights } = parsed.data;
+  const { rating, comment, rideDate, tour, riderOrigin, headline, showAvatar, stops, highlights } = parsed.data;
   const values = {
     id: newId(), name: auth.user.name, userId: auth.user.id, rating, comment, rideDate: rideDate || null,
-    tour: tour || null, riderOrigin: riderOrigin || null, photoUrl, stops: stops?.length ? stops : null, highlights: highlights?.length ? highlights : null,
+    tour: tour || null, riderOrigin: riderOrigin || null, headline: headline || null, showAvatar: showAvatar === true, photoUrl, stops: stops?.length ? stops : null, highlights: highlights?.length ? highlights : null,
   };
   await db.insert(reviews).values(values);
   await fireWebhook("review.created", { id: values.id, name: values.name, rating: values.rating, comment: values.comment });

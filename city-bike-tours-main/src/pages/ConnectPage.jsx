@@ -65,9 +65,17 @@ function ReviewCard({ review, isSignedIn, onVote }) {
   return (
     <article id={`review-${review.id}`} tabIndex={0} className="rr-plate rr-pad rr-review">
       <header className="rr-review-head">
+        {review.headline && <span className="rr-headline">{review.headline}</span>}
         <div className="rr-review-who">
-          <h3 className="rr-name">{review.name}{review.verified && <Verified />}</h3>
-          <p>{[review.verified && "Verified rider", review.riderOrigin].filter(Boolean).join(" · ") || "Rider"}</p>
+          {review.avatarUrl ? (
+            <img className="rr-avatar" src={review.avatarUrl} alt={`${review.name}'s profile picture`} style={{ objectFit: "cover" }} />
+          ) : (
+            <div className="rr-avatar">{review.name.trim().split(/\s+/).map((part) => part[0]).join("").toUpperCase().slice(0, 2)}</div>
+          )}
+          <div>
+            <h3 className="rr-name">{review.name}{review.verified && <Verified />}</h3>
+            <p>{[review.verified && "Verified rider", review.riderOrigin].filter(Boolean).join(" · ") || "Rider"}</p>
+          </div>
         </div>
         <span className="rr-review-stars" role="img" aria-label={`${review.rating} out of 5 stars`}>
           {[1, 2, 3, 4, 5].map((star) => (
@@ -168,6 +176,8 @@ function Composer({ onSent }) {
   const [hover, setHover] = useState(0);
   const [tour, setTour] = useState("");
   const [origin, setOrigin] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [showAvatar, setShowAvatar] = useState(false);
   const [stops, setStops] = useState([]);
   const [highlights, setHighlights] = useState([]);
   const [comment, setComment] = useState("");
@@ -192,7 +202,7 @@ function Composer({ onSent }) {
     if (!rating) { setError("Choose a star rating."); return; }
     setBusy(true); setError(""); setThanks("");
     try {
-      const payload = { rating, comment, ...(rideDate && { rideDate }), ...(tour && { tour }), ...(origin.trim() && { riderOrigin: origin.trim() }), ...(stops.length && { stops }), ...(highlights.length && { highlights }) };
+      const payload = { rating, comment, ...(rideDate && { rideDate }), ...(tour && { tour }), ...(origin.trim() && { riderOrigin: origin.trim() }), ...(headline.trim() && { headline: headline.trim() }), showAvatar, ...(stops.length && { stops }), ...(highlights.length && { highlights }) };
       let result;
       if (file) {
         const form = new FormData();
@@ -203,7 +213,7 @@ function Composer({ onSent }) {
         result = await api("/api/customer/reviews", { method: "POST", body: payload });
       }
       setThanks(result.message || "Thanks! Your review will appear once the team approves it.");
-      setRating(0); setTour(""); setOrigin(""); setStops([]); setHighlights([]); setComment(""); setRideDate(""); setFile(null);
+      setRating(0); setTour(""); setOrigin(""); setHeadline(""); setShowAvatar(false); setStops([]); setHighlights([]); setComment(""); setRideDate(""); setFile(null);
       onSent();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
@@ -236,10 +246,12 @@ function Composer({ onSent }) {
           <label className="rr-field"><span className="rr-label">Which ride did you join?</span>
             <select value={tour} onChange={(event) => setTour(event.target.value)}><option value="">Choose a ride (optional)</option>{Object.entries(TOUR_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
           </label>
+          <label className="rr-field"><span className="rr-label">Review title (optional)</span><input type="text" maxLength={80} value={headline} onChange={(event) => setHeadline(event.target.value)} placeholder="A short title for your review" /></label>
           <div className="rr-two">
             <label className="rr-field"><span className="rr-label">Where are you from?</span><input type="text" maxLength={80} value={origin} onChange={(event) => setOrigin(event.target.value)} placeholder="Gaborone, or Visitor from…" /></label>
             <label className="rr-field"><span className="rr-label">Ride date</span><input type="date" max={new Date().toISOString().slice(0, 10)} value={rideDate} onChange={(event) => setRideDate(event.target.value)} /></label>
           </div>
+          <label className="rr-toggle {showAvatar ? "is-on" : ""}" onClick={() => setShowAvatar(!showAvatar)} role="checkbox" aria-checked={showAvatar} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setShowAvatar(!showAvatar); } }}>Show my profile picture</label>
           <fieldset className="rr-field"><legend className="rr-label">Stops you loved (optional)</legend>
             <div className="rr-toggles">{SITES.map((site) => <button key={site.id} type="button" aria-pressed={stops.includes(site.id)} className={`rr-toggle ${stops.includes(site.id) ? "is-on" : ""}`} onClick={() => toggle(stops, setStops, site.id)}>{site.name}</button>)}</div>
           </fieldset>
@@ -376,6 +388,9 @@ export default function ConnectPage() {
   }, [api]);
   usePolling(loadReviews, 60000);
 
+  const featuredReviews = useMemo(() => reviews.filter((r) => r.featured).slice(0, 3), [reviews]);
+  const regularReviews = useMemo(() => reviews.filter((r) => !r.featured), [reviews]);
+
   const loadMine = useCallback(async () => {
     if (!isSignedIn) { setMine(null); return; }
     try { setMine((await api("/api/customer/reviews")).reviews); } catch { /* the composer reports problems */ }
@@ -400,7 +415,51 @@ export default function ConnectPage() {
             {isSignedIn && <p className="rr-muted">Signed in as <strong>{user?.name}</strong> · <button type="button" className="rr-inline" onClick={signOut}>Sign out</button></p>}
           </section>
           <ScoreCard summary={summary} />
-          <Feed reviews={reviews} loaded={loaded} failed={failed} isSignedIn={isSignedIn} onVote={vote} />
+          {featuredReviews.length > 0 && (
+            <section className="rr-plate-elevated rr-pad" aria-label="Featured rider stories">
+              <h2 style={{ color: "var(--rr-text)", fontSize: "1.5rem", fontWeight: 600, marginBottom: 1, letterSpacing: "-0.01em" }}>Featured stories</h2>
+              <div className="rr-grid" style={{ gap: "1.4rem" }}>
+                {featuredReviews.map((review) => (
+                  <article key={review.id} className="rr-plate rr-pad rr-review" style={{ borderLeft: "4px solid var(--rr-gold)" }}>
+                    {review.headline && <span className="rr-headline">{review.headline}</span>}
+                    <div className="rr-review-who">
+                      {review.avatarUrl ? (
+                        <img className="rr-avatar" src={review.avatarUrl} alt={`${review.name}'s profile picture`} style={{ objectFit: "cover" }} />
+                      ) : (
+                        <div className="rr-avatar">{review.name.trim().split(/\s+/).map((part) => part[0]).join("").toUpperCase().slice(0, 2)}</div>
+                      )}
+                      <div>
+                        <h3 className="rr-name">{review.name}{review.verified && <Verified />}</h3>
+                        <p>{[review.verified && "Verified rider", review.riderOrigin].filter(Boolean).join(" · ") || "Rider"}</p>
+                      </div>
+                    </div>
+                    <span className="rr-review-stars" role="img" aria-label={`${review.rating} out of 5 stars`}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <RrIcon key={star} name="star" size={18} className={star <= review.rating ? "on" : "off"} filled={star <= review.rating} />
+                      ))}
+                    </span>
+                    <p className="rr-comment">“{review.comment}”</p>
+                    {review.photoUrl && (
+                      <figure className="rr-photo">
+                        <img src={review.photoUrl} alt={`Photo shared by ${review.name}`} loading="lazy" />
+                      </figure>
+                    )}
+                    <footer className="rr-review-foot">
+                      <span className="rr-when"><Stamp value={review.createdAt} compact /></span>
+                      <span className="rr-tag">Featured</span>
+                    </footer>
+                    {review.adminReply && (
+                      <div className="rr-reply">
+                        <div><strong>City Bike Tours team</strong><Stamp value={review.adminReplyAt} compact className="rr-when" /></div>
+                        <p>{review.adminReply}</p>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+          <Feed reviews={regularReviews} loaded={loaded} failed={failed} isSignedIn={isSignedIn} onVote={vote} />
         </div>
         <aside className="rr-col-side">
           <Composer onSent={() => { void loadMine(); void loadReviews(); }} />

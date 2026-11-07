@@ -67,7 +67,8 @@ The homepage gallery is built into the website from local/static site data. It i
 ### Reviews and messages — `/connect`
 
 - Score summary, filter pills, sorting and review cards, all computed from approved reviews (empty state when none). A "Verified rider" badge only appears when the reviewer's phone number matches a booking staff checked in. Customers can mark reviews helpful, share a review, and see the team's reply with its time.
-- The composer (signed-in customers) takes a star rating, ride, origin, ride date, stops, highlight tags, a story and an optional photo. New reviews wait for approval in the admin dashboard.
+- Up to three staff-featured reviews render as quote cards at the top of the feed, above the score summary. Each review may show an optional headline (review title) above the rider's name, and the rider's profile picture is shown only when they chose to share it ("Show my profile picture").
+- The composer (signed-in customers) takes a star rating, optional review title, ride, origin, ride date, stops, highlight tags, a story, an optional photo, and a "Show my profile picture" choice. New reviews wait for approval in the admin dashboard.
 - "Message the team" is a chat with day dividers and times; it refreshes about every 20 seconds.
 
 ### Sign in — `/login` and `/login/callback`
