@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import Carousel from "../components/Carousel";
+import { SITES } from "../data";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
 
@@ -48,11 +50,11 @@ function Hero() {
 
             <div className="flex gap-4">
               <Link
-                to="/schedule#price-calculator"
+                to="/schedule"
                 className="px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "#D4A017", color: "#0D0805" }}
               >
-                Book a Ride
+                Check Availability
               </Link>
               <Link
                 to="/heritage-trail"
@@ -162,7 +164,40 @@ function AboutStrip() {
   );
 }
 
-// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+// ─── HERITAGE CAROUSEL ─────────────────────────────────────────────────────────
+
+function HeritageCarousel() {
+  const imgs = SITES.flatMap((site) => site.imgs).slice(0, 6);
+  return (
+    <section className="py-20 bg-[#0D0805]">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-12 reveal">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#C1440E" }}>— Gaborone on Two Wheels</p>
+          <h2 className="font-display font-bold" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)", color: "#F5EDD9", lineHeight: 1.1 }}>
+            See Gaborone's history<br /><span style={{ color: "#D4A017" }}>from a bicycle seat</span>
+          </h2>
+          <p className="text-base mt-4" style={{ color: "#E8DFCC", opacity: 0.8 }}>
+            Six landmark sites. One ride. Parliament, the Archives, the Post Office Gallery,
+            the National Museum, the Three Chiefs Monument, and the Government Enclave —
+            all connected by a gentle loop through the city centre.
+          </p>
+        </div>
+        <div className="reveal" style={{ margin: "0 auto", maxWidth: 900 }}>
+          <Carousel imgs={imgs} accent="#D4A017" title="Heritage sites" subtitle="Gaborone's living history" />
+        </div>
+        <div className="text-center mt-12 reveal">
+          <Link
+            to="/schedule"
+            className="px-10 py-4 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "#D4A017", color: "#0D0805" }}
+          >
+            Check Availability
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPage() {
   useScrollReveal();
@@ -170,6 +205,7 @@ export default function LandingPage() {
   return (
     <div className="relative">
       <Hero />
+      <HeritageCarousel />
       <div className="home-explore-shell glass">
         <AboutStrip />
       </div>
