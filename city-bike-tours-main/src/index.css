@@ -1355,9 +1355,10 @@ body { background-color: #123222; }
 .trail-hero h1 {
   margin-top: 1rem;
   color: #F5EDD9;
-  font: 700 clamp(3.2rem, 8vw, 7rem)/0.94 var(--font-display), serif;
-  letter-spacing: -0.045em;
+  font: 700 clamp(2.2rem, 5vw, 4rem)/0.94 var(--font-display), serif;
+  letter-spacing: 0.02em;
 }
+.trail-wave-space { width: 0.55ch; display: inline-block; }
 .trail-hero h1 span { color: #D4A017; }
 .trail-wave {
   display: inline-flex;
