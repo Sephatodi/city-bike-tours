@@ -5,8 +5,6 @@ import { useNow } from "../hooks/useNow";
 import { nextRide } from "../lib/time";
 import SiteClock from "./SiteClock";
 
-// "When would you like to ride?" and "Pricing" in one place: pick a ride, see its live price, choose how many
-// riders, and book, without scrolling.
 const CARDS = [
   {
     id: "complete", featured: true, max: 10,
@@ -19,8 +17,8 @@ const CARDS = [
     id: "loop", featured: false, max: 20,
     eyebrow: "COME AS YOU ARE", pill: "CASUAL · ALL WELCOME", title: ["Casual", "Saturday"],
     time: <><strong>Relaxed &amp; flexible</strong> <span>No rigid schedule</span></>,
-    blurb: "A fun, easygoing ride for friends, families, and anyone who wants to join. Cycling lessons are included for kids and adults.",
-    footer: "Lessons included · Main Mall", cta: "Join the ride",
+    blurb: "A fun, easygoing ride for friends, families, and anyone who wants to join.",
+    footer: "Main Mall", cta: "Join the ride",
   },
 ];
 
@@ -52,7 +50,7 @@ function RideCard({ card, route, riders, onRiders }) {
         {total !== null && <div className="ride-total">Total <strong>P{total}</strong></div>}
       </div>
 
-      <Link to="/book#book-form" className="ride-book">{card.cta}{total !== null ? ` — P${total}` : ""} <span aria-hidden="true">↗</span></Link>
+      <Link to="/book#book-form" className="ride-book ride-book-ring">{card.cta}{total !== null ? ` — P${total}` : ""} <span aria-hidden="true">↗</span></Link>
       <div className="schedule-option-bottom"><span>{card.footer}</span><span>No deposit · pay on the day</span></div>
     </article>
   );
@@ -66,8 +64,7 @@ export default function RidePlanner() {
   return (
     <section id="pricing" className="schedule-options reveal">
       <div className="schedule-section-heading">
-        <div><p className="schedule-section-kicker">CHOOSE YOUR PACE · TRANSPARENT PRICING</p><h2>When would you like to ride?</h2></div>
-        <p>Pick a ride, see what it costs, and book. No hidden fees, payment on the day, no deposit.</p>
+        <div><p className="schedule-section-kicker">CHOOSE YOUR PACE · TRANSPARENT PRICING</p></div>
       </div>
       <div className="ride-live">
         {next && <span className="ride-next"><strong>Next ride:</strong> {next.when}, {next.text}</span>}
@@ -84,6 +81,27 @@ export default function RidePlanner() {
           />
         ))}
       </div>
+      <style>{`
+        .ride-book-ring {
+          position: relative;
+          overflow: hidden;
+        }
+        .ride-book-ring::before {
+          content: "";
+          position: absolute;
+          inset: -6px;
+          border: 2px solid transparent;
+          border-top: 2px solid #D4A017;
+          border-right: 2px solid #D4A017;
+          border-radius: 4px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+          animation: ring-spin 1.5s linear infinite;
+        }
+        @keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ride-book-ring:hover::before { opacity: 1; }
+      `}</style>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import Footer from "../components/Footer";
 import PricingSection from "../components/PricingSection";
@@ -18,13 +18,38 @@ function useScrollReveal() {
   }, []);
 }
 
+function WavyHeading() {
+  const letters = "Ride Outs".split("");
+  return (
+    <h1 className="wavy-heading">
+      {letters.map((letter, i) => (
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            animation: `wave ${3 + i * 0.2}s ease-in-out infinite`,
+            animationDelay: `${i * 0.15}s`,
+          }}
+        >
+          {letter === " " ? "\u00A0" : letter}
+        </span>
+      ))}
+      <style>{`
+        @keyframes wave {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-12px); }
+        }
+      `}</style>
+    </h1>
+  );
+}
+
 export default function SchedulePage() {
   useScrollReveal();
   const { hash } = useLocation();
-  const today = siteClock(useNow(60000)).weekday; // 0 = Sunday, in Gaborone time
+  const today = siteClock(useNow(60000)).weekday;
   const DAY_INDEX = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
 
-  // Router navigation and direct visits do not reliably scroll to anchors.
   useEffect(() => {
     if (!hash) return undefined;
     const timer = setTimeout(() => {
@@ -38,7 +63,7 @@ export default function SchedulePage() {
       <header className="schedule-hero">
         <div className="schedule-hero-inner">
           <p className="schedule-eyebrow">GABORONE · BOTSWANA</p>
-          <h1>Ride Outs</h1>
+          <WavyHeading />
           <p>Choose your ride, find a time that works, see what it costs, and meet us at Main Mall.</p>
         </div>
       </header>
@@ -87,9 +112,23 @@ export default function SchedulePage() {
           <Link
             to="/book"
             className="px-10 py-4 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#D4A017", color: "#0D0805", display: "inline-block" }}
+            style={{ backgroundColor: "#D4A017", color: "#0D0805", display: "inline-block", position: "relative", overflow: "hidden" }}
           >
-            Check Availability
+            <span style={{ position: "relative", zIndex: 1 }}>Check Availability</span>
+            <div className="ring-light" style={{ position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none", opacity: 0, transition: "opacity 0.3s" }} />
+            <style>{`
+              .ring-light {
+                position: absolute;
+                inset: -4px;
+                border: 2px solid transparent;
+                border-top: 2px solid #D4A017;
+                border-right: 2px solid #D4A017;
+                border-radius: 4px;
+                animation: ring-spin 1.5s linear infinite;
+              }
+              @keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+              .schedule-page .reveal:last-child:hover .ring-light { opacity: 1; }
+            `}</style>
           </Link>
         </section>
 
