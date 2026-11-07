@@ -11,7 +11,7 @@ import { getDailyRiderCount } from "@/lib/capacity";
 import { getDailyCapacity, getSettings } from "@/lib/settings";
 import { fireWebhook } from "@/lib/webhook";
 import { isIpBlocked } from "@/lib/security";
-import { requireCustomer } from "@/lib/customer-auth";
+import { optionalCustomer } from "@/lib/customer-auth";
 import { createRidePassToken, createRidePassUrl } from "@/lib/ride-pass";
 import { renderEmailTemplate } from "@/lib/email-templates";
 import { sendEmail } from "@/lib/email";
@@ -21,9 +21,8 @@ import { bookingPriceTotal } from "@/lib/booking-lifecycle";
 import { getOrCreateBookingCode } from "@/lib/booking-code";
 
 export async function POST(request) {
-  // Riders must have an account before they can book.
-  const auth = await requireCustomer(request);
-  if (auth.error) return NextResponse.json({ error: "Please create an account or sign in before booking." }, { status: 401 });
+  // Guest booking is allowed; if signed in, link the request to the account.
+  const { user } = await optionalCustomer(request);
   if (await isIpBlocked(clientIp(request))) return NextResponse.json({ error: "Booking from this address is blocked. Please contact us." }, { status: 403 });
   // Each request can trigger WhatsApp/SMS messages that cost money, so throttle per IP.
   if (!rateLimit(`booking-request:${clientIp(request)}`, 5, 10 * 60 * 1000)) {
@@ -73,7 +72,7 @@ export async function POST(request) {
         id: newId(),
         ...rest,
         email: email || null,
-        userId: auth.user.id,
+        userId: user?.id || null,
         priceTotal: route ? bookingPriceTotal(route.priceBwp, rest.riders) : null,
         phone,
         rideDate: dateIso,

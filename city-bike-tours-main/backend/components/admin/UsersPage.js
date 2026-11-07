@@ -216,6 +216,11 @@ export default function UsersPage() {
                                 {u.mfaEnabled && <button className="btn btn-sm" disabled={busy} onClick={() => window.confirm(`Reset two-step sign-in for ${u.name}? They'll need to set it up again.`) && patch(u, { resetMfa: true }, "Two-step sign-in reset.")}>Reset 2-step</button>}
                                 {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => resetPassword(u)}><Icon name="key" size={13} /> Reset password</button>}
                                 {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => setEditingPass(u)}><Icon name="edit" size={13} /> Edit password</button>}
+                                {u.provider === "credentials" && u.role !== "customer" && <button className="btn btn-sm" disabled={busy} onClick={() => run(async () => {
+                                  const res = await api(`/api/admin/users/${u.id}/activation`, { method: "POST" }, "Could not send activation code.");
+                                  if (res?.code) window.alert(`Email delivery unavailable. Share this code securely with ${u.name}: ${res.code}`);
+                                  return res;
+                                }, "Activation code sent.")}>Send activation code</button>}
                                 {u.role === "customer"
                                   ? <button className="btn btn-sm btn-danger" disabled={busy} onClick={() => { setDeleteReviews(false); setDeletingCustomer(u); }}>Delete customer data</button>
                                   : u.bookingCount === 0 && <button className="btn btn-sm btn-danger btn-icon" disabled={busy} onClick={() => removeStaff(u)} aria-label={`Delete ${u.name}`}><Icon name="trash" size={13} /></button>}

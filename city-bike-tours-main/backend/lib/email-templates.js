@@ -57,6 +57,17 @@ const templates = {
     ],
     links: [{ label: "Open your ride pass", url: d.link }, { label: "Manage your booking", url: d.cancelUrl }],
   }),
+  adminActivation: (d) => ({
+    subject: "Activate your City Bike Tours admin account",
+    heading: `Activate your account, ${d.name || "there"}`,
+    paragraphs: [
+      "Use this code to activate your admin account and set your password.",
+      `<p style="font-size:28px;letter-spacing:.18em;font-weight:700;color:#174a34">${escapeHtml(d.code || "")}</p>`,
+      d.expiresAt ? `This code expires around ${escapeHtml(d.expiresAt)} (Gaborone time).` : "This code expires soon.",
+      "If you didn't expect this, you can ignore it.",
+    ],
+    links: d.loginUrl ? [{ label: "Open admin sign in", url: d.loginUrl }] : [],
+  }),
   passwordReset: (d) => ({
     subject: "Reset your City Bike Tours password",
     heading: "Reset your password",

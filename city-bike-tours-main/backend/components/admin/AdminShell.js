@@ -39,7 +39,7 @@ const NAV = [
     id: "admin", label: "Administration", icon: "settings",
     children: [
       { href: "/admin/users", label: "Users & roles", perm: "users:read" },
-      { href: "/admin/settings", label: "Site settings", perm: "settings:read" },
+      { href: "/admin/settings", label: "Settings", perm: "dashboard:read" },
       { href: "/admin/integrations", label: "Integrations", perm: "settings:read" },
       { href: "/admin/security", label: "Security", perm: "dashboard:read" },
       { href: "/admin/system", label: "System & backups", perm: "system:read" },
@@ -120,7 +120,7 @@ function Sidebar({ staff, can, onNavigate }) {
       <div className="adm-me">
         <span className="adm-avatar" aria-hidden="true">{initials(staff.name)}</span>
         <span><b>{staff.name}</b><small>{ROLE_LABELS[staff.role]}</small></span>
-        <button type="button" onClick={() => signOut({ callbackUrl: "/admin/login" })} aria-label="Sign out" title="Sign out"><Icon name="logout" size={17} /></button>
+        <button type="button" onClick={async () => { try { await fetch("/api/admin/users/me/signout", { method: "POST" }); } catch {} signOut({ callbackUrl: "/admin/login" }); }} aria-label="Sign out" title="Sign out"><Icon name="logout" size={17} /></button>
       </div>
     </aside>
   );

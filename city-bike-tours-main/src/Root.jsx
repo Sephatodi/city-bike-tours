@@ -4,6 +4,7 @@ import Nav from "./components/Nav";
 import BikeCursor from "./components/BikeCursor";
 import SiteBackdrop from "./components/SiteBackdrop";
 import MobileBottomNav from "./components/MobileBottomNav";
+import CookieNotice from "./components/CookieNotice";
 import { LiveDataProvider } from "./hooks/LiveDataContext";
 import { CustomerAuthProvider } from "./auth/CustomerAuth";
 
@@ -23,6 +24,7 @@ export default function Root() {
         {!isAdminArea && <BikeCursor />}
         {isAdminArea ? <Outlet /> : <div className="shine-wrap"><Outlet /></div>}
         {!isAdminArea && <MobileBottomNav />}
+        {!isAdminArea && <CookieNotice />}
       </CustomerAuthProvider>
     </LiveDataProvider>
   );

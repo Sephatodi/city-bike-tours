@@ -287,3 +287,15 @@ export const communityBookingUploadUsage = pgTable("community_booking_upload_usa
   bookingId: text("booking_id").primaryKey().references(() => bookingRequests.id, { onDelete: "cascade" }),
   count: integer("upload_count").notNull().default(0),
 });
+export const adminActivationCodes = pgTable("admin_activation_codes", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  userIdx: index("admin_activation_codes_user_idx").on(table.userId),
+  expiryIdx: index("admin_activation_codes_expires_at_idx").on(table.expiresAt),
+}));
