@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import RoundaboutCarousel from "../components/RoundaboutCarousel";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";

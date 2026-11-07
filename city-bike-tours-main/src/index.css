@@ -1359,6 +1359,19 @@ body { background-color: #123222; }
   letter-spacing: -0.045em;
 }
 .trail-hero h1 span { color: #D4A017; }
+.trail-wave {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.trail-wave span {
+  display: inline-block;
+  animation: trail-wave 2.2s ease-in-out infinite;
+}
+@keyframes trail-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.45rem); }
+}
 .trail-hero-lede {
   max-width: 39rem;
   margin-top: 1.5rem;
