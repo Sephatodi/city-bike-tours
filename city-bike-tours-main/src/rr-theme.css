@@ -7,8 +7,6 @@
 }
 .rr h1, .rr h2, .rr h3, .rr .rr-serif { font-family: "Vollkorn", Georgia, serif; }
 .rr-bg {
-  /* Let the global SiteBackdrop remain visible so Reviews, Gallery and Messages
-     share the exact same page background as the rest of the public website. */
   background: transparent;
   min-height: 100vh;
 }

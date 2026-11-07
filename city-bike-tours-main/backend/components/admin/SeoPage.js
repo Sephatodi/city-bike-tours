@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge, Icon, Modal, PageTop, Skeleton, api, useDash, useRun } from "./ui";
 
-const KNOWN = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/connect"];
+const KNOWN = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/share"];
 
 function Preview({ title, description, base, path }) {
   return (

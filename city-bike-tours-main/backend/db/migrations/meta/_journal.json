@@ -169,6 +169,13 @@
       "when": 1793761271510,
       "tag": "0025_launch_features",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793761271520,
+      "tag": "0026_booking_code_uploads",
+      "breakpoints": true
     }
   ]
 }

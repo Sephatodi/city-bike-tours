@@ -48,6 +48,9 @@ export default function RideTicketPage() {
               </div>
               <div className="ride-ticket-reference">PASS REF <strong>{ticket.reference}</strong></div>
               <div className="ride-ticket-meetup"><strong>Main Mall, Gaborone</strong><span>Meet your guide at the City Bike Tours flag.</span></div>
+              <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "rgba(245,237,217,0.75)" }}>
+                After your ride, share your photos at <a href="/share" style={{ color: "#D4A017" }}>/share</a> with your booking code.
+              </p>
               <button type="button" className="ride-ticket-print" onClick={() => window.print()}>Print ride pass</button>
             </>
           )}

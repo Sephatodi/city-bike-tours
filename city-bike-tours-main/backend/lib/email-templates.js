@@ -19,7 +19,12 @@ const templates = {
   bookingReceived: (d) => ({
     subject: `We received your ride request · ${d.date || ""}`.trim(),
     heading: `Thanks, ${d.name || "rider"}!`,
-    paragraphs: ["We received your booking request and will contact you after our team reviews it.", line("Ride", d.routeName), line("Date", d.date), line("Riders", d.guests)],
+    paragraphs: [
+      "We received your booking request and will contact you after our team reviews it.",
+      line("Ride", d.routeName), line("Date", d.date), line("Riders", d.guests),
+      line("Booking code", d.confirmationCode),
+      d.shareUrl ? `After your ride, share your photos at ${escapeHtml(d.shareUrl)} with your booking code.` : "After your ride, share your photos with your booking code.",
+    ],
   }),
   bookingConfirmed: (d) => ({
     subject: `Your City Bike Tours ride is confirmed · ${d.date || ""}`.trim(),
@@ -29,6 +34,7 @@ const templates = {
       line("Riders", d.guests), line("Total", d.total ? `P${d.total} · payable on the day` : "Payable on the day"),
       line("Meeting point", d.meetingPoint), line("Please arrive", d.arriveEarlyNote),
       line("Confirmation code", d.confirmationCode),
+      d.shareUrl ? `After your ride, share your photos at ${escapeHtml(d.shareUrl)} with your booking code.` : "After your ride, share your photos with your booking code.",
     ],
     links: [{ label: "Open your ride pass", url: d.link }],
   }),

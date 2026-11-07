@@ -6,7 +6,6 @@ import Icon from "../components/Icon";
 import Lightbox from "../components/Lightbox";
 import Stamp from "../components/Stamp";
 import { SITES } from "../data";
-import { useCustomer } from "../auth/CustomerAuth";
 import { useLiveData } from "../hooks/LiveDataContext";
 import { usePolling } from "../hooks/usePolling";
 import { downloadMedia } from "../utils/download";
@@ -75,7 +74,7 @@ function OfficialGallery() {
           Pictures from City Bike Tours
         </h2>
         <p className="mt-3 max-w-xl mx-auto text-sm" style={{ color: "rgba(245,237,217,0.75)" }}>
-          Team and admin-posted photos. Signed-in riders can download photos the team has marked as downloadable.
+          Team and admin-posted photos. Photos the team has marked as downloadable can be downloaded.
         </p>
       </div>
       {errors.content && (
@@ -116,9 +115,14 @@ function OfficialGallery() {
 }
 
 // ─── RIDER STORIES (uploaded by customers) ───────────────────────────────────
+// No account needed: riders upload with the booking code from their confirmation.
 
-function UploadForm({ onUploaded, remainingUploads }) {
-  const { api, isSignedIn } = useCustomer();
+function normalizeCode(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+}
+
+function UploadForm({ onUploaded }) {
+  const [code, setCode] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [title, setTitle] = useState("");
@@ -128,164 +132,88 @@ function UploadForm({ onUploaded, remainingUploads }) {
   const [thanks, setThanks] = useState("");
 
   useEffect(() => {
-    if (!file) {
-      setPreview("");
-      return undefined;
-    }
+    if (!file) { setPreview(""); return undefined; }
     const url = URL.createObjectURL(file);
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  if (!isSignedIn) {
-    return (
-      <div className="connect-gate">
-        <p>Sign in to share your photos and download approved rider photos.</p>
-        <Link to="/login?next=/gallery%23rider-stories" className="auth-primary">
-          Sign in or create an account
-        </Link>
-      </div>
-    );
-  }
-
   async function submit(event) {
     event.preventDefault();
-    if (!file) {
-      setError("Choose a photo or video first.");
-      return;
-    }
-    if (remainingUploads === null) {
-      setError("Your upload limit could not be checked. Please try again shortly.");
-      return;
-    }
-    if (remainingUploads <= 0) {
-      setError("You have reached the upload limit for your account.");
-      return;
-    }
+    setError(""); setThanks("");
+    const normalized = normalizeCode(code);
+    if (!/^\d{4}[A-Z]{2}$/.test(normalized)) { setError("Enter the 6-character booking code, like 1234AB."); return; }
+    if (!file) { setError("Choose a photo or video first."); return; }
+    if (!title.trim()) { setError("Add a short title for your media."); return; }
     setBusy(true);
-    setError("");
-    setThanks("");
     try {
       const isVideo = file.type.startsWith("video/");
       if (isVideo && file.size > 4 * 1024 * 1024) throw new Error("Videos must be 4MB or smaller.");
       const ready = isVideo ? file : await prepareImage(file);
       const form = new FormData();
+      form.append("code", normalized);
       form.append("file", ready);
-      form.append("title", title);
+      form.append("title", title.trim());
       form.append("story", story);
-      const result = await api("/api/community/photos", { method: "POST", form });
+      const res = await fetch("/api/community/photos", { method: "POST", body: form, credentials: "include" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || "We couldn't upload your media. Please try again.");
       setThanks(result.message || "Thank you! Your media will appear once our team has approved it.");
-      setFile(null);
-      setTitle("");
-      setStory("");
+      setFile(null); setTitle(""); setStory(""); setCode(normalized);
       onUploaded();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
   }
 
   return (
     <form onSubmit={submit} className="auth-form upload-form">
+      <p className="connect-muted" style={{ fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+        Use the booking code from your confirmation message. No account needed. You can also use the <Link to="/share" style={{ color: "#D4A017" }}>share page</Link>.
+      </p>
+      <label>Booking code *
+        <input type="text" required maxLength={6} value={code} onChange={(e) => setCode(normalizeCode(e.target.value))} placeholder="1234AB" inputMode="text" autoComplete="off" />
+      </label>
       <label className={`upload-drop ${preview ? "has-preview" : ""}`}>
         {preview ? (
-          file?.type.startsWith("video/") ? (
-            <video src={preview} muted controls aria-label="Preview of your video" />
-          ) : (
-            <img src={preview} alt="Preview of your photo" />
-          )
+          file?.type.startsWith("video/") ? <video src={preview} muted controls aria-label="Preview of your video" /> : <img src={preview} alt="Preview of your photo" />
         ) : (
-          <span>
-            <Icon name="image" size={28} />
-            <br />
-            Choose a photo or video
-          </span>
+          <span><Icon name="image" size={28} /><br />Choose a photo or video</span>
         )}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-          disabled={remainingUploads === null || remainingUploads <= 0}
-          onChange={(event) => {
-            setFile(event.target.files?.[0] || null);
-            setError("");
-          }}
-        />
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+          onChange={(event) => { setFile(event.target.files?.[0] || null); setError(""); }} />
       </label>
-      <p className="rr-gallery-upload-count">
-        {remainingUploads === null ? "Checking your upload limit…" : `${remainingUploads} uploads remaining on this account.`}
-      </p>
-      <label>
-        Title
-        <input
-          type="text"
-          required
-          maxLength={120}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Sunset at the Parliament lawns"
-        />
+      <label>Title *
+        <input type="text" required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Sunset at the Parliament lawns" />
       </label>
-      <label>
-        Your story <span className="auth-optional">optional</span>
-        <textarea
-          rows={4}
-          maxLength={1500}
-          value={story}
-          onChange={(e) => setStory(e.target.value)}
-          placeholder="Tell us about your ride, who you went with, what you'll remember…"
-        />
+      <label>Your story <span className="auth-optional">optional</span>
+        <textarea rows={4} maxLength={1500} value={story} onChange={(e) => setStory(e.target.value)} placeholder="Tell us about your ride, who you went with, what you'll remember…" />
       </label>
-      {error && (
-        <p role="alert" className="auth-error">
-          {error}
-        </p>
-      )}
-      {thanks && (
-        <p role="status" className="auth-success">
-          {thanks}
-        </p>
-      )}
-      <button type="submit" className="auth-primary" disabled={busy || remainingUploads === null || remainingUploads <= 0}>
-        {busy ? "Uploading…" : `Share my ${file?.type.startsWith("video/") ? "video" : "photo"}`}
-      </button>
+      {error && <p role="alert" className="auth-error">{error}</p>}
+      {thanks && <p role="status" className="auth-success">{thanks}</p>}
+      <button type="submit" className="auth-primary" disabled={busy}>{busy ? "Uploading…" : `Share my ${file?.type.startsWith("video/") ? "video" : "photo"}`}</button>
       <p className="connect-muted" style={{ fontSize: "0.75rem" }}>
-        Uploads are public and appear in the gallery only after our team approves them. Approved media may be downloadable.
-        Only share media you took or have permission to share.
+        Uploads appear in the gallery only after our team approves them. Only share media you took or have permission to share.
       </p>
     </form>
   );
 }
 
 function RiderStories() {
-  const { api } = useCustomer();
   const { download, notice } = useDownloads();
   const [photos, setPhotos] = useState(null);
-  const [remainingUploads, setRemainingUploads] = useState(null);
   const [failed, setFailed] = useState("");
   const [openAt, setOpenAt] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const result = await api("/api/community/photos");
-      setPhotos(result.photos);
-      setRemainingUploads(result.remainingUploads ?? 6);
+      const res = await fetch("/api/community/photos", { credentials: "include" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || "Rider photos couldn't be loaded.");
+      setPhotos(result.photos || []);
       setFailed("");
-    } catch (err) {
-      setFailed(err.message);
-    }
-  }, [api]);
+    } catch (err) { setFailed(err.message); }
+  }, []);
   usePolling(load, 60000);
-
-  async function remove(id) {
-    if (!window.confirm("Remove this media from the gallery?")) return;
-    try {
-      await api(`/api/community/photos/${id}`, { method: "DELETE" });
-      await load();
-    } catch (err) {
-      window.alert(err.message);
-    }
-  }
 
   const items = useMemo(
     () =>
@@ -321,7 +249,7 @@ function RiderStories() {
           Your photos, your stories
         </h2>
         <p className="mt-3 max-w-xl mx-auto text-sm" style={{ color: "rgba(245,237,217,0.75)" }}>
-          Share photos or videos from your ride. Approved rider media can be downloaded when the team allows it.
+          Share photos or videos from your ride using your booking code. No account needed.
         </p>
       </div>
 
@@ -350,10 +278,7 @@ function RiderStories() {
             <>
               <strong>{item.title}</strong>
               {item.story && <span>{item.story}</span>}
-              <span>
-                — {item.credit}
-                {item.status !== "approved" ? ` · ${item.status === "pending" ? "waiting for approval" : "not approved"}` : ""}
-              </span>
+              {item.credit ? <span>— {item.credit}</span> : null}
             </>
           )}
         />
@@ -366,7 +291,7 @@ function RiderStories() {
 
       <details className="connect-panel glass stories-upload rr-gallery-upload-disclosure" style={{ marginTop: "1.5rem" }}>
         <summary className="font-display">Share a photo or video</summary>
-        <UploadForm onUploaded={load} remainingUploads={remainingUploads} />
+        <UploadForm onUploaded={load} />
       </details>
 
       {openAt !== null && (

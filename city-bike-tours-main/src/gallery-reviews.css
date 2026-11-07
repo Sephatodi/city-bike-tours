@@ -84,7 +84,6 @@
 @media(prefers-reduced-motion:reduce){.rr-gallery-card,.rr-gallery-card img,.rr-gallery-dots button{transition:none!important}.rr-gallery-feature-image img{animation:none}}
 
 
-/* Original City Bike Tours visual system: translucent panels over SiteBackdrop. */
 .rr-gallery-page,.rr-connect-page,.rr-page{background:transparent!important;background-image:none!important}
 .rr{font-family:var(--font-body),sans-serif}
 .rr h1,.rr h2,.rr h3,.rr-display{font-family:var(--font-display),Georgia,serif}
@@ -250,7 +249,6 @@
 /* Reviews page styles use only the heritage palette and stay scoped to Connect. */
 .rr-connect-page{min-height:100vh;background:transparent!important;color:#F5EDD9;font-family:var(--font-body),sans-serif}
 
-/* Reviews feed: layered cards over the shared SiteBackdrop. */
 .rr-connect-page{overflow-x:clip}
 .rr-connect-page .rr-grid{display:block}
 .rr-connect-page .rr-col-main{width:min(100%,46rem);margin-inline:auto}

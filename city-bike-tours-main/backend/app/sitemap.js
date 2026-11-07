@@ -5,7 +5,7 @@ import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-const PAGES = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/connect"];
+const PAGES = ["/", "/schedule", "/heritage-trail", "/book", "/gallery", "/share"];
 
 export default async function sitemap() {
   const settings = await getSettings();

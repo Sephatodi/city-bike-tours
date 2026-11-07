@@ -38,7 +38,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: #123222;
+  background-color: #102A1C;
   color: #F5EDD9;
   overflow-x: hidden;
 }
@@ -47,80 +47,8 @@ body {
   --cursor-direction: 1;
 }
 
-@media (pointer: fine) {
-  body.bike-cursor-enabled,
-  body.bike-cursor-enabled button,
-  body.bike-cursor-enabled a,
-  body.bike-cursor-enabled input,
-  body.bike-cursor-enabled select {
-    cursor: none;
-  }
-}
-
-.custom-cursor-follower,
-.touch-bicycle-pointer {
-  position: fixed;
-  pointer-events: none;
-  z-index: 10050;
-  line-height: 0;
-  will-change: transform;
-  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-}
-.tyre-tracks { position: fixed; inset: 0; z-index: 10049; width: 100vw; height: 100vh; pointer-events: none; }
-.custom-cursor-follower {
-  top: 0;
-  left: 0;
-  transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
-  transition: opacity 0.15s ease;
-}
-.touch-bicycle-pointer {
-  transform: translate(-50%, -55%);
-}
-
-.header-bike {
-  --bike-w: clamp(110px, 11vw, 170px);
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden; /* sideways only matters: lanes are spaced so nothing is cut off vertically */
-  pointer-events: none;
-  opacity: 0.3;
-}
-.header-bike-layer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  /* spread the lanes over the container, leaving room for a whole bicycle at the bottom */
-  top: calc((100% - var(--bike-w) * 0.77) * var(--layer-index) / (var(--lanes) - 1));
-  height: calc(var(--bike-w) * 0.77);
-  overflow: visible;
-}
-.header-bike-rider {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: var(--bike-w);
-  height: calc(var(--bike-w) * 0.77);
-  animation-duration: var(--dur, 30s);
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-.header-bike-layer-forward .header-bike-rider { animation-name: header-bike-drift-forward; }
-.header-bike-layer-backward .header-bike-rider { animation-name: header-bike-drift-backward; }
-@keyframes header-bike-drift-forward {
-  0% { transform: translateX(calc(var(--bike-w) * -1.2)) rotate(-1.5deg); }
-  50% { transform: translateX(calc(50vw - var(--bike-w) / 2)) rotate(1.5deg); }
-  100% { transform: translateX(100vw) rotate(-1.5deg); }
-}
-@keyframes header-bike-drift-backward {
-  0% { transform: translateX(100vw) scaleX(-1) rotate(-1.5deg); }
-  50% { transform: translateX(calc(50vw - var(--bike-w) / 2)) scaleX(-1) rotate(1.5deg); }
-  100% { transform: translateX(calc(var(--bike-w) * -1.2)) scaleX(-1) rotate(-1.5deg); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .header-bike-rider { animation: none !important; left: calc(50% - var(--bike-w) / 2); }
-  .header-bike-rider:nth-child(2) { display: none; } /* one per lane so none overlap */
+    .header-bike-rider:nth-child(2) { display: none; } /* one per lane so none overlap */
   .header-bike-layer:nth-child(odd) .header-bike-rider { left: 12%; }
   .header-bike-layer:nth-child(even) .header-bike-rider { left: auto; right: 12%; }
 }
@@ -167,10 +95,6 @@ nav {
 }
 
 /* Tribal SVG pattern overlay */
-.tribal-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A017' fill-opacity='0.07'%3E%3Cpath d='M30 0L60 30L30 60L0 30z'/%3E%3Cpath d='M30 10L50 30L30 50L10 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
-
 .tribal-border {
   background-image: repeating-linear-gradient(
     90deg,
@@ -254,13 +178,6 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 /* Bicycle cursor trail */
-.bike-cursor {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  transition: left 0.15s ease, top 0.15s ease;
-}
-
 /* Gallery tab active */
 .gallery-tab.active {
   background: #C1440E;
@@ -1278,21 +1195,6 @@ input[type='range']::-webkit-slider-thumb {
 
 /* ── Page-wide backdrop: the home page header look, behind every page ───────── */
 body { background-color: #123222; }
-.site-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background: #123222;
-}
-/* Rich green with gold diamonds, like the page headers, with the city photo showing faintly through. */
-.site-backdrop-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
-.site-backdrop-tint { position: absolute; inset: 0; background: linear-gradient(160deg, rgba(20, 62, 38, 0.8) 0%, rgba(14, 46, 29, 0.74) 55%, rgba(9, 32, 20, 0.82) 100%); }
-.site-backdrop .tribal-pattern {
-  background-size: 60px 60px;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A017' fill-opacity='0.17'%3E%3Cpath d='M30 0L60 30L30 60L0 30z'/%3E%3C/g%3E%3Cg fill='%23123222' fill-opacity='0.55'%3E%3Cpath d='M30 9L51 30L30 51L9 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
 .shine-wrap { position: relative; z-index: 1; }
 ::-webkit-scrollbar-track { background: #1A3A2A; }
 
@@ -1471,26 +1373,6 @@ body { background-color: #123222; }
 
 /* The roaming bicycles share the cursor rider's filled-line artwork and a calmer,
    wider rhythm. Separate lanes keep the silhouettes from crossing one another. */
-.header-bike {
-  --bike-w: clamp(140px, 13vw, 190px);
-  opacity: 0.18;
-}
-.header-bike-layer {
-  top: calc((100% - var(--bike-w) * 0.77) * var(--layer-index) / (var(--lanes) - 1));
-  height: calc(var(--bike-w) * 0.77);
-}
-.header-bike-rider { height: calc(var(--bike-w) * 0.77); }
-.header-bike-rider svg { display: block; width: 100%; height: auto; }
-@media (max-width: 768px) {
-  .home-explore-shell { width: calc(100% - 1.5rem); margin-bottom: 3rem; }
-  .trail-hero { padding: 4rem 1.25rem 3rem; }
-  .trail-map-section, .trail-sites-section { padding: 3.5rem 1.25rem 0.5rem; }
-  .trail-section-heading { align-items: flex-start; flex-direction: column; gap: 0.8rem; }
-  .trail-sites-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-  .trail-booking-cta { align-items: flex-start; flex-direction: column; margin: 4rem 1.25rem 0; }
-  .trail-food-wrap { padding: 1.5rem 1.25rem 0; }
-  .header-bike { --bike-w: 140px; opacity: 0.15; }
-}
 @media (prefers-reduced-motion: reduce) {
   .trail-site-card, .trail-booking-button { transition: none; }
   .trail-site-card:hover, .trail-booking-button:hover { transform: none; }

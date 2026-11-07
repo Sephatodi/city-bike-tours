@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { ROUTES_DATA } from "../data";
 import { backendUrl } from "../api/backend";
 import { useLiveData } from "../hooks/LiveDataContext";
-import { useCustomer } from "../auth/CustomerAuth";
-import { generateBookingCode, saveBookingCode } from "../lib/bookingCode";
 
+// Booking does NOT require sign-in. Server issues a confirmation/booking code after submit.
 export default function BookingSection() {
   const { routes } = useLiveData();
-  const { isSignedIn, ready, user, signOut } = useCustomer();
   const { hash } = useLocation();
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
@@ -36,22 +34,11 @@ export default function BookingSection() {
   }, [hash]);
 
   useEffect(() => {
-    if (!isSignedIn || !user) return;
-    setName((current) => current || user.name || "");
-    setEmail((current) => current || user.email || "");
-    setPhone((current) => current || user.phone || "");
-  }, [isSignedIn, user]);
-
-  useEffect(() => {
     if (route !== "complete" || !date) {
-      setAvailability(null);
-      setAvailabilityError("");
-      setCheckingAvailability(false);
-      return undefined;
+      setAvailability(null); setAvailabilityError(""); setCheckingAvailability(false); return undefined;
     }
     const controller = new AbortController();
-    setCheckingAvailability(true);
-    setAvailabilityError("");
+    setCheckingAvailability(true); setAvailabilityError("");
     fetch(backendUrl(`/api/availability?date=${encodeURIComponent(date)}`), { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("We couldn't check available spaces for this date.");
@@ -63,25 +50,20 @@ export default function BookingSection() {
     return () => controller.abort();
   }, [date, route]);
 
-  const selectedRoute = (routes || ROUTES_DATA).find((r) => r.id === route) || (routes || ROUTES_DATA)[0];
+  const allRoutes = routes && routes.length ? routes : ROUTES_DATA;
+  const selectedRoute = allRoutes.find((r) => r.id === route) || allRoutes[0];
   const price = selectedRoute?.price ?? 0;
   const total = price * riders;
   const hasCapacity = route !== "complete" || !availability || availability.remaining >= riders;
-  const canSubmit = Boolean(date) && riders > 0 && !isSubmitting && !checkingAvailability && hasCapacity;
+  const canSubmit = Boolean(date && name.trim() && phone.trim()) && riders > 0 && !isSubmitting && !checkingAvailability && hasCapacity;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!isSignedIn) return;
-    setSubmitError("");
-    setIsSubmitting(true);
+    setSubmitError(""); setIsSubmitting(true);
     try {
       const response = await fetch(backendUrl("/api/booking-requests"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(localStorage.getItem("cb_customer_token") ? { Authorization: `Bearer ${localStorage.getItem("cb_customer_token")}` } : {}),
-        },
-        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name, phone, email, routeId: route, dateIso: date, riders,
           notes: route === "complete" ? [`Preferred start time: ${startTime}`, notes].filter(Boolean).join("\n") : notes,
@@ -91,18 +73,13 @@ export default function BookingSection() {
       if (response.status === 409 && Number.isInteger(result.remaining)) {
         setAvailability((current) => current && ({ ...current, booked: current.capacity - result.remaining, remaining: result.remaining, full: result.remaining === 0 }));
       }
-      if (response.status === 401) { signOut(); throw new Error("Please sign in again to book."); }
       if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
       setRequestId(result.request?.id || "");
-      const code = generateBookingCode();
-      saveBookingCode(code);
-      setBookingCode(code);
+      setBookingCode(result.confirmationCode || result.request?.confirmationCode || "");
       setSubmitted(true);
     } catch (error) {
       setSubmitError(error.message || "The booking service is unavailable. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   }
 
   const inputStyle = {
@@ -117,16 +94,16 @@ export default function BookingSection() {
         <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 font-display font-bold text-4xl" style={{ backgroundColor: "#D4A017", color: "#0D0805" }}>✓</div>
         <h2 className="font-display font-bold text-4xl mb-4" style={{ color: "#F5EDD9" }}>Booking Request Received!</h2>
         <p className="text-base mb-2" style={{ color: "rgba(245,237,217,0.7)" }}>
-          Your request for <strong style={{ color: "#D4A017" }}>{selectedRoute.name}</strong> has been saved.
-          We'll confirm it for {riders} rider{riders > 1 ? "s" : ""} via WhatsApp or phone within a few hours.
+          Your request for <strong style={{ color: "#D4A017" }}>{selectedRoute?.name}</strong> has been saved.
+          We'll confirm it for {riders} rider{riders > 1 ? "s" : ""} via WhatsApp or phone.
         </p>
-        <p className="text-xs mb-2" style={{ color: "rgba(245,237,217,0.45)" }}>Request reference: {requestId}</p>
+        {requestId && <p className="text-xs mb-2" style={{ color: "rgba(245,237,217,0.45)" }}>Request reference: {requestId}</p>}
         {bookingCode && (
           <div className="booking-code-box glass-soft" style={{ padding: "1rem 1.25rem", borderRadius: 6, marginTop: "1rem", marginBottom: "1rem", textAlign: "left" }}>
             <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "#D4A017" }}>Your booking code</p>
             <p className="font-display font-bold" style={{ fontSize: "2rem", letterSpacing: "0.15em", color: "#F5EDD9" }}>{bookingCode}</p>
             <p className="text-xs mt-2" style={{ color: "rgba(245,237,217,0.6)" }}>
-              Save this code — you'll need it to upload rider photos. It is only stored on this device, so keep it safe.
+              Save this code — you'll need it to upload rider photos after your ride (no account needed). Keep it safe.
             </p>
           </div>
         )}
@@ -138,34 +115,19 @@ export default function BookingSection() {
     );
   }
 
-  if (!isSignedIn) {
-    return (
-      <div className="booking-gate glass" style={{ padding: "2rem", borderRadius: 8 }}>
-        <h3 className="font-display font-bold text-2xl mb-2" style={{ color: "#F5EDD9" }}>Create an account to book</h3>
-        <p style={{ color: "rgba(245,237,217,0.7)" }}>{ready ? "Booking is for riders with an account, so we can reach you about your ride. It only takes a minute, and you can use Google, Facebook, your phone number or WhatsApp." : "Checking your account…"}</p>
-        {ready && (
-          <div className="booking-gate-actions" style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            <Link to="/login?mode=signup&next=/heritage-trail%23trail-book" className="auth-primary">Create an account</Link>
-            <Link to="/login?mode=signin&next=/heritage-trail%23trail-book" className="auth-link">I already have an account</Link>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="grid lg:grid-cols-[1fr,1.4fr] gap-12 items-start">
       <div>
         <h3 className="font-display font-bold text-2xl mb-6" style={{ color: "#F5EDD9" }}>Select your route</h3>
         <div className="space-y-3">
-          {routes.map((r) => (
+          {allRoutes.map((r) => (
             <button key={r.id} type="button" onClick={() => setRoute(r.id)}
               className="w-full text-left p-4 rounded-sm transition-all"
-              style={{ backgroundColor: route === r.id ? `${r.badgeColor}22` : "rgba(245,237,217,0.04)", border: `2px solid ${route === r.id ? r.badgeColor : "rgba(245,237,217,0.08)"}` }}>
-              <div className="font-bold text-sm mb-1" style={{ color: route === r.id ? r.badgeColor : "#F5EDD9" }}>{r.name}</div>
+              style={{ backgroundColor: route === r.id ? `${r.badgeColor || "#D4A017"}22` : "rgba(245,237,217,0.04)", border: `2px solid ${route === r.id ? (r.badgeColor || "#D4A017") : "rgba(245,237,217,0.08)"}` }}>
+              <div className="font-bold text-sm mb-1" style={{ color: route === r.id ? (r.badgeColor || "#D4A017") : "#F5EDD9" }}>{r.name}</div>
               <div className="flex justify-between items-center">
                 <span className="text-xs" style={{ color: "rgba(245,237,217,0.6)" }}>{r.duration}</span>
-                <span className="font-display font-bold text-lg" style={{ color: r.badgeColor }}>P{r.price}</span>
+                <span className="font-display font-bold text-lg" style={{ color: r.badgeColor || "#D4A017" }}>P{r.price}</span>
               </div>
             </button>
           ))}
@@ -173,13 +135,14 @@ export default function BookingSection() {
       </div>
 
       <div className="p-6 rounded-sm glass" style={{ border: "1px solid rgba(245,237,217,0.08)" }}>
-        <h3 className="font-display font-bold text-2xl mb-6" style={{ color: "#F5EDD9" }}>Your details</h3>
+        <h3 className="font-display font-bold text-2xl mb-2" style={{ color: "#F5EDD9" }}>Your details</h3>
+        <p className="text-xs mb-5" style={{ color: "rgba(245,237,217,0.55)" }}>No account needed to book. We'll send a booking code you can use to share photos after your ride.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Full Name *</label><input required style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" /></div>
             <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Phone / WhatsApp *</label><input required style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+267 7X XXX XXX" /></div>
           </div>
-          <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Email</label><input type="email" style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" /></div>
+          <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Email <span style={{ opacity: 0.5 }}>(optional)</span></label><input type="email" style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" /></div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Preferred Date *</label><input type="date" required style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} /></div>
             <div><label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(245,237,217,0.5)" }}>Number of Riders *</label><input type="number" required min={1} max={20} style={inputStyle} value={riders} onChange={(e) => setRiders(Math.max(1, parseInt(e.target.value, 10) || 1))} /></div>

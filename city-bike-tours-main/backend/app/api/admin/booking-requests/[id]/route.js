@@ -99,8 +99,9 @@ export async function PATCH(request, { params }) {
       guests: updated.riders,
       link: ticketUrl,
     });
-    const whatsappMessage = `${confirmation.body}\n\nBooking code: ${confirmationCode}\nYour ride-pass QR code is attached.`;
-    const smsMessage = `City Bike Tours: your booking is confirmed for ${updated.rideDate} at ${preferredTime}. Booking code: ${confirmationCode}. Ride pass: ${ticketUrl}`;
+    const shareUrl = (process.env.FRONTEND_ORIGIN || process.env.PUBLIC_FRONTEND_URL || "").split(",")[0].trim().replace(/\/$/, "") + "/share";
+    const whatsappMessage = `${confirmation.body}\n\nBooking code: ${confirmationCode}\nAfter your ride, share your photos at ${shareUrl} with your booking code.\nYour ride-pass QR code is attached.`;
+    const smsMessage = `City Bike Tours: your booking is confirmed for ${updated.rideDate} at ${preferredTime}. Booking code: ${confirmationCode}. Ride pass: ${ticketUrl}. Share photos after your ride at ${shareUrl}`;
     notifications = await sendBookingNotifications(db, {
       bookingRequestId: updated.id,
       phone: updated.phone,

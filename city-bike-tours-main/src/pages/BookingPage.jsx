@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import Footer from "../components/Footer";
 import { ROUTES_DATA } from "../data";
 import { backendUrl } from "../api/backend";
 import { useLiveData } from "../hooks/LiveDataContext";
-import { useCustomer } from "../auth/CustomerAuth";
-import { generateBookingCode, saveBookingCode } from "../lib/bookingCode";
 
 export default function BookingPage() {
   const { routes } = useLiveData();
-  const { isSignedIn, ready, user, signOut } = useCustomer();
   const { hash } = useLocation();
+  const [searchParams] = useSearchParams();
   const [route, setRoute] = useState("complete");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -35,13 +33,13 @@ export default function BookingPage() {
     return () => clearTimeout(timer);
   }, [hash]);
 
-  // Riders book with their account, so their details are filled in for them.
   useEffect(() => {
-    if (!user) return;
-    setName((current) => current || user.name || "");
-    setPhone((current) => current || user.phone || "");
-    setEmail((current) => current || (user.email && !user.email.toLowerCase().endsWith(".invalid") ? user.email : ""));
-  }, [user]);
+    const ride = searchParams.get("ride");
+    const d = searchParams.get("date");
+    if (ride && ROUTES_DATA.some((r) => r.id === ride)) setRoute(ride);
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) setDate(d);
+  }, [searchParams]);
+
 
   const selectedRoute = routes.find((r) => r.id === route) || ROUTES_DATA.find((r) => r.id === route);
   const total = selectedRoute.price * riders;
@@ -86,7 +84,6 @@ export default function BookingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isSignedIn) return;
     if (!availability || availability.full || insufficientCapacity || availabilityError) {
       setSubmitError(availabilityError || "Please choose a date with enough available spaces.");
       return;
@@ -129,13 +126,10 @@ export default function BookingPage() {
           full: result.remaining === 0,
         });
       }
-      if (response.status === 401) { signOut(); throw new Error("Please sign in again to book."); }
       if (!response.ok) throw new Error(result.error ?? "We couldn't submit your request. Please try again.");
 
       setRequestId(result.request.id);
-      const code = generateBookingCode();
-      saveBookingCode(code);
-      setBookingCode(code);
+      setBookingCode(result.confirmationCode || result.request?.confirmationCode || "");
       setSubmitted(true);
     } catch (error) {
       setSubmitError(error.message || "The booking service is unavailable. Please try again later.");
@@ -180,7 +174,7 @@ export default function BookingPage() {
                 <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "#D4A017" }}>Your booking code</p>
                 <p className="font-display font-bold" style={{ fontSize: "2rem", letterSpacing: "0.15em", color: "#F5EDD9" }}>{bookingCode}</p>
                 <p className="text-xs mt-2" style={{ color: "rgba(245,237,217,0.6)" }}>
-                  Save this code — you'll need it to upload rider photos. It is only stored on this device, so keep it safe.
+                  Save this code — you'll need it to upload rider photos after your ride. Keep it safe.
                 </p>
               </div>
             )}
@@ -219,18 +213,8 @@ export default function BookingPage() {
           <span className="booking-live-indicator"><i /> Booking requests open</span>
         </div>
 
-        {!isSignedIn ? (
-          <div className="booking-gate glass">
-            <h3 className="font-display">Create an account to book</h3>
-            <p>{ready ? "Booking is for riders with an account, so we can reach you about your ride. It only takes a minute, and you can use Google, Facebook, your phone number or WhatsApp." : "Checking your account…"}</p>
-            {ready && (
-              <div className="booking-gate-actions">
-                <Link to="/login?next=/book%23book-form" className="auth-primary">Create an account</Link>
-                <Link to="/login?mode=signin&next=/book%23book-form" className="auth-link">I already have an account</Link>
-              </div>
-            )}
-          </div>
-        ) : (
+<p className="text-sm mb-4" style={{ color: "rgba(245,237,217,0.65)" }}>No account needed to book. After you submit, we'll give you a booking code to share photos from your ride.</p>
+        </div>
         <form onSubmit={handleSubmit} className="booking-dashboard-form">
           <div className="booking-showcase-grid">
             <section className="booking-bike-feature">
@@ -275,7 +259,7 @@ export default function BookingPage() {
                 {route === "complete" && <label className="booking-field">Preferred start time<select value={startTime} onChange={(event) => setStartTime(event.target.value)} style={inputStyle}><option value="09:00">9:00 AM</option><option value="14:00">2:00 PM</option></select></label>}
                 <label className="booking-field">Full name<input type="text" required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" style={inputStyle} /></label>
                 <label className="booking-field">Phone / WhatsApp<input type="tel" required autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+267 7X XXX XXX" style={inputStyle} /></label>
-                {!user?.email && <label className="booking-field">Email <span className="booking-optional">Optional</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" style={inputStyle} /><small>We'll email your confirmation and reminder.</small></label>}
+                <label className="booking-field">Email <span className="booking-optional">Optional</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" style={inputStyle} /><small>We'll email your confirmation and reminder.</small></label>
                 <label className="booking-field booking-notes-field">Notes <span className="booking-optional">Optional</span><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Accessibility needs, school group, or other requests" style={{ ...inputStyle, resize: "vertical" }} /></label>
               </div>
             </section>
@@ -293,7 +277,6 @@ export default function BookingPage() {
             </aside>
           </div>
         </form>
-        )}
       </div>
 
       <Footer />
