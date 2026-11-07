@@ -140,8 +140,6 @@ function AboutStrip() {
 }
 
 export default function LandingPage() {
-  useScrollReveal();
-
   return (
     <div className="relative">
       <Hero />
