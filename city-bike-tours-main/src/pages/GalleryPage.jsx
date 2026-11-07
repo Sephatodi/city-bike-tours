@@ -296,8 +296,116 @@ function OfficialUpdates() {
   );
 }
 
+// ─── RIDER RATING SECTION ─────────────────────────────────────────────────────
+
+function RatingSection({ hasPostedPhotos }) {
+  if (!hasPostedPhotos) return null;
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  return (
+    <section id="rider-rating" className="gallery-section reveal" style={{ marginTop: "3rem" }}>
+      <div className="text-center mb-10">
+        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#D4A017" }}>— Rate your ride</p>
+        <h2 id="rating-heading" className="font-display font-bold" style={{ fontSize: "clamp(1.6rem, 3vw, 2.35rem)", color: "#F5EDD9" }}>How was your experience?</h2>
+      </div>
+      {submitted ? (
+        <div className="max-w-md mx-auto text-center" style={{ padding: "2rem", backgroundColor: "rgba(26,58,42,0.4)", borderRadius: "8px", border: "1px solid rgba(212,160,23,0.3)" }}>
+          <div style={{
+            width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "#25D366",
+            display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem"
+          }}>
+            <Icon name="mapPin" size={24} style={{ color: "#0D0805" }} />
+          </div>
+          <h3 style={{ color: "#F5EDD9", marginBottom: "0.5rem" }}>Thank you for your feedback!</h3>
+          <p style={{ color: "rgba(245,237,217,0.7)", fontSize: "0.9rem" }}>Your rating and comment help other riders discover Gaborone's heritage.</p>
+        </div>
+      ) : (
+        <div className="max-w-md mx-auto" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: star <= rating ? "#D4A017" : "rgba(245,237,217,0.3)",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  padding: "0.25rem",
+                  transition: "transform 0.1s",
+                }}
+                onMouseEnter={() => setRating(star)}
+                onMouseLeave={() => setRating(rating)}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+          <label style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <span style={{ color: "#E8DFCC", fontSize: "0.875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>Your comment</span>
+            <textarea
+              rows={4}
+              maxLength={500}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share your ride experience…"
+              style={{
+                width: "100%",
+                backgroundColor: "rgba(245,237,217,0.05)",
+                border: "1px solid rgba(245,237,217,0.15)",
+                color: "#F5EDD9",
+                borderRadius: "4px",
+                padding: "0.875rem",
+                fontFamily: "Outfit, sans-serif",
+                fontSize: "0.9rem",
+                resize: "vertical",
+              }}
+            />
+          </label>
+          <button
+            onClick={() => setSubmitted(true)}
+            disabled={rating === 0 || !comment.trim()}
+            className="submit-rating"
+            style={{
+              backgroundColor: rating === 0 || !comment.trim() ? "rgba(245,237,217,0.2)" : "#D4A017",
+              color: "#0D0805",
+              border: "none",
+              padding: "0.875rem 1.5rem",
+              borderRadius: "4px",
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              cursor: rating === 0 || !comment.trim() ? "not-allowed" : "pointer",
+              opacity: rating === 0 || !comment.trim() ? 0.5 : 1,
+              alignSelf: "flex-start",
+            }}
+          >
+            Submit Rating
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function GalleryPage() {
   const { hash } = useLocation();
+  const { api, isSignedIn } = useCustomer();
+  const [photos, setPhotos] = useState(null);
+
+  const loadPhotos = useCallback(async () => {
+    try {
+      const result = await api("/api/community/photos");
+      setPhotos(result.photos);
+    } catch {}
+  }, [api]);
+  useEffect(() => { loadPhotos(); }, [loadPhotos]);
+
+  const hasPostedPhotos = photos && photos.some((p) => p.mine && p.status === "approved");
 
   // The router doesn't scroll to #anchors by itself, and the shared scroll-to-top runs after this page mounts.
   useEffect(() => {
@@ -316,6 +424,7 @@ export default function GalleryPage() {
         </header>
         <div className="rr-wrap gallery-rr gallery-main-content-wrapper">
           <RiderStories />
+          {isSignedIn && <RatingSection hasPostedPhotos={hasPostedPhotos} />}
           <OfficialGallery />
         </div>
       </main>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { useCustomer } from "../auth/CustomerAuth";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
@@ -13,7 +12,6 @@ export default function Nav() {
   const [scrollY, setScrollY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const { isSignedIn, user, signOut } = useCustomer();
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -60,19 +58,6 @@ export default function Nav() {
           })}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          {isSignedIn ? (
-            <>
-              <Link to="/dashboard" className="text-xs uppercase tracking-wide font-medium" style={{ color: location.pathname === "/dashboard" ? "#D4A017" : "#F5EDD9" }}>Dashboard</Link>
-              <button type="button" onClick={signOut} className="text-xs uppercase tracking-wide font-medium" style={{ color: "#F5EDD9" }} title="Sign out">
-                {user?.name?.split(" ")[0] || "Account"} · Sign out
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="text-xs uppercase tracking-wide font-medium" style={{ color: "#F5EDD9" }}>Sign in</Link>
-          )}
-        </div>
-
         <Link
           to="/schedule#price-calculator"
           className="hidden md:inline-block px-5 py-2 text-sm font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90"
@@ -111,12 +96,6 @@ export default function Nav() {
               {label}
             </Link>
           ))}
-          {isSignedIn && <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#D4A017" }}>Dashboard</Link>}
-          {isSignedIn ? (
-            <button type="button" onClick={() => { signOut(); setMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-widest" style={{ color: "#F5EDD9" }}>Sign out ({user?.name?.split(" ")[0]})</button>
-          ) : (
-            <Link to="/login" onClick={() => setMenuOpen(false)} className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#D4A017" }}>Sign in</Link>
-          )}
         </div>
       )}
     </nav>

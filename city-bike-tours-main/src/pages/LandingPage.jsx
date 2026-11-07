@@ -1,9 +1,8 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
-import Carousel from "../components/Carousel";
-import { SITES } from "../data";
+import BicycleLoader from "../components/BicycleLoader";
 
 // ─── SCROLL REVEAL ───────────────────────────────────────────────────────────
 
@@ -22,12 +21,32 @@ function useScrollReveal() {
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 
 function Hero() {
+  const [loaderOpen, setLoaderOpen] = useState(false);
+
+  const handleCta = (event) => {
+    event.preventDefault();
+    setLoaderOpen(true);
+    setTimeout(() => {
+      window.location.href = "/schedule";
+      setLoaderOpen(false);
+    }, 2000);
+  };
+
+  const handleTrail = (event) => {
+    event.preventDefault();
+    setLoaderOpen(true);
+    setTimeout(() => {
+      window.location.href = "/heritage-trail";
+      setLoaderOpen(false);
+    }, 2000);
+  };
+
   return (
     <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h1 className="font-display font-bold leading-none mb-6" style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", color: "#F5EDD9" }}>
+            <h1 className="font-display font-bold leading-none mb-8" style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", color: "#F5EDD9" }}>
               Ride the<br />
               <span style={{ color: "#D4A017" }}>Heart</span> of<br />
               the City
@@ -49,44 +68,38 @@ function Hero() {
             </div>
 
             <div className="flex gap-4">
-              <Link
-                to="/schedule"
+              <button
+                onClick={handleCta}
                 className="px-8 py-3 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "#D4A017", color: "#0D0805" }}
               >
                 Check Availability
-              </Link>
-              <Link
-                to="/heritage-trail"
+              </button>
+              <button
+                onClick={handleTrail}
                 className="px-8 py-3 font-semibold uppercase tracking-widest text-sm rounded-sm border hover:bg-white/5 transition-colors"
                 style={{ borderColor: "rgba(245,237,217,0.4)", color: "#F5EDD9" }}
               >
                 The Trail →
-              </Link>
+              </button>
             </div>
           </div>
 
-          <div className="hero-feature-list grid gap-4">
-            {[
-              { n: "01", label: "Guided heritage ride", sub: "Stories, landmarks, and a steady pace" },
-              { n: "02", label: "Casual Saturday", sub: "A loose, social ride made for togetherness" },
-            ].map((s) => (
-              <div
-                key={s.n}
-                className="p-5 rounded-sm border flex items-start gap-4"
-                style={{ borderColor: "rgba(212,160,23,0.25)", backgroundColor: "rgba(26,58,42,0.2)" }}
-              >
-                <div className="font-display font-bold text-2xl leading-none" style={{ color: "#D4A017" }}>{s.n}</div>
-                <div>
-                  <div className="font-semibold text-sm mb-0.5" style={{ color: "#F5EDD9" }}>{s.label}</div>
-                  <div className="text-xs" style={{ color: "#E8DFCC", opacity: 0.6 }}>{s.sub}</div>
+          <div className="hidden lg:flex items-center justify-center">
+            <div className="bike-pop-container" style={{ position: "relative", width: "100%", maxWidth: 500, height: "clamp(300px, 35vw, 500px)" }}>
+              <div className="bike-pop-overlay" style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: "8px", zIndex: 1 }}></div>
+              <img src="/bike1.jfif" alt="Tour bicycle" className="relative z-10 w-full h-full object-cover rounded-sm" style={{ filter: "brightness(0.9) contrast(1.1)" }} />
+              <div className="absolute bottom-4 left-4 right-4 z-20">
+                <div className="font-display font-bold text-xl mb-1" style={{ color: "#D4A017" }}>Ride the Heart of Gaborone</div>
+                <div className="text-sm" style={{ color: "#F5EDD9", opacity: 0.9 }}>
+                  Six heritage sites, one story, two wheels.
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
-
+      {loaderOpen && <BicycleLoader isActive={true} />}
     </section>
   );
 }
@@ -97,102 +110,29 @@ function AboutStrip() {
   return (
     <section className="py-16 relative">
       <div className="relative max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div className="reveal">
-            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#C1440E" }}>— What We Do</p>
-            <h2 className="font-display font-bold mb-5" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: "#F5EDD9", lineHeight: 1.1 }}>
-              City Bike Tours<br /><span style={{ color: "#D4A017" }}>through living history</span>
-            </h2>
-            <p className="text-base leading-relaxed mb-4" style={{ color: "#E8DFCC", opacity: 0.85 }}>
-              City Bike Tours runs Gaborone's only heritage-focused bicycle tour, guiding riders through six landmark sites.
-              Wednesday to Friday, we meet at <strong style={{ color: "#D4A017" }}>Main Mall</strong> at 9am or 2pm for a guided ride through Gaborone's heritage sites. Each group is limited to 10 riders.
-            </p>
-            <div className="flex flex-col gap-3 mb-6">
-              {[
-                ["mapPin", "Meet at Main Mall, Gaborone City Centre"],
-                ["clock", "Wednesday–Friday at 9am or 2pm — guided groups of up to 10"],
-                ["bicycle", "Casual Saturdays — relaxed ride with friends, family, and fellow riders"],
-                ["graduationCap", "Cycling lessons included on Casual Saturdays for kids and adults"],
-              ].map(([icon, text]) => (
-                <div key={text} className="flex items-start gap-3 text-sm" style={{ color: "#E8DFCC" }}>
-                  <Icon name={icon} size={17} className="mt-0.5" style={{ color: "#D4A017" }} /><span>{text}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <Link to="/schedule" className="px-5 py-2 text-sm font-bold uppercase tracking-widest rounded-sm hover:opacity-90 transition-opacity" style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}>
-                Reserve
-              </Link>
-              <Link to="/heritage-trail" className="px-5 py-2 text-sm font-semibold uppercase tracking-widest rounded-sm border hover:bg-white/5 transition-colors" style={{ borderColor: "rgba(245,237,217,0.3)", color: "#F5EDD9" }}>
-                Heritage Trail
-              </Link>
-            </div>
-          </div>
-
-          <div className="reveal grid grid-cols-1 gap-4">
-            <div className="relative overflow-hidden rounded-sm glass">
-              <img
-                src="https://images.unsplash.com/photo-1738145133893-a9c9aa180f8f?w=700&h=420&fit=crop&auto=format"
-                alt="Group cycling in Africa"
-                className="w-full object-cover"
-                style={{ height: "clamp(240px, 28vw, 420px)", opacity: 0.85 }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="font-display font-bold text-xl mb-1" style={{ color: "#D4A017" }}>Experience the City's Heritage</div>
-                <div className="text-sm" style={{ color: "#F5EDD9", opacity: 0.8 }}>
-                  Meet us at Main Mall and begin your journey through history — together, curious, unhurried.
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Every Wed", sub: "Flagship ride", color: "#C1440E" },
-                { label: "6 Sites", sub: "Heritage trail", color: "#1A3A2A" },
-                { label: "All Levels", sub: "Welcome", color: "#D4A017" },
-              ].map((c) => (
-                <div key={c.label} className="p-4 rounded-sm text-center" style={{ backgroundColor: c.color + "33", borderLeft: `3px solid ${c.color}` }}>
-                  <div className="font-display font-bold text-lg" style={{ color: "#F5EDD9" }}>{c.label}</div>
-                  <div className="text-xs mt-1" style={{ color: "#E8DFCC", opacity: 0.7 }}>{c.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── HERITAGE CAROUSEL ─────────────────────────────────────────────────────────
-
-function HeritageCarousel() {
-  const imgs = SITES.flatMap((site) => site.imgs).slice(0, 6);
-  return (
-    <section className="py-20 bg-[#0D0805]">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-12 reveal">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#C1440E" }}>— Gaborone on Two Wheels</p>
-          <h2 className="font-display font-bold" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)", color: "#F5EDD9", lineHeight: 1.1 }}>
-            See Gaborone's history<br /><span style={{ color: "#D4A017" }}>from a bicycle seat</span>
+        <div className="reveal">
+          <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#C1440E" }}>— What We Do</p>
+          <h2 className="font-display font-bold mb-8" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: "#F5EDD9", lineHeight: 1.1 }}>
+            City Bike Tours<br /><span style={{ color: "#D4A017" }}>through living history</span>
           </h2>
-          <p className="text-base mt-4" style={{ color: "#E8DFCC", opacity: 0.8 }}>
-            Six landmark sites. One ride. Parliament, the Archives, the Post Office Gallery,
-            the National Museum, the Three Chiefs Monument, and the Government Enclave —
-            all connected by a gentle loop through the city centre.
-          </p>
-        </div>
-        <div className="reveal" style={{ margin: "0 auto", maxWidth: 900 }}>
-          <Carousel imgs={imgs} accent="#D4A017" title="Heritage sites" subtitle="Gaborone's living history" />
-        </div>
-        <div className="text-center mt-12 reveal">
-          <Link
-            to="/schedule"
-            className="px-10 py-4 font-bold uppercase tracking-widest text-sm rounded-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#D4A017", color: "#0D0805" }}
-          >
-            Check Availability
-          </Link>
+          <ul className="space-y-4 text-sm leading-relaxed" style={{ color: "#E8DFCC", opacity: 0.85 }}>
+            <li className="flex items-start gap-3">
+              <Icon name="mapPin" size={18} className="mt-0.5" style={{ color: "#D4A017" }} />
+              <span>Meet at Main Mall, Gaborone City Centre — every Wednesday to Friday at 9am or 2pm.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Icon name="bicycle" size={18} className="mt-0.5" style={{ color: "#D4A017" }} />
+              <span>Guided groups of up to 10 riders on the Heritage City Ride.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Icon name="graduationCap" size={18} className="mt-0.5" style={{ color: "#D4A017" }} />
+              <span>Cycling lessons included on Casual Saturdays for kids and adults.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Icon name="clock" size={18} className="mt-0.5" style={{ color: "#D4A017" }} />
+              <span>Pay on the day at Main Mall — no deposit, no online payment.</span>
+            </li>
+          </ul>
         </div>
       </div>
     </section>
@@ -205,10 +145,7 @@ export default function LandingPage() {
   return (
     <div className="relative">
       <Hero />
-      <HeritageCarousel />
-      <div className="home-explore-shell glass">
-        <AboutStrip />
-      </div>
+      <AboutStrip />
       <Footer />
     </div>
   );

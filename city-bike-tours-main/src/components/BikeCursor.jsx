@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import RiderIcon from "./RiderIcon";
 
-const TRACK_LIFE = 2600; // ms before a tyre mark has faded away
-const TRACK_GAP = 6;     // distance between the two tyres
-const MIN_STEP = 3;      // px the bicycle must move before a new mark is laid
-
-// The cursor is a cyclist that faces the way it is travelling and leaves two tyre tracks behind it.
+// The cursor is a cyclist with a single faint track line behind it.
 export default function BikeCursor() {
   const cursorRef = useRef(null);
   const canvasRef = useRef(null);
@@ -19,7 +15,7 @@ export default function BikeCursor() {
     const target = { x: -200, y: -200 };
     const current = { x: -200, y: -200 };
     const motion = { vx: 0, vy: 0, facing: 1 };
-    let marks = [];
+    let previous = { x: -200, y: -200 };
     let frame = 0;
     let started = false;
 
@@ -37,7 +33,7 @@ export default function BikeCursor() {
     function moveTarget(x, y) {
       target.x = x;
       target.y = y;
-      if (!started) { current.x = target.x; current.y = target.y; started = true; }
+      if (!started) { current.x = target.x; current.y = target.y; previous.x = target.x; previous.y = target.y; started = true; }
     }
 
     function readTouches(event) {
@@ -46,38 +42,24 @@ export default function BikeCursor() {
       setTouches(Array.from(event.touches).map((touch) => ({ id: touch.identifier, x: touch.clientX, y: touch.clientY })));
     }
 
-    function drawTracks(now) {
+    function drawSingleTrack(now) {
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      marks = marks.filter((mark) => now - mark.t < TRACK_LIFE);
-      for (let i = 1; i < marks.length; i += 1) {
-        const a = marks[i - 1];
-        const b = marks[i];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const length = Math.hypot(dx, dy) || 1;
-        const nx = -dy / length;
-        const ny = dx / length;
-        const alpha = Math.max(0, 1 - (now - b.t) / TRACK_LIFE) * 0.8;
-        context.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-        context.lineWidth = 2.8;
+      // Draw one faint line from previous position to current position
+      const dx = current.x - previous.x;
+      const dy = current.y - previous.y;
+      const length = Math.hypot(dx, dy);
+      if (length > 2) {
+        const alpha = Math.min(0.35, length / 60);
+        context.strokeStyle = `rgba(26, 58, 42, ${alpha})`;
+        context.lineWidth = 2;
         context.lineCap = "round";
-        for (const side of [-1, 1]) {
-          const offset = side * TRACK_GAP;
-          context.beginPath();
-          context.moveTo(a.x + nx * offset, a.y + ny * offset);
-          context.lineTo(b.x + nx * offset, b.y + ny * offset);
-          context.stroke();
-          // tread: a short bar across the tyre at every other mark
-          if (i % 2 === 0) {
-            context.lineWidth = 1.2;
-            context.beginPath();
-            context.moveTo(b.x + nx * (offset - 2.6), b.y + ny * (offset - 2.6));
-            context.lineTo(b.x + nx * (offset + 2.6), b.y + ny * (offset + 2.6));
-            context.stroke();
-            context.lineWidth = 2.8;
-          }
-        }
+        context.beginPath();
+        context.moveTo(previous.x, previous.y);
+        context.lineTo(current.x, current.y);
+        context.stroke();
       }
+      previous.x = current.x;
+      previous.y = current.y;
     }
 
     function tick(now) {
@@ -94,7 +76,6 @@ export default function BikeCursor() {
       const dy = current.y - previousY;
       const speed = Math.hypot(dx, dy);
 
-      // Smooth the heading so the bicycle turns gracefully instead of jittering.
       motion.vx += (dx - motion.vx) * 0.25;
       motion.vy += (dy - motion.vy) * 0.25;
       if (Math.abs(motion.vx) > 0.35) motion.facing = motion.vx >= 0 ? 1 : -1;
@@ -104,12 +85,7 @@ export default function BikeCursor() {
         cursorRef.current.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate(-50%, -55%) scaleX(${motion.facing}) rotate(${speed > 0.4 ? tilt : 0}deg)`;
       }
 
-      if (!reducedMotion && speed > 0.4) {
-        const last = marks[marks.length - 1];
-        const baseY = current.y + 22; // where the tyres touch the ground
-        if (!last || Math.hypot(current.x - last.x, baseY - last.y) >= MIN_STEP) marks.push({ x: current.x, y: baseY, t: now });
-      }
-      drawTracks(now);
+      drawSingleTrack(now);
       frame = requestAnimationFrame(tick);
     }
 

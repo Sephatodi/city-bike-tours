@@ -1,22 +1,23 @@
 import { Link } from "react-router";
 import Footer from "../components/Footer";
-import FoodStops from "../components/FoodStops";
 import HeritageMap from "../components/HeritageMap";
 import SiteFolders from "../components/SiteFolders";
 
 export default function HeritageTrailPage() {
   return (
     <main className="heritage-trail-page">
-      <header className="trail-hero">
-        <p className="trail-eyebrow">GABORONE · SIX LANDMARKS · ONE SHARED STORY</p>
-        <h1>Ride through<br /><span>living history.</span></h1>
-        <p className="trail-hero-lede">
-          From the civic heart of the city to the places that hold Botswana’s memory, take the long way through stories worth knowing.
-        </p>
-        <div className="trail-hero-facts" aria-label="Trail details">
-          <span><strong>6</strong> heritage sites</span>
-          <span><strong>~8.8 km</strong> by bicycle</span>
-          <span><strong>Main Mall</strong> start and finish</span>
+      <header className="trail-hero" style={{ textAlign: "right" }}>
+        <div className="trail-hero-content" style={{ display: "inline-block", textAlign: "left", maxWidth: "600px" }}>
+          <p className="trail-eyebrow">GABORONE · SIX LANDMARKS · ONE SHARED STORY</p>
+          <h1>Ride through<br /><span>living history.</span></h1>
+          <p className="trail-hero-lede">
+            From the civic heart of the city to the places that hold Botswana's memory, take the long way through stories worth knowing.
+          </p>
+          <div className="trail-hero-facts" aria-label="Trail details" style={{ marginTop: "1.5rem" }}>
+            <span><strong>6</strong> heritage sites</span>
+            <span><strong>~8.8 km</strong> by bicycle</span>
+            <span><strong>Main Mall</strong> start and finish</span>
+          </div>
         </div>
       </header>
 
@@ -36,7 +37,7 @@ export default function HeritageTrailPage() {
       <section className="trail-sites-section" aria-labelledby="trail-sites-heading">
         <div className="trail-section-heading trail-sites-heading">
           <div>
-            <p className="trail-eyebrow">THE NATION’S STORY</p>
+            <p className="trail-eyebrow">THE NATION'S STORY</p>
             <h2 id="trail-sites-heading">Six stops. Six perspectives.</h2>
           </div>
           <p>Each landmark marks a different chapter in the making of modern Botswana. Open a folder to see its photos, story and videos.</p>
@@ -44,20 +45,19 @@ export default function HeritageTrailPage() {
         <SiteFolders />
       </section>
 
-      <section className="trail-booking-cta" aria-labelledby="trail-booking-heading">
-        <div>
+      <section className="trail-booking-cta" aria-labelledby="trail-booking-heading" style={{ marginTop: "3rem" }}>
+        <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
           <p className="trail-eyebrow">THE CITY IS WAITING</p>
-          <h2 id="trail-booking-heading">Let’s go find a story.</h2>
+          <h2 id="trail-booking-heading">Let's go find a story.</h2>
           <p>Choose your pace, see the live price, and meet us at Main Mall. Pay on the day; no deposit is needed.</p>
+          <div className="trail-booking-button-wrap" style={{ marginTop: "1.5rem" }}>
+            <Link to="/schedule" className="trail-booking-button">
+              Check Availability <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
         </div>
-        <Link to="/schedule#price-calculator" className="trail-booking-button">
-          Choose your ride <span aria-hidden="true">↗</span>
-        </Link>
       </section>
 
-      <div className="trail-food-wrap">
-        <FoodStops />
-      </div>
       <Footer />
     </main>
   );
