@@ -25,15 +25,13 @@ export default function PricingSection() {
       <div className="schedule-section-heading">
         <div>
           <p className="schedule-section-kicker">COMPARE THE RIDES</p>
-          <h2 id="pricing-heading">What's included</h2>
-          <p className="pricing-section-intro">Cycling lessons for kids and adults are included with the Casual Saturday ride, with no separate lesson fee.</p>
+          <h2 id="pricing-heading">Full comparison</h2>
         </div>
       </div>
       <div>
         {/* Feature comparison table */}
         <div className="mb-14">
-          <h2 className="font-display font-bold text-2xl mb-2" style={{ color: "#F5EDD9" }}>What's Included — Full Comparison</h2>
-          <p className="text-sm mb-8" style={{ color: "rgba(245,237,217,0.5)" }}>Compare our two rides: a guided weekday heritage tour and a relaxed Saturday ride with cycling lessons included.</p>
+          <p className="text-sm mb-8" style={{ color: "rgba(245,237,217,0.5)" }}>Compare our two rides: a guided weekday heritage tour and a relaxed Saturday ride with cycling lessons included. Cycling lessons for kids and adults are included with the Casual Saturday ride, with no separate lesson fee.</p>
 
           <div className="overflow-x-auto rounded-sm" style={{ border: "1px solid rgba(245,237,217,0.08)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Outfit, sans-serif" }}>
