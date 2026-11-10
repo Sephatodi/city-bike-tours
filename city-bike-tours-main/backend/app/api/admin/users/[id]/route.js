@@ -11,6 +11,7 @@ import { userUpdateSchema } from "@/lib/validators";
 import { normalizePhone } from "@/lib/phone";
 import { isOurBlob } from "@/lib/blob-url";
 import { isPrivateCommunityBlob } from "@/lib/community-media";
+import { activationExpiry, generateActivationCode, hashActivationCode } from "@/lib/admin-activation";
 
 async function otherActiveAdmins(excludeId) {
   const [row] = await db.select({ n: sql`COUNT(*)::int` }).from(users)
@@ -29,7 +30,7 @@ export async function PATCH(request, { params }) {
   const [target] = await db.select().from(users).where(eq(users.id, params.id));
   if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
-  const { resetPassword, resetMfa, changePassword, phone, ...changes } = parsed.data;
+  const { resetPassword, resetActivation, resetMfa, changePassword, phone, linkedGoogleEmail, ...changes } = parsed.data;
   const isSelf = target.id === staff.id;
 
   if (isSelf && ((changes.role && changes.role !== target.role) || (changes.status && changes.status !== target.status))) {
@@ -48,8 +49,13 @@ export async function PATCH(request, { params }) {
     updates.phone = phone ? normalizePhone(phone) : null;
     if (phone && !updates.phone) return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
   }
+  if (linkedGoogleEmail !== undefined) {
+    const val = String(linkedGoogleEmail || "").trim().toLowerCase();
+    updates.linkedGoogleEmail = val || null;
+  }
 
   let plain = null;
+  let activationCode = null;
   if (resetPassword) {
     if (target.provider !== "credentials") {
       return NextResponse.json({ error: `This account signs in with ${target.provider}, so it has no password to reset.` }, { status: 409 });
@@ -57,6 +63,19 @@ export async function PATCH(request, { params }) {
     plain = randomBytes(9).toString("base64url");
     updates.passwordHash = await bcrypt.hash(plain, 10);
     updates.passwordChangedAt = new Date();
+    updates.activationRequired = false;
+    updates.activationCodeHash = null;
+    updates.activationCodeExpiresAt = null;
+    updates.activationAttempts = 0;
+  }
+  if (resetActivation) {
+    if (target.role === "customer") return NextResponse.json({ error: "Activation codes are only for staff accounts." }, { status: 400 });
+    activationCode = generateActivationCode();
+    updates.activationRequired = true;
+    updates.activationCodeHash = await hashActivationCode(activationCode);
+    updates.activationCodeExpiresAt = activationExpiry();
+    updates.activationAttempts = 0;
+    updates.passwordHash = await bcrypt.hash(randomBytes(24).toString("base64url"), 10);
   }
   if (changePassword) {
     if (target.provider !== "credentials") {
@@ -68,24 +87,27 @@ export async function PATCH(request, { params }) {
   if (!Object.keys(updates).length) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
 
   const [updated] = await db.update(users).set(updates).where(eq(users.id, params.id))
-    .returning({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status });
+    .returning({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status, linkedGoogleEmail: users.linkedGoogleEmail, activationRequired: users.activationRequired });
 
   const parts = [];
   if (changes.role && changes.role !== target.role) parts.push(`role ${target.role} → ${changes.role}`);
   if (changes.status && changes.status !== target.status) parts.push(changes.status === "suspended" ? "suspended" : "reactivated");
   if (changes.name) parts.push("name");
   if (phone !== undefined) parts.push("phone");
+  if (linkedGoogleEmail !== undefined) parts.push(linkedGoogleEmail ? "linked Google email" : "unlinked Google email");
   if (resetPassword) parts.push("password reset");
+  if (resetActivation) parts.push("activation code reset");
   if (changePassword) parts.push("password changed");
   if (resetMfa) parts.push("two-step sign-in reset");
   if (changes.team !== undefined) parts.push(`team: ${changes.team || "none"}`);
   const action = resetMfa ? "user.reset_mfa" : resetPassword ? "user.reset_password"
+    : resetActivation ? "user.reset_activation"
     : changePassword ? "user.change_password"
     : changes.status && changes.status !== target.status ? (changes.status === "suspended" ? "user.suspend" : "user.reactivate")
     : changes.role && changes.role !== target.role ? "user.role" : "user.edit";
   await logAudit(staff, action, `${target.name}: ${parts.join(", ") || "updated"}`, { targetType: "user", targetId: target.id });
 
-  return NextResponse.json({ user: updated, tempPassword: plain });
+  return NextResponse.json({ user: updated, tempPassword: plain, activationCode });
 }
 
 export async function DELETE(request, { params }) {

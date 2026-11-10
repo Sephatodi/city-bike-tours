@@ -9,6 +9,7 @@ import { logAudit } from "@/lib/audit";
 import { userCreateSchema } from "@/lib/validators";
 import { normalizePhone } from "@/lib/phone";
 import { newId } from "@/lib/id";
+import { activationExpiry, generateActivationCode, hashActivationCode } from "@/lib/admin-activation";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export async function GET() {
       mfaEnabled: users.mfaEnabled,
       provider: users.provider,
       createdAt: users.createdAt,
+      activationRequired: users.activationRequired,
+      linkedGoogleEmail: users.linkedGoogleEmail,
       bookingCount: sql`(SELECT COUNT(*)::int FROM ${bookings} WHERE ${bookings.userId} = ${users.id})`,
     })
     .from(users)
@@ -53,19 +56,41 @@ export async function POST(request) {
     if (!normalizedPhone) return NextResponse.json({ error: "Enter a valid phone number, including its country code if outside Botswana." }, { status: 400 });
   }
 
-  const plain = password || randomBytes(9).toString("base64url");
+  const isStaff = ["viewer", "editor", "admin"].includes(role);
+  let plain = null;
+  let activationCode = null;
+  let activationFields = {};
+  let passwordHash;
+
+  if (isStaff) {
+    // Staff accounts use first-login activation: creator shares 6-digit code, new admin sets password on first sign-in.
+    activationCode = generateActivationCode();
+    activationFields = {
+      activationRequired: true,
+      activationCodeHash: await hashActivationCode(activationCode),
+      activationCodeExpiresAt: activationExpiry(),
+      activationAttempts: 0,
+    };
+    // Placeholder hash; replaced when admin sets their password after code verification.
+    passwordHash = await bcrypt.hash(randomBytes(24).toString("base64url"), 10);
+  } else {
+    plain = password || randomBytes(9).toString("base64url");
+    passwordHash = await bcrypt.hash(plain, 10);
+  }
+
   const [created] = await db.insert(users).values({
     id: newId(),
     name,
     email,
     phone: normalizedPhone,
-    passwordHash: await bcrypt.hash(plain, 10),
+    passwordHash,
     provider: "credentials",
     role,
     team: team || null,
-  }).returning({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status });
+    ...activationFields,
+  }).returning({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status, activationRequired: users.activationRequired });
 
-  await logAudit(guard.staff, "user.create", `Created ${role} account for ${name} (${email})`, { targetType: "user", targetId: created.id });
-  // A generated password is shown once, in this response only.
-  return NextResponse.json({ user: created, tempPassword: password ? null : plain }, { status: 201 });
+  await logAudit(guard.staff, "user.create", `Created ${role} account for ${name} (${email})${activationCode ? " with activation code" : ""}`, { targetType: "user", targetId: created.id });
+  // A generated password or activation code is shown once, in this response only.
+  return NextResponse.json({ user: created, tempPassword: plain, activationCode }, { status: 201 });
 }
