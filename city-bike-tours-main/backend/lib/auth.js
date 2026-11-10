@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import AppleProvider from "next-auth/providers/apple";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { newId } from "@/lib/id";
@@ -34,6 +34,7 @@ const providers = [
       const [user] = await db.select().from(users).where(eq(users.email, email));
       if (!user || !user.passwordHash) return fail("unknown_account");
       if (user.status === "suspended") return fail("suspended");
+      if (user.activationRequired) throw new Error("ACTIVATION_REQUIRED");
 
       const valid = await bcrypt.compare(credentials.password, user.passwordHash);
       if (!valid) return fail("wrong_password");
@@ -99,6 +100,20 @@ export const authOptions = {
 
       const email = user.email?.toLowerCase();
       if (!email) return false;
+
+      // If a staff user has linked their Google email, allow sign-in via that
+      // Google account but authenticate against the same staff row (custom domain
+      // account keeps its password/role/status).
+      if (account.provider === "google") {
+        const [linked] = await db.select().from(users).where(eq(users.linkedGoogleEmail, email));
+        if (linked) {
+          if (linked.status === "suspended") return false;
+          user.id = linked.id;
+          user.role = linked.role;
+          user.email = linked.email; // keep session identity as the custom admin email
+          return true;
+        }
+      }
 
       const [existing] = await db.select().from(users).where(eq(users.email, email));
       if (existing) {

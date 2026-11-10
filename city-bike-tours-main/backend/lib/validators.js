@@ -128,7 +128,9 @@ export const userUpdateSchema = z.object({
   role: staffRoleSchema.optional(),
   status: z.enum(["active", "suspended"]).optional(),
   team: z.string().trim().max(60).optional(),
+  linkedGoogleEmail: z.string().trim().toLowerCase().email("Enter a valid Google email.").optional().or(z.literal("")),
   resetPassword: z.boolean().optional(),
+  resetActivation: z.boolean().optional(),
   resetMfa: z.boolean().optional(),
   changePassword: z.string().min(12, "Use at least 12 characters.").max(100).optional(),
 }).refine((v) => Object.keys(v).length > 0, "Nothing to update.");

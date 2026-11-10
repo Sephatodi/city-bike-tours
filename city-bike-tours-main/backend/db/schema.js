@@ -24,6 +24,11 @@ export const users = pgTable("users", {
   mfaSecret: text("mfa_secret"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+  activationCodeHash: text("activation_code_hash"),
+  activationCodeExpiresAt: timestamp("activation_code_expires_at", { withTimezone: true }),
+  activationRequired: boolean("activation_required").notNull().default(false),
+  activationAttempts: integer("activation_attempts").notNull().default(0),
+  linkedGoogleEmail: text("linked_google_email"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
