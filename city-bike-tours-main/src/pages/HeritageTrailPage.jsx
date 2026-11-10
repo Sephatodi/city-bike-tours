@@ -9,8 +9,8 @@ export default function HeritageTrailPage() {
       <header className="trail-hero" style={{ textAlign: "left", paddingLeft: 0, marginLeft: 0 }}>
         <div className="trail-hero-content" style={{ display: "block", textAlign: "left" }}>
           <p className="trail-eyebrow">GABORONE · SIX LANDMARKS · ONE SHARED STORY</p>
-          <h1 className="trail-wave" style={{ textAlign: "left" }}>
-            R<span style={{ animationDelay: "0.05s" }}>i</span><span style={{ animationDelay: "0.1s" }}>d</span><span style={{ animationDelay: "0.15s" }}>e</span><span className="trail-wave-space" style={{ animationDelay: "0.2s" }}> </span><span style={{ animationDelay: "0.25s" }}>t</span><span style={{ animationDelay: "0.3s" }}>h</span><span style={{ animationDelay: "0.35s" }}>r</span><span style={{ animationDelay: "0.4s" }}>o</span><span style={{ animationDelay: "0.45s" }}>u</span><span style={{ animationDelay: "0.5s" }}>g</span><span style={{ animationDelay: "0.55s" }}>h</span><span className="trail-wave-space" style={{ animationDelay: "0.6s" }}> </span><span style={{ animationDelay: "0.65s" }}>l</span><span style={{ animationDelay: "0.7s" }}>i</span><span style={{ animationDelay: "0.75s" }}>v</span><span style={{ animationDelay: "0.8s" }}>i</span><span style={{ animationDelay: "0.85s" }}>n</span><span style={{ animationDelay: "0.9s" }}>g</span><span className="trail-wave-space" style={{ animationDelay: "0.95s" }}> </span><span style={{ animationDelay: "1s" }}>h</span><span style={{ animationDelay: "1.05s" }}>i</span><span style={{ animationDelay: "1.1s" }}>s</span><span style={{ animationDelay: "1.15s" }}>t</span><span style={{ animationDelay: "1.2s" }}>o</span><span style={{ animationDelay: "1.25s" }}>r</span><span style={{ animationDelay: "1.3s" }}>y</span><span style={{ animationDelay: "1.35s" }}>.</span>
+          <h1 style={{ textAlign: "left" }}>
+            Ride through <span style={{ color: "#D4A017" }}>living history.</span>
           </h1>
           <p className="trail-hero-lede">
             From the civic heart of the city to the places that hold Botswana's memory, take the long way through stories worth knowing.
@@ -48,7 +48,7 @@ export default function HeritageTrailPage() {
       </section>
 
       <section className="trail-booking-cta" aria-labelledby="trail-booking-heading" style={{ marginTop: "3rem" }}>
-        <div style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
+        <div style={{ maxWidth: "600px", textAlign: "left" }}>
           <p className="trail-eyebrow">THE CITY IS WAITING</p>
           <h2 id="trail-booking-heading">Let's go find a story.</h2>
           <p>Choose your pace, see the live price, and meet us at Main Mall. Pay on the day; no deposit is needed.</p>

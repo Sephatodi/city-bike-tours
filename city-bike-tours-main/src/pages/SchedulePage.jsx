@@ -18,30 +18,8 @@ function useScrollReveal() {
   }, []);
 }
 
-function WavyHeading() {
-  const letters = "Ride Outs".split("");
-  return (
-    <h1 className="wavy-heading">
-      {letters.map((letter, i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            animation: `wave ${3 + i * 0.2}s ease-in-out infinite`,
-            animationDelay: `${i * 0.15}s`,
-          }}
-        >
-          {letter === " " ? "\u00A0" : letter}
-        </span>
-      ))}
-      <style>{`
-        @keyframes wave {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-      `}</style>
-    </h1>
-  );
+function PageHeading() {
+  return <h1 className="wavy-heading">Ride Outs</h1>;
 }
 
 export default function SchedulePage() {
@@ -63,7 +41,7 @@ export default function SchedulePage() {
       <header className="schedule-hero">
         <div className="schedule-hero-inner">
           <p className="schedule-eyebrow">GABORONE · BOTSWANA</p>
-          <WavyHeading />
+          <PageHeading />
           <p>Choose your ride, find a time that works, see what it costs, and meet us at Main Mall.</p>
         </div>
       </header>

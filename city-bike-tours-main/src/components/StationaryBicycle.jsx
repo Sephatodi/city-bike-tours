@@ -17,8 +17,8 @@ export default function StationaryBicycle() {
   return (
     <div className="stationary-bicycle" style={{
       position: "fixed",
-      top: "20px",
-      left: "0",
+      top: "8px",
+      left: "10px",
       zIndex: 60,
       width: "60px",
       height: "auto",

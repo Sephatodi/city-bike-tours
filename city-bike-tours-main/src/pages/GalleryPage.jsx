@@ -434,8 +434,8 @@ export default function GalleryPage() {
       <main className="gallery-page rr rr-bg rr-gallery-page">
         <header className="rr-wrap rr-gallery-page-heading" style={{ textAlign: "left", marginLeft: 0, paddingLeft: 0, maxWidth: "none" }}>
           <p className="rr-kicker">City Bike Tours · Photo stories</p>
-          <h1 className="font-display trail-wave" style={{ textAlign: "left" }}>
-            Y<span style={{ animationDelay: "0.05s" }}>o</span><span style={{ animationDelay: "0.1s" }}>u</span><span style={{ animationDelay: "0.15s" }}>r</span><span className="trail-wave-space" style={{ animationDelay: "0.2s" }}> </span><span style={{ animationDelay: "0.25s" }}>s</span><span style={{ animationDelay: "0.3s" }}>t</span><span style={{ animationDelay: "0.35s" }}>o</span><span style={{ animationDelay: "0.4s" }}>r</span><span style={{ animationDelay: "0.45s" }}>y</span><span style={{ animationDelay: "0.5s" }}>.</span><span className="trail-wave-space" style={{ animationDelay: "0.55s" }}> </span><span style={{ animationDelay: "0.6s" }}>O</span><span style={{ animationDelay: "0.65s" }}>u</span><span style={{ animationDelay: "0.7s" }}>r</span><span className="trail-wave-space" style={{ animationDelay: "0.75s" }}> </span><span style={{ animationDelay: "0.8s" }}>s</span><span style={{ animationDelay: "0.85s" }}>t</span><span style={{ animationDelay: "0.9s" }}>o</span><span style={{ animationDelay: "0.95s" }}>r</span><span style={{ animationDelay: "1s" }}>y</span><span style={{ animationDelay: "1.05s" }}>.</span>
+          <h1 className="font-display" style={{ textAlign: "left" }}>
+            Your story. <span style={{ color: "#D4A017" }}>Our story.</span>
           </h1>
           <p style={{ textAlign: "left" }}>Share your ride, celebrate our nation's story — one photo at a time.</p>
         </header>

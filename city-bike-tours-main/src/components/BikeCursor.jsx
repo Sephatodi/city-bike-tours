@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import RiderIcon from "./RiderIcon";
 
 // The cursor is a cyclist with a single faint track line behind it.
@@ -6,10 +7,25 @@ export default function BikeCursor() {
   const cursorRef = useRef(null);
   const canvasRef = useRef(null);
   const [touches, setTouches] = useState([]);
+  const [visible, setVisible] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => { setVisible(false); }, [location.pathname, location.search, location.hash]);
 
   useEffect(() => {
+    function showOnClick(event) {
+      const el = event.target.closest("button,a,[role='button'],input[type='submit']");
+      if (el) setVisible(true);
+    }
+    document.addEventListener("click", showOnClick, true);
+    return () => document.removeEventListener("click", showOnClick, true);
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     document.body.classList.add("bike-cursor-enabled");
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const context = canvas.getContext("2d");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const target = { x: -200, y: -200 };
@@ -107,8 +123,11 @@ export default function BikeCursor() {
       window.removeEventListener("touchend", readTouches);
       window.removeEventListener("touchcancel", readTouches);
       cancelAnimationFrame(frame);
+      setTouches([]);
     };
-  }, []);
+  }, [visible]);
+
+  if (!visible) return null;
 
   return (
     <>
