@@ -1342,7 +1342,7 @@ body { background-color: #123222; }
 .trail-hero {
   position: relative;
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 0;
   padding: clamp(4rem, 9vw, 8rem) 2rem 4.5rem;
   border-bottom: 1px solid rgba(212, 160, 23, 0.25);
 }
@@ -1396,7 +1396,7 @@ body { background-color: #123222; }
 .trail-hero-facts strong { margin-right: 0.35rem; color: #F5EDD9; }
 .trail-map-section, .trail-sites-section {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 0;
   padding: 5rem 2rem 1rem;
 }
 .trail-section-heading {
@@ -1453,11 +1453,11 @@ body { background-color: #123222; }
 .trail-site-history { margin-top: 0.7rem; color: rgba(245, 237, 217, 0.72); font-size: 0.84rem; line-height: 1.7; }
 .trail-booking-cta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 2rem;
   max-width: 1248px;
-  margin: 6rem auto 0;
+  margin: 6rem 2rem 0;
   padding: clamp(1.6rem, 4vw, 3.2rem);
   border: 1px solid rgba(212, 160, 23, 0.32);
   background: linear-gradient(110deg, rgba(193, 68, 14, 0.88), rgba(97, 43, 18, 0.88));

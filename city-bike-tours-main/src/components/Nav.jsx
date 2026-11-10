@@ -30,7 +30,7 @@ export default function Nav() {
       }}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3" style={{ marginLeft: "80px" }}>
+        <Link to="/" className="flex items-center gap-3" style={{ marginLeft: "52px" }}>
           <div>
             <div className="font-display font-bold text-lg leading-tight" style={{ color: "#F5EDD9" }}>
               City Bike Tours
