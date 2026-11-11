@@ -221,11 +221,14 @@ function Body() {
 
       <div className="adm-card">
         <div className="adm-toolbar">
-          <div className="tabs" role="group" aria-label="Filter by status">
-            {TABS.map((t) => (
-              <button key={t.id} className="tab" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}>{t.label} <span className="n num">{counts[t.id]}</span></button>
-            ))}
-          </div>
+          <label className="field" style={{ margin: 0, minWidth: 180 }}>
+            Status
+            <select className="select" value={tab} onChange={(e) => setTab(e.target.value)} aria-label="Filter by status">
+              {TABS.map((t) => (
+                <option key={t.id} value={t.id}>{t.label} ({counts[t.id]})</option>
+              ))}
+            </select>
+          </label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <select className="select" style={{ width: 176 }} value={when} onChange={(e) => setWhen(e.target.value)} aria-label="Ride date">
               <option value="upcoming">Today and later</option>
