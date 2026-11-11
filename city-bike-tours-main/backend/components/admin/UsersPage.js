@@ -144,10 +144,6 @@ export default function UsersPage() {
     const res = await patch(u, { resetActivation: true });
     if (res?.activationCode) setSecret({ name: u.name, value: res.activationCode, type: "activation", email: u.email });
   }
-  const removeStaff = (u) => {
-    if (!window.confirm(`Delete ${u.name}'s account? This can't be undone.`)) return;
-    run(async () => { await api(`/api/admin/users/${u.id}`, { method: "DELETE" }, "Could not delete the account."); await load(); }, "Account deleted.");
-  };
   async function deleteCustomerData() {
     if (!deletingCustomer) return;
     const result = await run(async () => {
@@ -159,6 +155,34 @@ export default function UsersPage() {
       setDeletingCustomer(null);
     }, "Customer data deleted.");
     if (result !== null) setDeleteReviews(false);
+  }
+
+  async function runAction(u, action) {
+    if (!action) return;
+    if (action === "suspend") {
+      if (window.confirm(`Suspend ${u.name}? They won't be able to sign in.`)) await patch(u, { status: "suspended" }, "Account suspended.");
+    } else if (action === "reactivate") {
+      await patch(u, { status: "active" }, "Account reactivated.");
+    } else if (action === "resetMfa") {
+      if (window.confirm(`Reset two-step sign-in for ${u.name}? They'll need to set it up again.`)) await patch(u, { resetMfa: true }, "Two-step sign-in reset.");
+    } else if (action === "resetActivation") {
+      await resetActivation(u);
+    } else if (action === "resetPassword") {
+      await resetPassword(u);
+    } else if (action === "editPassword") {
+      setEditingPass(u);
+    } else if (action === "linkGoogle") {
+      const g = window.prompt(`Link Google email for ${u.name} (leave empty to unlink). They can sign in with Google but use their ${u.email} password/role.`, u.linkedGoogleEmail || "");
+      if (g !== null) await patch(u, { linkedGoogleEmail: g.trim().toLowerCase() }, "Google link updated.");
+    } else if (action === "deleteCustomer") {
+      setDeleteReviews(false);
+      setDeletingCustomer(u);
+    } else if (action === "deleteStaff") {
+      if (window.confirm(`Delete ${u.name}'s account? This can't be undone.`)) {
+        const ok = await run(async () => { await api(`/api/admin/users/${u.id}`, { method: "DELETE" }, "Could not delete the account."); await load(); }, "Account deleted.");
+        if (ok === null) return;
+      }
+    }
   }
 
   return (
@@ -229,19 +253,18 @@ export default function UsersPage() {
                         {write && (
                           <td>
                             {!self && (
-                              <div className="row-actions">
-                                {u.status === "active"
-                                  ? <button className="btn btn-sm" disabled={busy} onClick={() => window.confirm(`Suspend ${u.name}? They won't be able to sign in.`) && patch(u, { status: "suspended" }, "Account suspended.")}>Suspend</button>
-                                  : <button className="btn btn-sm" disabled={busy} onClick={() => patch(u, { status: "active" }, "Account reactivated.")}>Reactivate</button>}
-                                {u.mfaEnabled && <button className="btn btn-sm" disabled={busy} onClick={() => window.confirm(`Reset two-step sign-in for ${u.name}? They'll need to set it up again.`) && patch(u, { resetMfa: true }, "Two-step sign-in reset.")}>Reset 2-step</button>}
-                                {u.provider === "credentials" && u.role !== "customer" && <button className="btn btn-sm" disabled={busy} onClick={() => resetActivation(u)}>Reset activation code</button>}
-                                {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => resetPassword(u)}><Icon name="key" size={13} /> Reset password</button>}
-                                {u.provider === "credentials" && <button className="btn btn-sm" disabled={busy} onClick={() => setEditingPass(u)}><Icon name="edit" size={13} /> Edit password</button>}
-                                {u.role !== "customer" && <button className="btn btn-sm" disabled={busy} onClick={() => { const g = window.prompt(`Link Google email for ${u.name} (leave empty to unlink). They can sign in with Google but use their ${u.email} password/role.`, u.linkedGoogleEmail || ""); if (g !== null) patch(u, { linkedGoogleEmail: g.trim().toLowerCase() }, "Google link updated."); }}>{u.linkedGoogleEmail ? "Edit Google link" : "Link Google"}</button>}
+                              <select className="select" style={{ width: 150, minHeight: 34 }} value="" disabled={busy} aria-label={`Actions for ${u.name}`} onChange={(e) => runAction(u, e.target.value)}>
+                                <option value="" disabled>Actions…</option>
+                                {u.status === "active" ? <option value="suspend">Suspend</option> : <option value="reactivate">Reactivate</option>}
+                                {u.mfaEnabled && <option value="resetMfa">Reset 2-step</option>}
+                                {u.provider === "credentials" && u.role !== "customer" && <option value="resetActivation">Reset activation code</option>}
+                                {u.provider === "credentials" && <option value="resetPassword">Reset password</option>}
+                                {u.provider === "credentials" && <option value="editPassword">Edit password</option>}
+                                {u.role !== "customer" && <option value="linkGoogle">{u.linkedGoogleEmail ? "Edit Google link" : "Link Google"}</option>}
                                 {u.role === "customer"
-                                  ? <button className="btn btn-sm btn-danger" disabled={busy} onClick={() => { setDeleteReviews(false); setDeletingCustomer(u); }}>Delete customer data</button>
-                                  : u.bookingCount === 0 && <button className="btn btn-sm btn-danger btn-icon" disabled={busy} onClick={() => removeStaff(u)} aria-label={`Delete ${u.name}`}><Icon name="trash" size={13} /></button>}
-                              </div>
+                                  ? <option value="deleteCustomer">Delete customer data</option>
+                                  : u.bookingCount === 0 && <option value="deleteStaff">Delete account</option>}
+                              </select>
                             )}
                           </td>
                         )}
