@@ -267,6 +267,21 @@ export const otpCodes = pgTable("otp_codes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Holds a not-yet-completed email sign-up while its phone number is verified by a one-time code.
+export const pendingRegistrations = pgTable("pending_registrations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  channel: text("channel").notNull(),
+  codeHash: text("code_hash").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Rider uploads can be public after approval or stay private to their owner and staff.
 export const communityPhotos = pgTable("community_photos", {
   id: text("id").primaryKey(),
