@@ -17,7 +17,7 @@ export async function verifyActivationCode(code, hash) {
 }
 
 export function activationExpiry() {
-  return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
 }
 
 export const ACTIVATION_MAX_ATTEMPTS = 8;
