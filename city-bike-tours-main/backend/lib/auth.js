@@ -25,15 +25,15 @@ const providers = [
       const ip = ipFromHeaders(req?.headers);
       const fail = async (reason) => { await recordAttempt({ email, ip, success: false, reason }); return null; };
 
-      if (await isIpBlocked(ip)) return fail("blocked_ip");
+      if (await isIpBlocked(ip)) throw new Error("blocked_ip");
 
       // Too many recent failures for this email: stop checking passwords for a while.
       const { maxFailedLogins } = await getSettings();
-      if ((await recentFailures(email)) >= (parseInt(maxFailedLogins, 10) || 5)) return fail("locked_out");
+      if ((await recentFailures(email)) >= (parseInt(maxFailedLogins, 10) || 5)) throw new Error("locked_out");
 
       const [user] = await db.select().from(users).where(eq(users.email, email));
-      if (!user || !user.passwordHash) return fail("unknown_account");
-      if (user.status === "suspended") return fail("suspended");
+      if (!user || !user.passwordHash) throw new Error("unknown_account");
+      if (user.status === "suspended") throw new Error("suspended");
       if (user.activationRequired) throw new Error("ACTIVATION_REQUIRED");
 
       const valid = await bcrypt.compare(credentials.password, user.passwordHash);

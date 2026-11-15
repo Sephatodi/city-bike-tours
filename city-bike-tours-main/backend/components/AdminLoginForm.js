@@ -86,7 +86,16 @@ export default function AdminLoginForm({ notice = "" }) {
         setStep("mfa");
         throw new Error("Enter the 6-digit code from your authenticator app.");
       }
-      if (!result?.ok || result.error) throw new Error(step === "mfa" ? "That code didn't work. Try the newest one." : "Password is incorrect, or sign-in is temporarily locked after too many tries.");
+      if (result?.error === "locked_out") {
+        throw new Error("Too many failed attempts. Wait a few minutes and try again.");
+      }
+      if (result?.error === "unknown_account") {
+        throw new Error("No admin account found for this email.");
+      }
+      if (result?.error === "suspended") {
+        throw new Error("This account has been suspended. Ask an admin for help.");
+      }
+      if (!result?.ok || result.error) throw new Error(step === "mfa" ? "That code didn't work. Try the newest one." : "That password is incorrect. Try again, or use 'Forgot password?' to reset it.");
       await completeStaffSignIn();
     } catch (reason) {
       setError(reason.message || "Unable to sign in.");
