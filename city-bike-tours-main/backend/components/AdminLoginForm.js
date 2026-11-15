@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getSession, signIn, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AdminLoginForm({ notice = "" }) {
   const router = useRouter();
-  const [step, setStep] = useState("email"); // email | password | activation-code | activation-password | mfa
+  const searchParams = useSearchParams();
+  const [step, setStep] = useState("email"); // email | password | activation-code | activation-password | mfa | forgot-email | reset-password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -14,9 +15,16 @@ export default function AdminLoginForm({ notice = "" }) {
   const [activationToken, setActivationToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetToken, setResetToken] = useState(searchParams.get("token") || "");
+  const [resetMessage, setResetMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Landing on /admin/login?token=... means the user clicked a reset link.
+  useEffect(() => {
+    if (resetToken) setStep("reset-password");
+  }, [resetToken]);
 
   function resetToEmail() {
     setStep("email");
@@ -26,6 +34,8 @@ export default function AdminLoginForm({ notice = "" }) {
     setActivationToken("");
     setNewPassword("");
     setConfirmPassword("");
+    setResetToken("");
+    setResetMessage("");
     setError("");
     setShowPassword(false);
   }
@@ -130,12 +140,60 @@ export default function AdminLoginForm({ notice = "" }) {
     }
   }
 
+  async function handleForgotSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/admin/password/forgot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "We couldn't send a reset link.");
+      setResetMessage(data.message || "If that email has an account, we've sent instructions.");
+    } catch (reason) {
+      setError(reason.message || "Unable to send a reset link.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleResetSubmit(event) {
+    event.preventDefault();
+    setError("");
+    if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
+    if (newPassword.length < 12) { setError("Use at least 12 characters."); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/admin/password/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: resetToken, password: newPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "This reset link is invalid or has expired.");
+      setResetMessage(data.message);
+      setStep("email");
+      setResetToken("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (reason) {
+      setError(reason.message || "We couldn't reset your password. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const titles = {
     email: "Sign in",
     password: "Enter your password",
     mfa: "Authenticator code",
     "activation-code": "Activate your account",
     "activation-password": "Create your password",
+    "forgot-email": "Reset your password",
+    "reset-password": "Choose a new password",
   };
   const descriptions = {
     email: "Enter your staff email (e.g. username@citybikes.com) to continue.",
@@ -143,6 +201,8 @@ export default function AdminLoginForm({ notice = "" }) {
     mfa: "Enter the 6-digit code from your authenticator app.",
     "activation-code": "First-time sign-in: enter the 6-digit activation code shared by the admin who created your account.",
     "activation-password": "Set a new password for your account (min 12 characters). You’ll use this same password to sign in, including if you later link Google.",
+    "forgot-email": "Enter your staff email and we'll send a reset link.",
+    "reset-password": "This link expires in 30 minutes and can only be used once.",
   };
 
   return (
@@ -163,6 +223,39 @@ export default function AdminLoginForm({ notice = "" }) {
             {notice && !error && <div className="adm-alert warn" role="status" style={{ marginBottom: 0 }}>{notice}</div>}
             {error && <div className="adm-alert bad" role="alert" style={{ marginBottom: 0 }}>{error}</div>}
             <button className="btn btn-primary" type="submit" disabled={submitting}>{submitting ? "Checking…" : "Continue"}</button>
+          </form>
+        )}
+
+        {step === "forgot-email" && (
+          <form onSubmit={handleForgotSubmit}>
+            <label className="field" htmlFor="admin-email-forgot">Email
+              <input id="admin-email-forgot" className="input" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="username@citybikes.com" />
+            </label>
+            {resetMessage && <div className="adm-alert warn" role="status" style={{ marginBottom: 0 }}>{resetMessage}</div>}
+            {error && <div className="adm-alert bad" role="alert" style={{ marginBottom: 0 }}>{error}</div>}
+            <button className="btn btn-primary" type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send reset link"}</button>
+            <button className="btn" type="button" style={{ marginTop: 8 }} onClick={resetToEmail}>Back to sign in</button>
+          </form>
+        )}
+
+        {step === "reset-password" && (
+          <form onSubmit={handleResetSubmit}>
+            <label className="field" htmlFor="reset-email">Email
+              <input id="reset-email" className="input" type="email" value={email} readOnly />
+            </label>
+            <label className="field" htmlFor="new-password-admin">New password
+              <input id="new-password-admin" className="input" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={12} required autoFocus value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            </label>
+            <label className="field" htmlFor="confirm-password-admin">Confirm password
+              <input id="confirm-password-admin" className="input" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={12} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+              <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Show passwords
+            </label>
+            {resetMessage && <div className="adm-alert warn" role="status" style={{ marginBottom: 0 }}>{resetMessage}</div>}
+            {error && <div className="adm-alert bad" role="alert" style={{ marginBottom: 0 }}>{error}</div>}
+            <button className="btn btn-primary" type="submit" disabled={submitting || !resetToken}>{submitting ? "Saving…" : "Update password"}</button>
+            <button className="btn" type="button" style={{ marginTop: 8 }} onClick={resetToEmail}>Back to sign in</button>
           </form>
         )}
 
@@ -188,6 +281,7 @@ export default function AdminLoginForm({ notice = "" }) {
             )}
             {error && <div className="adm-alert bad" role="alert" style={{ marginBottom: 0 }}>{error}</div>}
             <button className="btn btn-primary" type="submit" disabled={submitting}>{submitting ? "Checking…" : "Sign in"}</button>
+            <button className="btn" type="button" style={{ marginTop: 8 }} onClick={() => setStep("forgot-email")}>Forgot password?</button>
             <button className="btn" type="button" style={{ marginTop: 8 }} onClick={resetToEmail}>Use a different email</button>
           </form>
         )}
