@@ -5,8 +5,8 @@ import { BACKEND_BASE_URL, ADMIN_BASE_URL } from "../api/backend";
 export default function Footer() {
   return (
     <footer style={{ backgroundColor: "rgba(13,8,5,0.5)", backdropFilter: "blur(8px)" }}>
-      <div className="max-w-7xl mx-auto" style={{ padding: "43px 1.5rem" }}>
-        <div className="grid md:grid-cols-4" style={{ gap: "29px", marginBottom: "36px" }}>
+      <div className="max-w-7xl mx-auto" style={{ padding: "41px 1.5rem" }}>
+        <div className="grid md:grid-cols-4" style={{ gap: "29px", marginBottom: "34px" }}>
           <div className="md:col-span-1">
             <div className="flex items-center" style={{ gap: "11px", marginBottom: "14px" }}>
               <div>
@@ -67,11 +67,11 @@ export default function Footer() {
           </span>
           <span>Built with pride in Botswana 🇧🇼</span>
           {ADMIN_BASE_URL ? (
-            <a href={`${ADMIN_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "7px 14px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Admin Login</a>
+            <a href={`${ADMIN_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</a>
           ) : BACKEND_BASE_URL ? (
-            <a href={`${BACKEND_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "7px 14px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Admin Login</a>
+            <a href={`${BACKEND_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</a>
           ) : (
-            <Link to="/admin/login" className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "7px 14px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Admin Login</Link>
+            <Link to="/admin/login" className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</Link>
           )}
         </div>
       </div>

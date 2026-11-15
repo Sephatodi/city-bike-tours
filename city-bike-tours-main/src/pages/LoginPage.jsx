@@ -7,19 +7,11 @@ import Footer from "../components/Footer";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
-  { id: "facebook", label: "Facebook" },
-  { id: "apple", label: "Apple" },
 ];
 
 function SocialIcon({ id }) {
-  if (id === "google") return (
-    <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62Z" /><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z" /><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33Z" /><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.42 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z" /></svg>
-  );
-  if (id === "facebook") return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="#1877F2" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z" /></svg>
-  );
   return (
-    <svg viewBox="0 0 17 20" width="16" height="18" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.7-.7-1.4 0-2.6.8-3.3 2C2.5 10 3.6 14 5 16.2c.7 1 1.5 2.2 2.6 2.1 1-.1 1.4-.7 2.7-.7s1.6.7 2.7.6c1.1 0 1.8-1 2.5-2 .8-1.2 1.1-2.3 1.1-2.4-.1 0-2.5-1-2.5-3.2Z" /><path d="M11.9 4.3c.6-.7 1-1.7.9-2.7-.9.04-1.9.6-2.6 1.3-.5.6-1 1.6-.9 2.6 1 .1 2-.5 2.6-1.2Z" /></svg>
+    <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62Z" /><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z" /><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33Z" /><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.42 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z" /></svg>
   );
 }
 
@@ -47,6 +39,9 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [devCode, setDevCode] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regCode, setRegCode] = useState("");
+  const [regDevCode, setRegDevCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,9 +87,33 @@ export default function LoginPage() {
   const submitEmail = (event) => {
     event.preventDefault();
     run(async () => {
-      const result = mode === "create"
-        ? await post("/api/customer/register", form)
-        : await post("/api/customer/login", { email: form.email, password: form.password });
+      if (mode === "create") {
+        const result = await post("/api/customer/register", form);
+        // With a phone number, the backend holds the sign-up until the code is verified.
+        if (result.pending) {
+          setRegPhone(result.phone);
+          setRegCode("");
+          setRegDevCode(result.devCode || "");
+          return;
+        }
+        finish(result);
+        return;
+      }
+      finish(await post("/api/customer/login", { email: form.email, password: form.password }));
+    });
+  };
+
+  const verifyRegistration = (event) => {
+    event.preventDefault();
+    run(async () => {
+      const response = await fetch("/api/customer/register", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone: regPhone, code: regCode }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "We couldn't verify that code.");
       finish(result);
     });
   };
@@ -137,21 +156,21 @@ export default function LoginPage() {
 
           <div className="auth-tabs" role="tablist" aria-label="Account">
             {[["create", "Create account"], ["signin", "Sign in"]].map(([id, label]) => (
-              <button key={id} type="button" role="tab" aria-selected={mode === id} className={mode === id ? "active" : ""} onClick={() => { setMode(id); setError(""); setCodeSent(false); }}>{label}</button>
+              <button key={id} type="button" role="tab" aria-selected={mode === id} className={mode === id ? "active" : ""} onClick={() => { setMode(id); setError(""); setCodeSent(false); setRegPhone(""); setRegCode(""); }}>{label}</button>
             ))}
           </div>
 
           <div className="auth-socials">
             {SOCIALS.map(({ id, label }) => (
               <button key={id} type="button" className="auth-social" disabled={!providers || !enabled(id) || busy} onClick={() => goSocial(id)} title={enabled(id) ? undefined : `${label} sign-in isn't set up yet`}>
-                <SocialIcon id={id} /> Continue with {label}{providers && !enabled(id) && <small>Not set up yet</small>}
+                <SocialIcon id={id} /> Continue with {label}
               </button>
             ))}
             <button type="button" className={`auth-social ${method === "whatsapp" ? "selected" : ""}`} disabled={!providers || !providers.whatsapp || busy} onClick={() => { setMethod("whatsapp"); setCodeSent(false); setError(""); }}>
-              <WhatsAppIcon /> Continue with WhatsApp{providers && !providers.whatsapp && <small>Not set up yet</small>}
+              <WhatsAppIcon /> Continue with WhatsApp
             </button>
             <button type="button" className={`auth-social ${method === "sms" ? "selected" : ""}`} disabled={!providers || !providers.sms || busy} onClick={() => { setMethod("sms"); setCodeSent(false); setError(""); }}>
-              <span aria-hidden="true">📱</span> Continue with phone number{providers && !providers.sms && <small>Not set up yet</small>}
+              <span aria-hidden="true">📱</span> Continue with phone number
             </button>
           </div>
 
@@ -176,6 +195,18 @@ export default function LoginPage() {
               <button type="submit" className="auth-primary" disabled={busy}>{busy ? "Please wait…" : codeSent ? "Verify and continue" : "Send me a code"}</button>
               {codeSent && <button type="button" className="auth-link" disabled={busy} onClick={sendCode}>Send a new code</button>}
               <button type="button" className="auth-link" onClick={() => { setMethod("email"); setCodeSent(false); setError(""); }}>Use email instead</button>
+            </form>
+          ) : regPhone ? (
+            <form onSubmit={verifyRegistration} className="auth-form">
+              <p className="auth-sub">We sent a 6-digit code to <strong>{regPhone}</strong>. Enter it to finish creating your account.</p>
+              <label>6-digit code
+                <input type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="\d{6}" maxLength={6} value={regCode} onChange={(e) => setRegCode(e.target.value.replace(/\D/g, ""))} placeholder="123456" autoFocus />
+                <small>The code expires in 10 minutes.</small>
+                {regDevCode && <small style={{ color: "#D4A017" }}>Local test mode — your code is {regDevCode}</small>}
+              </label>
+              {error && <p role="alert" className="auth-error">{error}</p>}
+              <button type="submit" className="auth-primary" disabled={busy}>{busy ? "Please wait…" : "Verify and create account"}</button>
+              <button type="button" className="auth-link" disabled={busy} onClick={() => { setRegPhone(""); setRegCode(""); setError(""); }}>Use a different number</button>
             </form>
           ) : (
             <form onSubmit={submitEmail} className="auth-form">

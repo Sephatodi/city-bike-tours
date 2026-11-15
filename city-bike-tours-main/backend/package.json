@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "drizzle-kit": "^0.24.2"
   }
 }
