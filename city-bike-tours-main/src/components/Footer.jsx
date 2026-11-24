@@ -67,11 +67,11 @@ export default function Footer() {
           </span>
           <span>Built with pride in Botswana 🇧🇼</span>
           {ADMIN_BASE_URL ? (
-            <a href={`${ADMIN_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</a>
+            <a href={`${ADMIN_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Sign in</a>
           ) : BACKEND_BASE_URL ? (
-            <a href={`${BACKEND_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</a>
+            <a href={`${BACKEND_BASE_URL}/admin/login`} className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Sign in</a>
           ) : (
-            <Link to="/admin/login" className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>AL</Link>
+            <Link to="/admin/login" className="inline-flex items-center justify-center border font-semibold transition-colors hover:bg-white/5" style={{ padding: "3px 8px", fontSize: "11px", borderColor: "rgba(212,160,23,0.55)", color: "#D4A017" }}>Sign in</Link>
           )}
         </div>
       </div>

@@ -1,13 +1,19 @@
 import PasswordInput from "../components/PasswordInput";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import { BACKEND_BASE_URL } from "../api/backend";
+import { BACKEND_BASE_URL, ADMIN_BASE_URL } from "../api/backend";
 import { rememberNext, takeNext, useCustomer } from "../auth/CustomerAuth";
 import Footer from "../components/Footer";
 
 const SOCIALS = [
   { id: "google", label: "Google" },
 ];
+
+const adminLoginUrl = ADMIN_BASE_URL
+  ? `${ADMIN_BASE_URL}/admin/login`
+  : BACKEND_BASE_URL
+    ? `${BACKEND_BASE_URL}/admin/login`
+    : "/admin/login";
 
 function SocialIcon({ id }) {
   return (
@@ -17,12 +23,6 @@ function SocialIcon({ id }) {
 
 function WhatsAppIcon() {
   return <svg viewBox="0 0 24 24" width="18" height="18" fill="#25D366" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2Zm0 18.1c-1.5 0-2.97-.4-4.25-1.16l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 1 1 7.04 3.87Zm4.5-6.15c-.25-.12-1.46-.72-1.69-.8-.23-.08-.4-.12-.56.12-.17.25-.64.8-.78.96-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.15-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07s.89 2.4 1.01 2.57c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.18-.06-.1-.23-.17-.48-.29Z" /></svg>;
-}
-
-// Where the backend lives, so the social buttons can leave this site and come back.
-function backendOrigin() {
-  if (BACKEND_BASE_URL) return BACKEND_BASE_URL;
-  return import.meta.env.DEV ? "http://localhost:3000" : window.location.origin;
 }
 
 export default function LoginPage() {
@@ -146,6 +146,10 @@ export default function LoginPage() {
   const phoneMethod = method === "sms" || method === "whatsapp";
   const enabled = (id) => Boolean(providers?.[id]);
 
+  function goAdmin() {
+    window.location.assign(adminLoginUrl);
+  }
+
   return (
     <>
       <main className="auth-shell">
@@ -175,6 +179,13 @@ export default function LoginPage() {
           </div>
 
           <div className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></div>
+
+          <div className="auth-admin-cta" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+            <button type="button" className="auth-primary" disabled={busy} onClick={goAdmin} style={{ background: "linear-gradient(110deg, rgba(212,160,23,0.95), rgba(193,68,14,0.95))" }}>
+              Sign in as admin
+            </button>
+            <span className="auth-sub" style={{ margin: "auto 0" }}>Use your staff email or phone to open the dashboard.</span>
+          </div>
 
           {phoneMethod ? (
             <form onSubmit={codeSent ? verifyCode : sendCode} className="auth-form">
