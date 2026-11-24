@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
+import { ADMIN_BASE_URL, BACKEND_BASE_URL } from "../api/backend";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
@@ -7,6 +8,12 @@ const NAV_LINKS = [
   { label: "Heritage Trail", to: "/heritage-trail" },
   { label: "Gallery", to: "/gallery" },
 ];
+
+const adminLoginUrl = ADMIN_BASE_URL
+  ? `${ADMIN_BASE_URL}/admin/login`
+  : BACKEND_BASE_URL
+    ? `${BACKEND_BASE_URL}/admin/login`
+    : "/admin/login";
 
 export default function Nav() {
   const [scrollY, setScrollY] = useState(0);
@@ -66,6 +73,14 @@ export default function Nav() {
           Book Now
         </Link>
 
+        <a
+          href={adminLoginUrl}
+          className="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90"
+          style={{ backgroundColor: "rgba(212,160,23,0.15)", color: "#D4A017", border: "1px solid rgba(212,160,23,0.55)" }}
+        >
+          Sign in
+        </a>
+
         {/* Mobile hamburger */}
         <button
           className="md:hidden flex flex-col gap-1.5 p-2"
@@ -96,6 +111,22 @@ export default function Nav() {
               {label}
             </Link>
           ))}
+          <a
+            href={adminLoginUrl}
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-semibold uppercase tracking-widest"
+            style={{ color: "#D4A017" }}
+          >
+            Sign in
+          </a>
+          <Link
+            to="/schedule#price-calculator"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-semibold uppercase tracking-widest"
+            style={{ color: "#F5EDD9" }}
+          >
+            Book Now
+          </Link>
         </div>
       )}
     </nav>
