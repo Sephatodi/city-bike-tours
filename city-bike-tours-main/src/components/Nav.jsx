@@ -67,19 +67,11 @@ export default function Nav() {
 
         <Link
           to="/schedule#price-calculator"
-          className="hidden md:inline-block px-5 py-2 text-sm font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90"
+          className="hidden md:inline-block px-5 py-2 text-sm font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90 ml-auto"
           style={{ backgroundColor: "#C1440E", color: "#F5EDD9" }}
         >
           Book Now
         </Link>
-
-        <a
-          href={adminLoginUrl}
-          className="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-semibold tracking-wide uppercase rounded-sm transition-all hover:opacity-90"
-          style={{ backgroundColor: "rgba(212,160,23,0.15)", color: "#D4A017", border: "1px solid rgba(212,160,23,0.55)" }}
-        >
-          Sign in
-        </a>
 
         {/* Mobile hamburger */}
         <button
