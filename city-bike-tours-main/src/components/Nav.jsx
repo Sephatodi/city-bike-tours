@@ -36,7 +36,7 @@ export default function Nav() {
         backdropFilter: solid || menuOpen ? "blur(12px)" : "none",
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center gap-8">
         <Link to="/" className="flex items-center gap-3" style={{ marginLeft: "52px" }}>
           <div>
             <div className="font-display font-bold text-lg leading-tight" style={{ color: "#F5EDD9" }}>
