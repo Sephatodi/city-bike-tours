@@ -205,7 +205,7 @@ export default function AdminLoginForm({ notice = "" }) {
     "reset-password": "Choose a new password",
   };
   const descriptions = {
-    email: "Enter your staff email (e.g. username@citybikes.com) to continue.",
+    email: "",
     password: `Signing in as ${email}. Enter your password to access the dashboard.`,
     mfa: "Enter the 6-digit code from your authenticator app.",
     "activation-code": "First-time sign-in: enter the 6-digit activation code shared by the admin who created your account.",

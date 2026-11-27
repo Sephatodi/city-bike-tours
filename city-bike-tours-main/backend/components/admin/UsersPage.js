@@ -257,7 +257,7 @@ export default function UsersPage() {
                                 <option value="" disabled>Actions…</option>
                                 {u.status === "active" ? <option value="suspend">Suspend</option> : <option value="reactivate">Reactivate</option>}
                                 {u.mfaEnabled && <option value="resetMfa">Reset 2-step</option>}
-                                {u.provider === "credentials" && u.role !== "customer" && <option value="resetActivation">Reset activation code</option>}
+                                {u.provider === "credentials" && u.role !== "customer" && <option value="resetActivation">Regenerate activation code (14 days)</option>}
                                 {u.provider === "credentials" && <option value="resetPassword">Reset password</option>}
                                 {u.provider === "credentials" && <option value="editPassword">Edit password</option>}
                                 {u.role !== "customer" && <option value="linkGoogle">{u.linkedGoogleEmail ? "Edit Google link" : "Link Google"}</option>}

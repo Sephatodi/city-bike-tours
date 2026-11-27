@@ -178,12 +178,9 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></div>
+          <section className="auth-divider"><span>{phoneMethod ? (method === "whatsapp" ? "WhatsApp number" : "Phone number") : "or use your email"}</span></section>
 
           <div className="auth-admin-cta" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-            <button type="button" className="auth-primary" disabled={busy} onClick={goAdmin} style={{ background: "linear-gradient(110deg, rgba(212,160,23,0.95), rgba(193,68,14,0.95))" }}>
-              Sign in as admin
-            </button>
             <span className="auth-sub" style={{ margin: "auto 0" }}>Use your staff email or phone to open the dashboard.</span>
           </div>
 
